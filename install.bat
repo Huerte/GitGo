@@ -52,8 +52,6 @@ if not exist "%INSTALL_DIR%" (
 echo [INFO] Copying files...
 copy "%SRC_DIR%\gitgo.py" "%INSTALL_DIR%\" >nul
 copy "%SRC_DIR%\gitgo.bat" "%INSTALL_DIR%\" >nul
-copy "%SRC_DIR%\refresh-path.ps1" "%INSTALL_DIR%\" >nul
-copy "%SRC_DIR%\refresh-path.bat" "%INSTALL_DIR%\" >nul
 
 if %errorLevel% neq 0 (
     echo [ERROR] Failed to copy files!
