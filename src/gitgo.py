@@ -19,7 +19,9 @@ def run_command(command, allow_fail=False):
         if allow_fail:
             return e
         print(f"\n{RED}Command Failed: {' '.join(command)}{RESET}")
-        print(f"{RED}Error output:\n{e.stderr.strip()}{RESET}\n")
+        # Fix the AttributeError - safely handle None stderr
+        stderr = e.stderr.strip() if e.stderr else "No error details available"
+        print(f"{RED}Error output:\n{stderr}{RESET}\n")
         sys.exit(1)
 
 
@@ -32,6 +34,45 @@ def git_commit(commit_message):
     print(run_command(["git", "add", "."]))
     print(run_command(["git", "commit", "-m", f"{commit_message}"]))
     print(f"\n{GREEN}Changes committed.{RESET}\n")
+
+
+def check_and_sync_branch(branch):
+    """Check if local branch is behind remote and sync if needed - no more rejected pushes, fam! 💪"""
+    try:
+        # Fetch latest changes from remote
+        print(f"{YELLOW}Checking if branch is up to date...{RESET}")
+        run_command(["git", "fetch", "origin"])
+
+        # Check if local branch is behind remote
+        try:
+            local_commit = run_command(["git", "rev-parse", branch])
+            remote_commit = run_command(["git", "rev-parse", f"origin/{branch}"])
+
+            if local_commit != remote_commit:
+                # Check if we're behind (not ahead)
+                behind_check = run_command(
+                    ["git", "rev-list", "--count", f"{branch}..origin/{branch}"]
+                )
+                if behind_check and int(behind_check) > 0:
+                    print(
+                        f"{YELLOW}Local branch is behind remote by {behind_check} commit(s). Pulling changes...{RESET}"
+                    )
+                    output = run_command(["git", "pull", "--rebase", "origin", branch])
+                    if output:
+                        print(output)
+                    print(f"{GREEN}Successfully synced with remote!{RESET}")
+                else:
+                    print(f"{GREEN}Branch is up to date or ahead of remote.{RESET}")
+            else:
+                print(f"{GREEN}Branch is already up to date.{RESET}")
+        except:
+            # Remote branch might not exist yet, that's okay for first push
+            print(
+                f"{YELLOW}Remote branch doesn't exist yet. First push will create it.{RESET}"
+            )
+    except:
+        # If fetch fails, continue anyway (might be offline or no remote)
+        print(f"{YELLOW}Could not fetch from remote. Proceeding with push...{RESET}")
 
 
 def git_push(branch):
