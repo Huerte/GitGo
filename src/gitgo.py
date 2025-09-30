@@ -32,11 +32,17 @@ def git_new_branch(branch):
 
 def git_commit(commit_message):
     print(run_command(["git", "add", "."]))
+    
+    status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
+    if isinstance(status_result, subprocess.CalledProcessError) or not status_result.strip():
+        print(f"\n{YELLOW}No changes to commit - working tree clean! Skipping commit step...{RESET}")
+        return False
 
     clean_message = commit_message.strip('"\'')
     
     print(run_command(["git", "commit", "-m", clean_message]))
     print(f"\n{GREEN}Changes committed.{RESET}\n")
+    return True
 
 
 def check_and_sync_branch(branch):
@@ -119,8 +125,24 @@ def push_operation(arguments):
     else:
         branch = arguments[1]
 
-    git_commit(arguments[-1])
-    git_push(branch)
+    commit_made = git_commit(arguments[-1])
+    
+    # Check if we need to push - baka naman may existing commits na di pa na-push 🤔
+    if commit_made:
+        git_push(branch)
+    else:
+        # Check if there are unpushed commits
+        try:
+            unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True)
+            if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
+                print(f"\n{YELLOW}Found unpushed commits. Pushing to remote...{RESET}")
+                git_push(branch)
+            else:
+                print(f"\n{GREEN}Everything is already up to date! Nothing to push.{RESET}")
+        except:
+            # If we can't check, just try to push anyway
+            print(f"\n{YELLOW}Attempting to push anyway...{RESET}")
+            git_push(branch)
 
     print("\n" + ("=" * 90))
     print(
