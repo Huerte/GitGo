@@ -32,7 +32,10 @@ def git_new_branch(branch):
 
 def git_commit(commit_message):
     print(run_command(["git", "add", "."]))
-    print(run_command(["git", "commit", "-m", f"{commit_message}"]))
+
+    clean_message = commit_message.strip('"\'')
+    
+    print(run_command(["git", "commit", "-m", clean_message]))
     print(f"\n{GREEN}Changes committed.{RESET}\n")
 
 
