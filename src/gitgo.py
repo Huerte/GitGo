@@ -19,7 +19,6 @@ def run_command(command, allow_fail=False):
         if allow_fail:
             return e
         print(f"\n{RED}Command Failed: {' '.join(command)}{RESET}")
-        # Fix the AttributeError - safely handle None stderr
         stderr = e.stderr.strip() if e.stderr else "No error details available"
         print(f"{RED}Error output:\n{stderr}{RESET}\n")
         sys.exit(1)
@@ -31,7 +30,6 @@ def git_new_branch(branch):
 
 
 def git_commit(commit_message):
-    # Check if there are any changes to commit first - walang utang na loob kung walang changes! 😤
     status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
     if isinstance(status_result, subprocess.CalledProcessError) or not status_result.strip():
         return False
@@ -44,19 +42,15 @@ def git_commit(commit_message):
     return True
 
 def check_and_sync_branch(branch):
-    """Check if local branch is behind remote and sync if needed - no more rejected pushes, fam! 💪"""
     try:
-        # Fetch latest changes from remote
         print(f"{YELLOW}Checking if branch is up to date...{RESET}")
         run_command(["git", "fetch", "origin"])
 
-        # Check if local branch is behind remote
         try:
             local_commit = run_command(["git", "rev-parse", branch])
             remote_commit = run_command(["git", "rev-parse", f"origin/{branch}"])
 
             if local_commit != remote_commit:
-                # Check if we're behind (not ahead)
                 behind_check = run_command(
                     ["git", "rev-list", "--count", f"{branch}..origin/{branch}"]
                 )
@@ -73,12 +67,10 @@ def check_and_sync_branch(branch):
             else:
                 print(f"{GREEN}Branch is already up to date.{RESET}")
         except:
-            # Remote branch might not exist yet, that's okay for first push
             print(
                 f"{YELLOW}Remote branch doesn't exist yet. First push will create it.{RESET}"
             )
     except:
-        # If fetch fails, continue anyway (might be offline or no remote)
         print(f"{YELLOW}Could not fetch from remote. Proceeding with push...{RESET}")
 
 
@@ -125,11 +117,9 @@ def push_operation(arguments):
 
     commit_made = git_commit(arguments[-1])
     
-    # Check if we need to push - baka naman may existing commits na di pa na-push 🤔
     if commit_made:
         git_push(branch)
     else:
-        # No new changes to commit, check if there are unpushed commits
         try:
             unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True)
             if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
@@ -138,12 +128,11 @@ def push_operation(arguments):
             else:
                 print(f"\n{BLUE}Working tree is clean and everything is up to date! 😎{RESET}")
                 print(f"{YELLOW}Make some changes first before using GitGo to commit and push.{RESET}")
-                return  # Exit early, no mission complete message needed
+                return
         except:
-            # If we can't check, inform user about the situation
             print(f"\n{YELLOW}No changes to commit. Cannot verify remote status.{RESET}")
             print(f"{YELLOW}Make some changes first or check your git remote configuration.{RESET}")
-            return  # Exit early, no mission complete message needed
+            return
 
     print("\n" + ("=" * 90))
     print(
