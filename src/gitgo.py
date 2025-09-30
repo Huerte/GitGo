@@ -31,19 +31,17 @@ def git_new_branch(branch):
 
 
 def git_commit(commit_message):
-    print(run_command(["git", "add", "."]))
-    
+    # Check if there are any changes to commit first - walang utang na loob kung walang changes! 😤
     status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
     if isinstance(status_result, subprocess.CalledProcessError) or not status_result.strip():
-        print(f"\n{YELLOW}No changes to commit - working tree clean! Skipping commit step...{RESET}")
         return False
 
+    print(run_command(["git", "add", "."]))
     clean_message = commit_message.strip('"\'')
     
     print(run_command(["git", "commit", "-m", clean_message]))
     print(f"\n{GREEN}Changes committed.{RESET}\n")
     return True
-
 
 def check_and_sync_branch(branch):
     """Check if local branch is behind remote and sync if needed - no more rejected pushes, fam! 💪"""
@@ -131,18 +129,21 @@ def push_operation(arguments):
     if commit_made:
         git_push(branch)
     else:
-        # Check if there are unpushed commits
+        # No new changes to commit, check if there are unpushed commits
         try:
             unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True)
             if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
-                print(f"\n{YELLOW}Found unpushed commits. Pushing to remote...{RESET}")
+                print(f"\n{YELLOW}No changes to commit, but found unpushed commits. Pushing to remote...{RESET}")
                 git_push(branch)
             else:
-                print(f"\n{GREEN}Everything is already up to date! Nothing to push.{RESET}")
+                print(f"\n{BLUE}Working tree is clean and everything is up to date! 😎{RESET}")
+                print(f"{YELLOW}Make some changes first before using GitGo to commit and push.{RESET}")
+                return  # Exit early, no mission complete message needed
         except:
-            # If we can't check, just try to push anyway
-            print(f"\n{YELLOW}Attempting to push anyway...{RESET}")
-            git_push(branch)
+            # If we can't check, inform user about the situation
+            print(f"\n{YELLOW}No changes to commit. Cannot verify remote status.{RESET}")
+            print(f"{YELLOW}Make some changes first or check your git remote configuration.{RESET}")
+            return  # Exit early, no mission complete message needed
 
     print("\n" + ("=" * 90))
     print(
