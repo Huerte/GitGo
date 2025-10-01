@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-GITGO_OPERATIONS = ["push", "check"]
+GITGO_OPERATIONS = ["push", "check", "init"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 RED = "\033[31m"
@@ -144,6 +144,24 @@ def push_operation(arguments):
     )
 
 
+def initialize(arguments):
+    if len(arguments) < 2:
+        print(f"\n{RED}Repository URL required for initialization!{RESET}\n")
+        sys.exit(1)
+    
+    print(run_command(["git", "init"]))
+    print(git_commit("Initial commit"))
+
+    print(run_command(["git", "branch", "-M", "main"]))
+    print(f"\n{GREEN}Initialized empty Git repository and made initial commit.{RESET}\n")
+
+    print(run_command(["git", "remote", "add", "origin", arguments[1]]))
+    print(f"\n{GREEN}Added remote 'origin' with URL '{arguments[1]}'.{RESET}\n")
+
+    print(run_command(["git", "push", "-u", "origin", "main"]))
+    print(f"\n{GREEN}Pushed initial commit to remote 'main' branch.{RESET}\n")
+
+
 def validate_operation(operation):
     if operation not in GITGO_OPERATIONS:
         print(f"\n{RED}Invalid operation '{operation}'!{RESET}")
@@ -178,8 +196,10 @@ if __name__ == "__main__":
 
     if type_of_operation == "push" and len(arguments) >= 2:
         push_operation(arguments)
-    elif type_of_operation == 'check':
+    elif type_of_operation == 'check' and len(arguments) == 1:
         check_branch(arguments[0])
+    elif type_of_operation == 'init' and len(arguments) >= 2:
+        initialize(arguments)
     else:
         print(f"\n{RED}Insufficient arguments for push operation!{RESET}\n")
         sys.exit(1)
