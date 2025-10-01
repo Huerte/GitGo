@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-GITGO_OPERATIONS = ["push", "check", "test"]
+GITGO_OPERATIONS = ["push", "check"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 RED = "\033[31m"
@@ -180,8 +180,6 @@ if __name__ == "__main__":
         push_operation(arguments)
     elif type_of_operation == 'check':
         check_branch(arguments[0])
-    elif type_of_operation == 'test':
-        print("debug message")
     else:
         print(f"\n{RED}Insufficient arguments for push operation!{RESET}\n")
         sys.exit(1)

@@ -17,7 +17,7 @@ if %errorLevel% == 0 (
     echo [WARNING] Not running as administrator. PATH changes may require manual labor/restart.
 )
 
-python --version >nul 2>&1 || py --version >nul 2>&1
+python --version >nul 2>&1 |>nul 2>&1
 if %errorLevel% neq 0 (
     echo [ERROR] Python not found or not in PATH!
     echo Please install Python first and try utro.
