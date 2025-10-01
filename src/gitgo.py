@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-GITGO_OPERATIONS = ["push"]
+GITGO_OPERATIONS = ["push", "check"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 RED = "\033[31m"
@@ -28,6 +28,10 @@ def git_new_branch(branch):
     print(run_command(["git", "checkout", "-b", branch]))
     print(f"\n{GREEN}Branch '{branch}' created.{RESET}\n")
 
+def check_branch(branch):
+    result = run_command(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+    if result:
+        print(result)
 
 def git_commit(commit_message):
     status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
@@ -172,8 +176,10 @@ if __name__ == "__main__":
 
     validate_operation(type_of_operation)
 
-    if type_of_operation == "push" and len(arguments) > 2:
+    if type_of_operation == "push" and len(arguments) >= 2:
         push_operation(arguments)
+    elif type_of_operation == 'check':
+        check_branch(arguments[0])
     else:
         print(f"\n{RED}Insufficient arguments for push operation!{RESET}\n")
         sys.exit(1)
