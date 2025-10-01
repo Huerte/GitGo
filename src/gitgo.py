@@ -1,5 +1,7 @@
 import subprocess
 import sys
+import os
+
 
 GITGO_OPERATIONS = ["push", "check", "init"]
 HELP_COMMANDS = ["help", "--help", "-h"]
@@ -150,16 +152,30 @@ def initialize(arguments):
         sys.exit(1)
     
     print(run_command(["git", "init"]))
-    print(git_commit("Initial commit"))
 
-    print(run_command(["git", "branch", "-M", "main"]))
-    print(f"\n{GREEN}Initialized empty Git repository and made initial commit.{RESET}\n")
+    # Check if repo has files
+    status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
+    if not status_result.strip():
+        # No files then create a README.md
+        with open("README.md", "w") as f:
+            f.write("# New Repository\n")
+        print(f"{YELLOW}No files found. Created README.md for initial commit.{RESET}\n")
+    
+    # Now commit
+    if git_commit("Initial commit"):
+        print(run_command(["git", "branch", "-M", "main"]))
+        print(f"{GREEN}Initialized empty Git repository and made initial commit.{RESET}\n")
 
-    print(run_command(["git", "remote", "add", "origin", arguments[1]]))
-    print(f"\n{GREEN}Added remote 'origin' with URL '{arguments[1]}'.{RESET}\n")
+        run_command(["git", "remote", "remove", "origin"], allow_fail=True)  # avoid duplicate
+        print(run_command(["git", "remote", "add", "origin", arguments[1]]))
+        print(f"{GREEN}Added remote 'origin' with URL '{arguments[1]}'.{RESET}\n")
 
-    print(run_command(["git", "push", "-u", "origin", "main"]))
-    print(f"\n{GREEN}Pushed initial commit to remote 'main' branch.{RESET}\n")
+        print(run_command(["git", "push", "-u", "origin", "main"]))
+        print(f"{GREEN}Pushed initial commit to remote 'main' branch.{RESET}\n")
+    else:
+        print(f"{RED}Failed to make initial commit. Even after README.md creation.{RESET}\n")
+        sys.exit(1)
+
 
 
 def validate_operation(operation):
