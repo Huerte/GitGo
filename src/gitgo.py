@@ -2,15 +2,11 @@ import subprocess
 import sys
 import os
 import shutil
+from utils.colors import *
+
 
 GITGO_OPERATIONS = ["push", "link", "update"]
 HELP_COMMANDS = ["help", "--help", "-h"]
-
-RED = "\033[31m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-BLUE = "\033[34m"
-RESET = "\033[0m"
 
 
 def get_current_script_path():
@@ -60,13 +56,14 @@ def is_path_outdated():
 def check_path_validity():
     # validate path and warn user if needed - fr fr this is important
     if is_path_outdated():
-        print(f"\n{YELLOW}⚠️  PATH OUTDATED DETECTED! ⚠️{RESET}")
-        print(f"{RED}Your system PATH points to an outdated GitGo location.{RESET}")
-        print(f"{YELLOW}Current script: {get_current_script_path()}{RESET}")
-        print(f"{YELLOW}System PATH: {get_system_gitgo_path() or 'Not found'}{RESET}")
-        print(f"\n{BLUE}To fix this issue, run:{RESET}")
-        print(f"{GREEN}    gitgo update{RESET}")
-        print(f"{YELLOW}This will update your system PATH to the current location.{RESET}\n")
+        warning("\n\⚠️  PATH OUTDATED DETECTED! ⚠️")
+        error("Your system PATH points to an outdated GitGo location.")
+        warning(f"Current script: {get_current_script_path()}")
+        warning(f"System PATH: {get_system_gitgo_path() or 'Not found'}")
+
+        info("\nTo fix this issue, run:")
+        success("    gitgo update")
+        warning("This will update your system PATH to the current location.\n")
         return False
     return True
 
@@ -78,15 +75,18 @@ def run_command(command, allow_fail=False):
     except subprocess.CalledProcessError as e:
         if allow_fail:
             return e
-        print(f"\n{RED}Command Failed: {' '.join(command)}{RESET}")
+        
+        error("\nCommand Failed: {' '.join(command)}")
+
         stderr = e.stderr.strip() if e.stderr else "No error details available"
-        print(f"{RED}Error output:\n{stderr}{RESET}\n")
+        
+        error(f"Error output:\n{stderr}\n")
         sys.exit(1)
 
 
 def git_new_branch(branch):
     print(run_command(["git", "checkout", "-b", branch]))
-    print(f"\n{GREEN}Branch '{branch}' created.{RESET}\n")
+    success(f"\nBranch '{branch}' created.\n")
 
 
 def git_commit(commit_message):
@@ -98,7 +98,8 @@ def git_commit(commit_message):
     clean_message = commit_message.strip('"\'')
     
     print(run_command(["git", "commit", "-m", clean_message]))
-    print(f"\n{GREEN}Changes committed.{RESET}\n")
+
+    success("\nChanges committed.\n")
     return True
 
 
@@ -106,12 +107,13 @@ def git_init():
     # check if already a git repo - no cap fr fr
     git_check = run_command(["git", "status"], allow_fail=True)
     if not isinstance(git_check, subprocess.CalledProcessError):
-        print(f"{YELLOW}Already a git repository! Skipping init...{RESET}")
+        warning("Already a git repository! Skipping init...")
         return True
     
-    print(f"{BLUE}Initializing git repository...{RESET}")
+    info("Initializing git repository...")
     run_command(["git", "init"])
-    print(f"{GREEN}Git repository initialized! 🎯{RESET}")
+
+    success("Git repository initialized! 🎯")
     return True
 
 
@@ -122,27 +124,27 @@ def add_remote_origin(repo_url):
     # check if remote already exists
     existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
     if not isinstance(existing_remote, subprocess.CalledProcessError):
-        print(f"{YELLOW}Remote origin already exists: {existing_remote}{RESET}")
-        print(f"{YELLOW}Updating to new URL...{RESET}")
+        warning(f"Remote origin already exists: {existing_remote}")
+        warning("Updating to new URL...")
         run_command(["git", "remote", "set-url", "origin", clean_url])
     else:
-        print(f"{BLUE}Adding remote origin...{RESET}")
+        info("Adding remote origin...")
         run_command(["git", "remote", "add", "origin", clean_url])
     
-    print(f"{GREEN}Remote origin set to: {clean_url} ✨{RESET}")
+    success("Remote origin set to: {clean_url} ✨")
 
 
 def confirm_remote_link():
     # test connection to remote - make sure it's not cap
-    print(f"{BLUE}Testing connection to remote...{RESET}")
+    info("Testing connection to remote...")
     test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True)
     
     if isinstance(test_result, subprocess.CalledProcessError):
-        print(f"{RED}Failed to connect to remote repository! 💀{RESET}")
-        print(f"{YELLOW}Please check your repository URL and network connection.{RESET}")
+        error("Failed to connect to remote repository! 💀")
+        warning("Please check your repository URL and network connection.")
         return False
     
-    print(f"{GREEN}Successfully connected to remote repository! 🔗{RESET}")
+    success("Successfully connected to remote repository! 🔗")
     return True
 
 
@@ -152,20 +154,21 @@ def create_main_branch():
     
     if isinstance(current_branch, subprocess.CalledProcessError) or not current_branch.strip():
         # no commits yet, set default branch to main
-        print(f"{BLUE}Setting default branch to 'main'...{RESET}")
+        info("Setting default branch to 'main'...")
         run_command(["git", "checkout", "-b", "main"])
     elif current_branch.strip() != "main":
         # rename current branch to main
-        print(f"{BLUE}Renaming branch '{current_branch.strip()}' to 'main'...{RESET}")
+        info(f"Renaming branch '{current_branch.strip()}' to 'main'...")
         run_command(["git", "branch", "-m", "main"])
     else:
-        print(f"{GREEN}Already on 'main' branch! 👌{RESET}")
+        success("Already on 'main' branch! 👌")
     
-    print(f"{GREEN}Main branch ready! 🚀{RESET}")
+    success("Main branch ready! 🚀")
+
 
 def check_and_sync_branch(branch):
     try:
-        print(f"{YELLOW}Checking if branch is up to date...{RESET}")
+        warning("Checking if branch is up to date...")
         run_command(["git", "fetch", "origin"])
 
         try:
@@ -177,28 +180,24 @@ def check_and_sync_branch(branch):
                     ["git", "rev-list", "--count", f"{branch}..origin/{branch}"]
                 )
                 if behind_check and int(behind_check) > 0:
-                    print(
-                        f"{YELLOW}Local branch is behind remote by {behind_check} commit(s). Pulling changes...{RESET}"
-                    )
+                    warning(f"Local branch is behind remote by {behind_check} commit(s). Pulling changes...")
                     output = run_command(["git", "pull", "--rebase", "origin", branch])
                     if output:
                         print(output)
-                    print(f"{GREEN}Successfully synced with remote!{RESET}")
+                    success("Successfully synced with remote!")
                 else:
-                    print(f"{GREEN}Branch is up to date or ahead of remote.{RESET}")
+                    success("Branch is up to date or ahead of remote.")
             else:
-                print(f"{GREEN}Branch is already up to date.{RESET}")
+                success("Branch is already up to date.")
         except:
-            print(
-                f"{YELLOW}Remote branch doesn't exist yet. First push will create it.{RESET}"
-            )
+            warning("Remote branch doesn't exist yet. First push will create it.")
     except:
-        print(f"{YELLOW}Could not fetch from remote. Proceeding with push...{RESET}")
+        warning("Could not fetch from remote. Proceeding with push...")
 
 
 def git_push(branch):
     print(run_command(["git", "push", "-u", "origin", branch]))
-    print(f"\n{GREEN}Pushed to remote branch '{branch}'.{RESET}\n")
+    success(f"\nPushed to remote branch '{branch}'.\n")
 
 
 def handle_rebase():
@@ -207,79 +206,76 @@ def handle_rebase():
         return False
 
     if "rebase in progress" in status or "rebase" in status.lower():
-        print(f"\n{YELLOW}Conflict detected!{RESET}")
-        print(f"{YELLOW}Please resolve conflicts manually, then run:{RESET}")
-        print(f"{BLUE}    git add <files>{RESET}")
-        print(f"{BLUE}    git rebase --continue{RESET}")
-        print(
-            f"{YELLOW}When finished, run 'gitgo push <branch> <message>' again.{RESET}\n"
-        )
+        warning("\nConflict detected!")
+        warning("Please resolve conflicts manually, then run:")
+        info("    git add <files>")
+        info("    git rebase --continue")
+        warning("When finished, run 'gitgo push <branch> <message>' again.\n")
         sys.exit(1)
+
     return True
 
 
 def link_operation(arguments):
     if len(arguments) < 2:
-        print(f"\n{RED}GitHub repository URL required!{RESET}")
-        print(f"{YELLOW}Usage: gitgo link <github_repo_url> [commit_message]{RESET}\n")
+        error("\nGitHub repository URL required!")
+        warning("Usage: gitgo link <github_repo_url> [commit_message]\n")
         sys.exit(1)
     
     if arguments[1] in HELP_COMMANDS:
-        print(f"\n{YELLOW}Usage: gitgo link <github_repo_url> [commit_message]{RESET}\n")
-        print(f"{YELLOW}github_repo_url: The GitHub repository URL to link{RESET}")
-        print(f"{YELLOW}commit_message: Custom commit message (default: 'Initial commit'){RESET}\n")
+        warning("\nUsage: gitgo link <github_repo_url> [commit_message]\n")
+        warning("github_repo_url: The GitHub repository URL to link")
+        warning("commit_message: Custom commit message (default: 'Initial commit')\n")
         sys.exit(0)
     
     repo_url = arguments[1]
     commit_message = arguments[2] if len(arguments) > 2 else "Initial commit"
     
-    print(f"\n{BLUE}🚀 INITIATING LINK OPERATION...{RESET}")
-    print(f"{BLUE}Target: {repo_url}{RESET}\n")
+    info("\n🚀 INITIATING LINK OPERATION...")
+    info(f"Target: {repo_url}\n")
     
     # Step 1: Initialize git repository
     if not git_init():
         return
     
     # Step 2: Add all files - stage everything
-    print(f"{BLUE}Adding all files...{RESET}")
+    info("Adding all files...")
     run_command(["git", "add", "."])
-    print(f"{GREEN}Files staged for commit! 📁{RESET}")
+    success("Files staged for commit! 📁")
     
     # Step 3: Create initial commit with custom or default message
     clean_message = commit_message.strip('"\'')
-    print(f"{BLUE}Creating initial commit...{RESET}")
+    info("Creating initial commit...")
     run_command(["git", "commit", "-m", clean_message])
-    print(f"{GREEN}Initial commit created! 💾{RESET}")
+    success("Initial commit created! 💾")
     
     # Step 4: Add remote origin
     add_remote_origin(repo_url)
     
     # Step 5: Confirm remote link - make sure connection works
     if not confirm_remote_link():
-        print(f"{RED}Link operation failed! Check your repository URL.{RESET}")
+        error("Link operation failed! Check your repository URL.")
         return
     
     # Step 6: Create/switch to main branch
     create_main_branch()
     
     print("\n" + ("=" * 90))
-    print(f"{GREEN}🎯 LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!{RESET}")
-    print(f"{GREEN}Ready to push with: gitgo push main 'your message'{RESET}")
-    print(f"{BLUE}AWAITING FURTHER ORDERS...{RESET}\n")
+    success("🎯 LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
+    success("Ready to push with: gitgo push main 'your message'")
+    info("AWAITING FURTHER ORDERS...\n")
 
 
 def push_operation(arguments):
     if arguments[1] in HELP_COMMANDS:
-        print(f"\n{YELLOW}Usage: gitgo push [branch] [commit_message]{RESET}\n")
-        print(f"{YELLOW}branch: The branch to push to (default: main){RESET}")
-        print(
-            f"{YELLOW}commit_message: The commit message (default: empty string){RESET}\n"
-        )
+        warning("\nUsage: gitgo push [branch] [commit_message]\n")
+        warning("branch: The branch to push to (default: main)")
+        warning("commit_message: The commit message (default: empty string)\n")
         sys.exit(0)
 
     if arguments[1] in ["-n", "new"]:
         if len(arguments) < 3:
-            print(f"\n{RED}Branch name required for new branch creation!{RESET}\n")
+            error("\nBranch name required for new branch creation!\n")
             sys.exit(1)
 
         branch = arguments[2]
@@ -295,37 +291,35 @@ def push_operation(arguments):
         try:
             unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True)
             if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
-                print(f"\n{YELLOW}No changes to commit, but found unpushed commits. Pushing to remote...{RESET}")
+                warning("\nNo changes to commit, but found unpushed commits. Pushing to remote...")
                 git_push(branch)
             else:
-                print(f"\n{BLUE}Working tree is clean and everything is up to date! 😎{RESET}")
-                print(f"{YELLOW}Make some changes first before using GitGo to commit and push.{RESET}")
+                info("\nWorking tree is clean and everything is up to date! 😎")
+                warning("Make some changes first before using GitGo to commit and push.")
                 return
         except:
-            print(f"\n{YELLOW}No changes to commit. Cannot verify remote status.{RESET}")
-            print(f"{YELLOW}Make some changes first or check your git remote configuration.{RESET}")
+            warning("\nNo changes to commit. Cannot verify remote status.")
+            warning("Make some changes first or check your git remote configuration.")
             return
 
     print("\n" + ("=" * 90))
-    print(
-        f"{GREEN}MISSION COMPLETE ✅ — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.{RESET}\n\n"
-    )
+    success("MISSION COMPLETE ✅ — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
 
 
 def update_operation(arguments):
     # handle gitgo update command - update PATH to current location
     if len(arguments) > 1 and arguments[1] in HELP_COMMANDS:
-        print(f"\n{YELLOW}Usage: gitgo update{RESET}\n")
-        print(f"{YELLOW}Updates your system PATH to point to the current GitGo location.{RESET}")
-        print(f"{YELLOW}This fixes issues when GitGo is moved to a different directory.{RESET}\n")
+        warning("\nUsage: gitgo update\n")
+        warning("Updates your system PATH to point to the current GitGo location.")
+        warning("This fixes issues when GitGo is moved to a different directory.\n")
         sys.exit(0)
     
-    print(f"\n{BLUE}🔧 INITIATING PATH UPDATE OPERATION...{RESET}")
+    info("\n🔧 INITIATING PATH UPDATE OPERATION...")
     
     current_script = get_current_script_path()
     current_dir = os.path.dirname(current_script)
     
-    print(f"{BLUE}Current GitGo location: {current_dir}{RESET}")
+    info(f"Current GitGo location: {current_dir}")
     
     # create or update batch file in a system-accessible location
     try:
@@ -355,62 +349,62 @@ def update_operation(arguments):
         with open(batch_file, 'w') as f:
             f.write(batch_content)
         
-        print(f"{GREEN}✅ Batch file created: {batch_file}{RESET}")
+        success(f"✅ Batch file created: {batch_file}")
         
         # check if target_dir is in PATH
         current_path = os.environ.get('PATH', '')
         if target_dir.lower() not in current_path.lower():
-            print(f"\n{YELLOW}⚠️  MANUAL ACTION REQUIRED ⚠️{RESET}")
-            print(f"{YELLOW}Add this directory to your system PATH:{RESET}")
-            print(f"{GREEN}    {target_dir}{RESET}")
-            print(f"\n{BLUE}How to add to PATH:{RESET}")
-            print(f"{YELLOW}1. Press Win + R, type 'sysdm.cpl', press Enter{RESET}")
-            print(f"{YELLOW}2. Click 'Environment Variables' button{RESET}")
-            print(f"{YELLOW}3. Under 'User variables', find and select 'Path', click 'Edit'{RESET}")
-            print(f"{YELLOW}4. Click 'New' and add: {target_dir}{RESET}")
-            print(f"{YELLOW}5. Click 'OK' on all dialogs{RESET}")
-            print(f"{YELLOW}6. Restart your terminal{RESET}")
+            warning("⚠️  MANUAL ACTION REQUIRED ⚠️")
+            warning("Add this directory to your system PATH:")
+            success(f"    {target_dir}")
+
+            info("How to add to PATH:")
+            warning("1. Press Win + R, type 'sysdm.cpl', press Enter")
+            warning("2. Click 'Environment Variables' button")
+            warning("3. Under 'User variables', find and select 'Path', click 'Edit'")
+            warning(f"4. Click 'New' and add: {target_dir}")
+            warning("5. Click 'OK' on all dialogs")
+            warning("6. Restart your terminal")
         else:
-            print(f"{GREEN}✅ Directory already in PATH!{RESET}")
-        
-        print(f"\n{GREEN}🎯 PATH UPDATE COMPLETE!{RESET}")
-        print(f"{BLUE}GitGo should now work from any location.{RESET}")
-        print(f"{YELLOW}If issues persist, restart your terminal.{RESET}\n")
-        
+            success("✅ Directory already in PATH!")
+
+        success("🎯 PATH UPDATE COMPLETE!")
+        info("GitGo should now work from any location.")
+        warning("If issues persist, restart your terminal.")
+
     except Exception as e:
-        print(f"\n{RED}❌ Update failed: {str(e)}{RESET}")
-        print(f"{YELLOW}You may need to run this command as Administrator.{RESET}\n")
+        error(f"❌ Update failed: {str(e)}")
+        warning("You may need to run this command as Administrator.")
         sys.exit(1)
 
 
 def validate_operation(operation):
     if operation not in GITGO_OPERATIONS:
-        print(f"\n{RED}Invalid operation '{operation}'!{RESET}")
-        print(
-            f"{YELLOW}Supported operations are: {', '.join(GITGO_OPERATIONS)}{RESET}\n"
-        )
+        error(f"\nInvalid operation '{operation}'!")
+        warning(f"Supported operations are: {', '.join(GITGO_OPERATIONS)}\n")
         sys.exit(1)
 
 
-if __name__ == "__main__":
-
+def main():
     if len(sys.argv) < 2:
-        print(f"\n{RED}Invalid arguments!{RESET}\n")
+        error("\nInvalid arguments!\n")
         sys.exit(1)
 
     arguments = sys.argv[1:]
     type_of_operation = arguments[0].lower()
 
     if type_of_operation in ["-r", "ready"]:
-        print(
-            f"\n{BLUE}ALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...{RESET}\n"
-        )
+        info("\nALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...\n")
+        sys.exit(0)
+
+    if type_of_operation in ["-v", "version"]:
+        warning("\nGitGo Version 1.0\n")
         sys.exit(0)
 
     if type_of_operation in HELP_COMMANDS:
-        print(f"\n{YELLOW}Usage: Help Manual for gitgo{RESET}\n")
-        print(f"{YELLOW}" + "=" * 50 + f"{RESET}")
-        print(f"{YELLOW}Feature is currently in development.{RESET}\n")
+        warning("\nUsage: Help Manual for gitgo\n")
+        warning("=" * 50)
+        warning("Feature is currently in development.\n")
         sys.exit(0)
 
     # handle update operation first - no path validation needed for update
@@ -422,8 +416,8 @@ if __name__ == "__main__":
 
     # check path validity for all operations except update - lowkey important
     if not check_path_validity():
-        print(f"{RED}Operation aborted due to outdated PATH.{RESET}")
-        print(f"{YELLOW}Please run 'gitgo update' first to fix the issue.{RESET}\n")
+        error("Operation aborted due to outdated PATH.")
+        warning("Please run 'gitgo update' first to fix the issue.\n")
         sys.exit(1)
 
     if type_of_operation == "push" and len(arguments) > 2:
@@ -431,5 +425,9 @@ if __name__ == "__main__":
     elif type_of_operation == "link":
         link_operation(arguments)
     else:
-        print(f"\n{RED}Insufficient arguments for {type_of_operation} operation!{RESET}\n")
+        error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
