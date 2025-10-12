@@ -143,6 +143,7 @@ gitgo push main "Update with GitGo"
 | `gitgo link [url] [message]` | Initialize and link project to GitHub | `gitgo link https://github.com/user/repo.git "Initial commit"` |
 | `gitgo push [branch] [message]` | Commit and push to existing branch | `gitgo push main "Fix bug"` |
 | `gitgo push -n [branch] [message]` | Create new branch and push | `gitgo push -n feature "New feature"` |
+| `gitgo update` | Update system PATH to current GitGo location | `gitgo update` |
 | `gitgo help` | Show help information | `gitgo help` |
 
 ### 💡 Pro Tips
@@ -152,6 +153,7 @@ gitgo push main "Update with GitGo"
 - **Commit Messages**: Always include meaningful commit messages
 - **Custom Messages**: Link command supports custom commit messages or defaults to "Initial commit"
 - **Status Check**: Run `gitgo -r` to ensure everything is configured correctly
+- **PATH Issues**: Run `gitgo update` whenever you move GitGo or see PATH warnings
 
 ### 🎨 Output Examples
 
@@ -203,6 +205,54 @@ gitgo link --help
 - 🔄 **Smart Remote Handling** - Updates existing remotes if needed
 - 🎨 **Beautiful Feedback** - Clear status updates throughout the process
 - ⚡ **One Command Setup** - Replaces 6+ manual git commands
+
+### 🔧 Update Command Deep Dive
+
+The `gitgo update` command fixes PATH issues when GitGo has been moved to a different location. Here's what it does:
+
+**When to Use Update:**
+- 🚨 When you see "PATH OUTDATED DETECTED!" warnings
+- 📁 After moving GitGo to a new directory
+- 🔄 When `gitgo` command stops working from other directories
+- 🛠️ During initial setup if PATH configuration fails
+
+**Step-by-Step Process:**
+1. 🔍 **Path Detection** - Identifies current GitGo script location
+2. 📝 **Batch File Creation** - Creates/updates `gitgo.bat` in system directory
+3. 🎯 **PATH Validation** - Checks if target directory is in system PATH
+4. 📋 **Instructions** - Provides manual PATH setup steps if needed
+5. ✅ **Verification** - Confirms successful update
+
+**Usage Examples:**
+```bash
+# Basic update command
+gitgo update
+
+# Get help for update command
+gitgo update --help
+```
+
+**What Makes Update Special:**
+- 🛡️ **Smart Detection** - Automatically finds the best system directory
+- 🔄 **Cross-Directory Support** - Works regardless of current location
+- 📋 **Clear Instructions** - Provides step-by-step PATH setup guide
+- ⚡ **Quick Fix** - Resolves PATH issues in seconds
+
+**Common Update Scenarios:**
+```bash
+# Scenario 1: Moved GitGo folder
+# Error: "PATH OUTDATED DETECTED!"
+gitgo update
+
+# Scenario 2: Fresh installation
+# Error: "'gitgo' is not recognized as an internal or external command"
+cd path\to\GitGo\src
+python gitgo.py update
+
+# Scenario 3: After system changes
+# GitGo stops working from other directories
+gitgo update
+```
 
 ---
 
@@ -295,9 +345,11 @@ If you encounter any issues or have questions:
 
 | Problem | Solution |
 |---------|----------|
-| `gitgo` command not found | Close current terminal and open a new one after PATH setup |
+| `gitgo` command not found | Run `gitgo update` or close current terminal and open a new one after PATH setup |
+| PATH OUTDATED DETECTED warning | Run `gitgo update` to fix PATH configuration |
 | Permission errors | Run PowerShell as Administrator |
 | Git errors | Verify you're in a Git repository |
+| GitGo stops working after moving folder | Run `gitgo update` from the new location |
 
 ---
 
