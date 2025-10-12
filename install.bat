@@ -50,8 +50,15 @@ if not exist "%INSTALL_DIR%" (
 )
 
 echo [INFO] Copying files...
-copy "%SRC_DIR%\gitgo.py" "%INSTALL_DIR%\" >nul
-copy "%SRC_DIR%\gitgo.bat" "%INSTALL_DIR%\" >nul
+xcopy "%SRC_DIR%\*" "%INSTALL_DIR%\" /E /I /Y >nul
+
+if %errorLevel% neq 0 (
+    echo [ERROR] Failed to copy files!
+    pause
+    exit /b 1
+)
+
+echo [INFO] Files copied successfully.
 
 if %errorLevel% neq 0 (
     echo [ERROR] Failed to copy files!
@@ -103,7 +110,7 @@ if %errorLevel% == 0 (
     echo [SUCCESS] GitGo is working correctly!
     echo.
     echo ========================================
-    echo    Installation Complete! 🎉
+    echo    Installation Complete! 
     echo ========================================
     echo.
     echo You can now use 'gitgo' from anywhere:

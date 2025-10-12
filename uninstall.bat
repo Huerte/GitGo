@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 echo.
 echo ========================================
-echo    GitGo Uninstaller v1.0
+echo    GitGo Uninstaller v1.1
 echo ========================================
 echo.
 
@@ -18,7 +18,7 @@ if not exist "%INSTALL_DIR%" (
 echo [INFO] Found GitGo installation at: %INSTALL_DIR%
 echo.
 echo This will:
-echo - Remove GitGo files from %INSTALL_DIR%
+echo - Remove all GitGo files from %INSTALL_DIR%
 echo - Remove GitGo from your PATH
 echo.
 set /p "CONFIRM=Are you sure you want to uninstall GitGo? (y/N): "
@@ -29,31 +29,25 @@ if /i not "%CONFIRM%"=="y" (
 )
 
 echo [INFO] Removing GitGo files...
-if exist "%INSTALL_DIR%\gitgo.py" del "%INSTALL_DIR%\gitgo.py"
-if exist "%INSTALL_DIR%\gitgo.bat" del "%INSTALL_DIR%\gitgo.bat"
-if exist "%INSTALL_DIR%\refresh-path.ps1" del "%INSTALL_DIR%\refresh-path.ps1"
-if exist "%INSTALL_DIR%\refresh-path.bat" del "%INSTALL_DIR%\refresh-path.bat"
-if exist "%INSTALL_DIR%\fix-ide-path.bat" del "%INSTALL_DIR%\fix-ide-path.bat"
-rmdir "%INSTALL_DIR%" 2>nul
+rmdir /S /Q "%INSTALL_DIR%" 2>nul
 
 if exist "%INSTALL_DIR%" (
     echo [WARNING] Could not remove installation directory completely.
-    echo PS: Might need to manually remove: %INSTALL_DIR%
+    echo PS: You may need to manually delete: %INSTALL_DIR%
 ) else (
-    echo [SUCCESS] GitGo files removed.
+    echo [SUCCESS] GitGo files removed successfully.
 )
 
 echo [INFO] Removing GitGo from PATH...
 
 for /f "tokens=2*" %%A in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set "USER_PATH=%%B"
 
-if "!USER_PATH!"=="" (
+if not defined USER_PATH (
     echo [INFO] No user PATH found.
-    goto :cleanup_complete
+    goto :refresh_path
 )
 
-set "NEW_PATH=!USER_PATH!"
-set "NEW_PATH=!NEW_PATH:%INSTALL_DIR%;=!"
+set "NEW_PATH=!USER_PATH:%INSTALL_DIR%;=!"
 set "NEW_PATH=!NEW_PATH:;%INSTALL_DIR%=!"
 set "NEW_PATH=!NEW_PATH:%INSTALL_DIR%=!"
 
@@ -63,20 +57,29 @@ if not "!NEW_PATH!"=="!USER_PATH!" (
         echo [SUCCESS] GitGo removed from PATH.
     ) else (
         echo [WARNING] Could not update PATH automatically.
-        echo PS: Might need manual removal of: %INSTALL_DIR%
+        echo PS: You may need to manually remove "%INSTALL_DIR%" from your PATH.
     )
 ) else (
-    echo [INFO] GitGo was not found in your PATH.
+    echo [INFO] GitGo not found in PATH.
 )
 
-:cleanup_complete
+:refresh_path
+echo [INFO] Refreshing PATH for current session...
+powershell -ExecutionPolicy Bypass -Command ^
+"try {
+    $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH','User');
+    Write-Host '[SUCCESS] PATH refreshed for current session!' -ForegroundColor Green
+} catch {
+    Write-Host '[INFO] Manual PATH refresh may be needed in IDE terminals.' -ForegroundColor Yellow
+}" 2>nul
+
 echo.
 echo ========================================
-echo    Uninstallation Complete! 👋
+echo    Uninstallation Complete! 
 echo ========================================
 echo.
 echo GitGo has been removed from your system.
-echo Restartterminal to see effect.
+echo Restart your terminal to see the effect.
 
 :end
 echo.

@@ -4,5 +4,5 @@
 
 :: %~dp0 stands for "drive and path of this script"
 :: %* stands for "all the arguments passed to this script"
-:: so this line runs git_auto.py located in the same folder as this .bat file
+:: so this line runs gitgo.py located in the same folder as this .bat file
 py "%~dp0gitgo.py" %*
