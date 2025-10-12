@@ -1,9 +1,7 @@
 import subprocess
 import sys
-import os
 
-
-GITGO_OPERATIONS = ["push", "check", "init"]
+GITGO_OPERATIONS = ["push", "link"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 RED = "\033[31m"
@@ -30,10 +28,6 @@ def git_new_branch(branch):
     print(run_command(["git", "checkout", "-b", branch]))
     print(f"\n{GREEN}Branch '{branch}' created.{RESET}\n")
 
-def check_branch(branch):
-    result = run_command(["git", "rev-parse", "--abbrev-ref", "HEAD"])
-    if result:
-        print(result)
 
 def git_commit(commit_message):
     status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
@@ -46,6 +40,68 @@ def git_commit(commit_message):
     print(run_command(["git", "commit", "-m", clean_message]))
     print(f"\n{GREEN}Changes committed.{RESET}\n")
     return True
+
+
+def git_init():
+    # check if already a git repo - no cap fr fr
+    git_check = run_command(["git", "status"], allow_fail=True)
+    if not isinstance(git_check, subprocess.CalledProcessError):
+        print(f"{YELLOW}Already a git repository! Skipping init...{RESET}")
+        return True
+    
+    print(f"{BLUE}Initializing git repository...{RESET}")
+    run_command(["git", "init"])
+    print(f"{GREEN}Git repository initialized! 🎯{RESET}")
+    return True
+
+
+def add_remote_origin(repo_url):
+    # clean the URL - remove quotes if present, dili na kailangan og quotes
+    clean_url = repo_url.strip('"\'')
+    
+    # check if remote already exists
+    existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
+    if not isinstance(existing_remote, subprocess.CalledProcessError):
+        print(f"{YELLOW}Remote origin already exists: {existing_remote}{RESET}")
+        print(f"{YELLOW}Updating to new URL...{RESET}")
+        run_command(["git", "remote", "set-url", "origin", clean_url])
+    else:
+        print(f"{BLUE}Adding remote origin...{RESET}")
+        run_command(["git", "remote", "add", "origin", clean_url])
+    
+    print(f"{GREEN}Remote origin set to: {clean_url} ✨{RESET}")
+
+
+def confirm_remote_link():
+    # test connection to remote - make sure it's not cap
+    print(f"{BLUE}Testing connection to remote...{RESET}")
+    test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True)
+    
+    if isinstance(test_result, subprocess.CalledProcessError):
+        print(f"{RED}Failed to connect to remote repository! 💀{RESET}")
+        print(f"{YELLOW}Please check your repository URL and network connection.{RESET}")
+        return False
+    
+    print(f"{GREEN}Successfully connected to remote repository! 🔗{RESET}")
+    return True
+
+
+def create_main_branch():
+    # check current branch - switch to main if needed
+    current_branch = run_command(["git", "branch", "--show-current"], allow_fail=True)
+    
+    if isinstance(current_branch, subprocess.CalledProcessError) or not current_branch.strip():
+        # no commits yet, set default branch to main
+        print(f"{BLUE}Setting default branch to 'main'...{RESET}")
+        run_command(["git", "checkout", "-b", "main"])
+    elif current_branch.strip() != "main":
+        # rename current branch to main
+        print(f"{BLUE}Renaming branch '{current_branch.strip()}' to 'main'...{RESET}")
+        run_command(["git", "branch", "-m", "main"])
+    else:
+        print(f"{GREEN}Already on 'main' branch! 👌{RESET}")
+    
+    print(f"{GREEN}Main branch ready! 🚀{RESET}")
 
 def check_and_sync_branch(branch):
     try:
@@ -102,6 +158,56 @@ def handle_rebase():
     return True
 
 
+def link_operation(arguments):
+    if len(arguments) < 2:
+        print(f"\n{RED}GitHub repository URL required!{RESET}")
+        print(f"{YELLOW}Usage: gitgo link <github_repo_url> [commit_message]{RESET}\n")
+        sys.exit(1)
+    
+    if arguments[1] in HELP_COMMANDS:
+        print(f"\n{YELLOW}Usage: gitgo link <github_repo_url> [commit_message]{RESET}\n")
+        print(f"{YELLOW}github_repo_url: The GitHub repository URL to link{RESET}")
+        print(f"{YELLOW}commit_message: Custom commit message (default: 'Initial commit'){RESET}\n")
+        sys.exit(0)
+    
+    repo_url = arguments[1]
+    commit_message = arguments[2] if len(arguments) > 2 else "Initial commit"
+    
+    print(f"\n{BLUE}🚀 INITIATING LINK OPERATION...{RESET}")
+    print(f"{BLUE}Target: {repo_url}{RESET}\n")
+    
+    # Step 1: Initialize git repository
+    if not git_init():
+        return
+    
+    # Step 2: Add all files - stage everything
+    print(f"{BLUE}Adding all files...{RESET}")
+    run_command(["git", "add", "."])
+    print(f"{GREEN}Files staged for commit! 📁{RESET}")
+    
+    # Step 3: Create initial commit with custom or default message
+    clean_message = commit_message.strip('"\'')
+    print(f"{BLUE}Creating initial commit...{RESET}")
+    run_command(["git", "commit", "-m", clean_message])
+    print(f"{GREEN}Initial commit created! 💾{RESET}")
+    
+    # Step 4: Add remote origin
+    add_remote_origin(repo_url)
+    
+    # Step 5: Confirm remote link - make sure connection works
+    if not confirm_remote_link():
+        print(f"{RED}Link operation failed! Check your repository URL.{RESET}")
+        return
+    
+    # Step 6: Create/switch to main branch
+    create_main_branch()
+    
+    print("\n" + ("=" * 90))
+    print(f"{GREEN}🎯 LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!{RESET}")
+    print(f"{GREEN}Ready to push with: gitgo push main 'your message'{RESET}")
+    print(f"{BLUE}AWAITING FURTHER ORDERS...{RESET}\n")
+
+
 def push_operation(arguments):
     if arguments[1] in HELP_COMMANDS:
         print(f"\n{YELLOW}Usage: gitgo push [branch] [commit_message]{RESET}\n")
@@ -146,38 +252,6 @@ def push_operation(arguments):
     )
 
 
-def initialize(arguments):
-    if len(arguments) < 2:
-        print(f"\n{RED}Repository URL required for initialization!{RESET}\n")
-        sys.exit(1)
-    
-    print(run_command(["git", "init"]))
-
-    # Check if repo has files
-    status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if not status_result.strip():
-        # No files then create a README.md
-        with open("README.md", "w") as f:
-            f.write("# New Repository\n")
-        print(f"{YELLOW}No files found. Created README.md for initial commit.{RESET}\n")
-    
-    # Now commit
-    if git_commit("Initial commit"):
-        print(run_command(["git", "branch", "-M", "main"]))
-        print(f"{GREEN}Initialized empty Git repository and made initial commit.{RESET}\n")
-
-        run_command(["git", "remote", "remove", "origin"], allow_fail=True)  # avoid duplicate
-        print(run_command(["git", "remote", "add", "origin", arguments[1]]))
-        print(f"{GREEN}Added remote 'origin' with URL '{arguments[1]}'.{RESET}\n")
-
-        print(run_command(["git", "push", "-u", "origin", "main"]))
-        print(f"{GREEN}Pushed initial commit to remote 'main' branch.{RESET}\n")
-    else:
-        print(f"{RED}Failed to make initial commit. Even after README.md creation.{RESET}\n")
-        sys.exit(1)
-
-
-
 def validate_operation(operation):
     if operation not in GITGO_OPERATIONS:
         print(f"\n{RED}Invalid operation '{operation}'!{RESET}")
@@ -210,12 +284,10 @@ if __name__ == "__main__":
 
     validate_operation(type_of_operation)
 
-    if type_of_operation == "push" and len(arguments) >= 2:
+    if type_of_operation == "push" and len(arguments) > 2:
         push_operation(arguments)
-    elif type_of_operation == 'check' and len(arguments) == 1:
-        check_branch(arguments[0])
-    elif type_of_operation == 'init' and len(arguments) >= 2:
-        initialize(arguments)
+    elif type_of_operation == "link":
+        link_operation(arguments)
     else:
-        print(f"\n{RED}Insufficient arguments for push operation!{RESET}\n")
+        print(f"\n{RED}Insufficient arguments for {type_of_operation} operation!{RESET}\n")
         sys.exit(1)
