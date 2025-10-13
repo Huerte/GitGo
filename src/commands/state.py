@@ -40,6 +40,20 @@ def validate_state_id(state_id, save_states):
     return True
 
 
+def ask_state_id(save_states):
+    proceed = False
+    state_id = None
+
+    while not proceed:
+        state_id = input(">> ").strip().lower()
+        if state_id == 'q':
+            info("\nLoad operation cancelled by user.\n")
+            sys.exit(0)
+        proceed = validate_state_id(state_id, save_states)
+    
+    return state_id
+
+
 def load_state(arguments):
     proceed = False
 
@@ -66,19 +80,8 @@ def load_state(arguments):
     
     if not proceed:
         display_save_states(save_states)
-
-    while not proceed:
-        # Ask user to input the id of the state to load
-        state_id = input(">> ").strip()
-
-        if state_id.lower() == 'q':
-            warning("\nLoad operation cancelled by user.\n")
-            sys.exit(0)
-
-        # Validate the input
-        if validate_state_id(state_id, save_states):
-            proceed = True
-    
+        state_id = ask_state_id(save_states)
+        
     # Load the selected state
     run_command(["git", "stash", "apply", f"stash@{{{int(state_id) - 1}}}"])
 
@@ -90,8 +93,7 @@ def save_state(arguments):
         error("\nToo many arguments for save operation!\n")
         sys.exit(1)
     elif len(arguments) < 2:
-        error("\nState name is required for save operation!\n")
-        sys.exit(1)
+        state_name = "Auto-Save"
     
     if arguments[1] in ("-h", "--help", "help"):
         print("\nUsage: gitgo save <state_name>\n")
@@ -101,16 +103,46 @@ def save_state(arguments):
         sys.exit(0)
     
     # Name of the state to save
-    state_name = arguments[1]
+    if len(arguments) == 2:
+        state_name = arguments[1]
 
     run_command(["git", "stash", "push", "-m", state_name])
 
     success(f"\nState '{state_name}' saved successfully.\n")
 
 
-# TODO: Implement update_state and delete_state functions
-def update_state(arguments):
-    pass
-
 def delete_state(arguments):
-    pass
+    if len(arguments) > 2:
+        error("\nToo many arguments for delete operation!\n")
+        sys.exit(1)
+    elif len(arguments) < 2:
+        state_id = ask_state_id(all_save_state())
+    else:
+        if arguments[1] in ("-h", "--help", "help"):
+            print("\nUsage: gitgo delete <state_id>\n")
+            print("Deletes a previously saved working state.\n")
+            warning("\nSyntax:\n")
+            print("        gitgo delete <state_id>   # Deletes the state with the specified ID\n")
+            print("        gitgo delete -a           # Deletes all saved states\n")
+            sys.exit(0)
+        
+        elif arguments[1] == '-a':
+            confirm = input("\nAre you sure you want to delete all saved states? (y/n): ").strip().lower()
+            if confirm.lower() == 'y':
+                run_command(["git", "stash", "clear"])
+                success("\nAll saved states deleted successfully.\n")
+                sys.exit(0)
+            else:
+                warning("\nDelete operation cancelled by user.\n")
+                sys.exit(0)
+        
+        elif not arguments[1].isdigit():
+            error("\nInvalid input. Please enter a valid state ID.\n")
+            sys.exit(1)
+
+        state_id = arguments[1]
+        if not validate_state_id(state_id, all_save_state()):
+            sys.exit(1)
+    
+    run_command(["git", "stash", "drop", f"stash@{{{int(state_id) - 1}}}"])
+    success(f"\nState with ID '{state_id}' deleted successfully.\n")
