@@ -1,4 +1,5 @@
 from commands.state import load_state, save_state
+from commands.clean import clean_project
 from utils.executor import run_command
 from utils.colors import *
 import subprocess
@@ -7,7 +8,7 @@ import sys
 import os
 
 
-GITGO_OPERATIONS = ["push", "link", "update", "load", "save"]
+GITGO_OPERATIONS = ["push", "link", "update", "load", "save", "clean"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 
@@ -434,6 +435,8 @@ def main():
         load_state(arguments)
     elif type_of_operation == "save":
         save_state(arguments)
+    elif type_of_operation == "clean":
+        clean_project(arguments)
     else:
         error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
         sys.exit(1)
