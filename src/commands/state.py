@@ -41,6 +41,11 @@ def validate_state_id(state_id, save_states):
 
 def load_state(arguments):
     if len(arguments) > 1:
+        if arguments[1] in ("-h", "--help", "help"):
+            print("\nUsage: gitgo load\n")
+            print("Loads a previously saved working state.\n")
+            sys.exit(0)
+            
         error("\nToo many arguments for load operation!\n")
         sys.exit(1)
 
@@ -74,6 +79,11 @@ def save_state(arguments):
     elif len(arguments) < 2:
         error("\nState name is required for save operation!\n")
         sys.exit(1)
+    
+    if arguments[1] in ("-h", "--help", "help"):
+        print("\nUsage: gitgo save <state_name>\n")
+        print("Saves the current working state with the given name.\n")
+        sys.exit(0)
     
     # Name of the state to save
     state_name = arguments[1]
