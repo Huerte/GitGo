@@ -1,11 +1,13 @@
+from commands.state import load_state, save_state
+from utils.executor import run_command
+from utils.colors import *
 import subprocess
+import shutil
 import sys
 import os
-import shutil
-from utils.colors import *
 
 
-GITGO_OPERATIONS = ["push", "link", "update"]
+GITGO_OPERATIONS = ["push", "link", "update", "load", "save"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 
@@ -68,20 +70,6 @@ def check_path_validity():
     return True
 
 
-def run_command(command, allow_fail=False):
-    try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        if allow_fail:
-            return e
-        
-        error("\nCommand Failed: {' '.join(command)}")
-
-        stderr = e.stderr.strip() if e.stderr else "No error details available"
-        
-        error(f"Error output:\n{stderr}\n")
-        sys.exit(1)
 
 
 def git_new_branch(branch):
@@ -442,6 +430,10 @@ def main():
         push_operation(arguments)
     elif type_of_operation == "link":
         link_operation(arguments)
+    elif type_of_operation == "load":
+        load_state(arguments)
+    elif type_of_operation == "save":
+        save_state(arguments)
     else:
         error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
         sys.exit(1)
