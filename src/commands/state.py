@@ -15,7 +15,9 @@ def all_save_state():
     return save_states
 
 
-def display_save_states(save_states):
+def display_save_states():
+    save_states = all_save_state()
+
     # Display the list of saved states
     print("\nSaved States:")
     print("-" * 32)
@@ -23,8 +25,7 @@ def display_save_states(save_states):
         state_index = state.split(': ', 1)[0].replace("stash@", "").replace("{", "").replace("}", "")
         highlight(f"{int(state_index) + 1} | {state.split(': ', 1)[1]}")
 
-    print("-" * 32)
-    info("\nEnter the ID of the state you want to load (or 'q' to cancel): ")
+    print("-" * 32 + '\n')
 
 
 def validate_state_id(state_id, save_states):
@@ -47,11 +48,25 @@ def ask_state_id(save_states):
     while not proceed:
         state_id = input(">> ").strip().lower()
         if state_id == 'q':
-            info("\nLoad operation cancelled by user.\n")
+            warning("\nLoad operation cancelled by user.\n")
             sys.exit(0)
         proceed = validate_state_id(state_id, save_states)
     
     return state_id
+
+
+def state_list(arguments):
+    if len(arguments) > 1:
+        if arguments[1] in ("-h", "--help", "help"):
+            print("\nDisplay all saved states.\n")
+            warning("\nUsage:\n")
+            print("  gitgo state list        # Show all saved states")
+            print("  gitgo state -l          # Alias\n")
+            sys.exit(0)
+        error("\nToo many arguments for list operation!\n")
+        sys.exit(1)
+
+    display_save_states()
 
 
 def load_state(arguments):
@@ -60,13 +75,13 @@ def load_state(arguments):
     if len(arguments) > 1:
 
         if arguments[1] in ("-h", "--help", "help"):
-            print("\nUsage: gitgo load\n")
-            print("Loads a previously saved working state.\n")
-            warning("\nSyntax:\n")
-            print("        gitgo load                # Lists all saved states and prompts for selection")
-            print("        gitgo load <state_id>     # Loads the state with the specified ID\n")
+            print("\nLoad a previously saved working state.\n")
+            warning("\nUsage:\n")
+            print("  gitgo state load <id>   # Load a specific state by ID")
+            print("  gitgo state load        # Show all saved states and prompt for selection")
+            print("  gitgo state -o <id>     # Alias\n")
             sys.exit(0)
-        
+
         elif arguments[1].isdigit():
             state_id = arguments[1]
             proceed = validate_state_id(state_id, all_save_state())
@@ -79,7 +94,8 @@ def load_state(arguments):
     save_states = all_save_state()
     
     if not proceed:
-        display_save_states(save_states)
+        display_save_states()
+        info("\nEnter the ID of the state you want to load (or 'q' to cancel): ")
         state_id = ask_state_id(save_states)
         
     # Load the selected state
@@ -89,21 +105,23 @@ def load_state(arguments):
 
 
 def save_state(arguments):
+    print(arguments)
     if len(arguments) > 2:
         error("\nToo many arguments for save operation!\n")
         sys.exit(1)
     elif len(arguments) < 2:
         state_name = "Auto-Save"
     
-    if arguments[1] in ("-h", "--help", "help"):
-        print("\nUsage: gitgo save <state_name>\n")
-        print("Saves the current working state with the given name.\n")
-        warning("\nSyntax:\n")
-        print("        gitgo save <state_name>   # Saves the current state with the specified name\n")
-        sys.exit(0)
-    
     # Name of the state to save
     if len(arguments) == 2:
+        if arguments[1] in ("-h", "--help", "help"):
+            print("\nSave the current working state with an optional name.\n")
+            warning("\nUsage:\n")
+            print("  gitgo state save <name>   # Save with a specific name")
+            print("  gitgo state save          # Save with default name 'Auto-Save'")
+            print("  gitgo state -s <name>     # Alias\n")
+            sys.exit(0)
+            
         state_name = arguments[1]
 
     run_command(["git", "stash", "push", "-m", state_name])
@@ -119,11 +137,12 @@ def delete_state(arguments):
         state_id = ask_state_id(all_save_state())
     else:
         if arguments[1] in ("-h", "--help", "help"):
-            print("\nUsage: gitgo delete <state_id>\n")
-            print("Deletes a previously saved working state.\n")
-            warning("\nSyntax:\n")
-            print("        gitgo delete <state_id>   # Deletes the state with the specified ID\n")
-            print("        gitgo delete -a           # Deletes all saved states\n")
+            print("\nDelete one or all saved working states.\n")
+            warning("\nUsage:\n")
+            print("  gitgo state delete <id>   # Delete a specific state by ID")
+            print("  gitgo state delete -a     # Delete all saved states")
+            print("  gitgo state -d <id>       # Alias\n")
+            print("  gitgo state -d <id>       # Alias for delete all\n")
             sys.exit(0)
         
         elif arguments[1] == '-a':
@@ -146,3 +165,32 @@ def delete_state(arguments):
     
     run_command(["git", "stash", "drop", f"stash@{{{int(state_id) - 1}}}"])
     success(f"\nState with ID '{state_id}' deleted successfully.\n")
+
+
+def state_operations_help():
+    print("\nState Operations Help:\n")
+    print("  list, -l      Display all saved states.")
+    print("  load, -o      Load a previously saved working state.")
+    print("  save, -s      Save the current working state with a given name.")
+    print("  delete, -d    Delete a previously saved working state.\n")
+    print("Use 'gitgo state <operation> --help' for more information on a specific operation.\n")
+
+
+def state_operations(arguments):
+    if len(arguments) == 0 or arguments[0] in ("-h", "--help", "help"):
+        state_operations_help()
+        sys.exit(0)
+
+    type_of_operation = arguments[0].lower()
+    if type_of_operation in ["list", "-l"]:
+        state_list(arguments)
+    elif type_of_operation in ["load", "-o"]:
+        load_state(arguments)
+    elif type_of_operation in ["save", "-s"]:
+        save_state(arguments)
+    elif type_of_operation in ["delete", "d"]:
+        delete_state(arguments)
+    else:
+        error(f"\nUnknown state operation: {type_of_operation}\n")
+        state_operations_help()
+        sys.exit(1)

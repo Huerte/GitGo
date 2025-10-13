@@ -26,7 +26,7 @@ def clean_project(arguments):
         if confirm.lower() == 'y':
             proceed = True
         elif confirm == 'n':
-            info("\nClean operation cancelled by user.\n")
+            warning("\nClean operation cancelled by user.\n")
             sys.exit(0)
         else:
             error("\nInvalid input. Please enter 'y' or 'n'.\n")
