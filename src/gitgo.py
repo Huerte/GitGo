@@ -390,7 +390,9 @@ def main():
         error("\nInvalid arguments!\n")
         sys.exit(1)
 
+    # This list will return all arguments except the script name "gitgo"
     arguments = sys.argv[1:]
+
     type_of_operation = arguments[0].lower()
 
     if type_of_operation in ["-r", "ready"]:
@@ -398,7 +400,7 @@ def main():
         sys.exit(0)
 
     if type_of_operation in ["-v", "version"]:
-        warning("\nGitGo Version 1.0\n")
+        highlight("\nGitGo Version 1.0\n")
         sys.exit(0)
 
     if type_of_operation in HELP_COMMANDS:
@@ -421,6 +423,7 @@ def main():
         sys.exit(1)
 
     if type_of_operation == "push" and len(arguments) > 2:
+        error("\nIt passed!!!\n")
         push_operation(arguments)
     elif type_of_operation == "link":
         link_operation(arguments)
