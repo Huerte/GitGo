@@ -277,10 +277,26 @@ def push_operation(arguments):
         if len(arguments) < 3:
             error("\nBranch name required for new branch creation!\n")
             sys.exit(1)
+        elif len(arguments) < 4:
+            error("\nCommit message required!\n")
+            sys.exit(1)
+        elif len(arguments) > 4:
+            error("\nToo many arguments for new branch creation!\n")
+            sys.exit(1)
 
         branch = arguments[2]
         git_new_branch(branch)
     else:
+        if len(arguments) < 2:
+            error("\nBranch name required!\n")
+            sys.exit(1)
+        elif len(arguments) < 3:
+            error("\nCommit message required!\n")
+            sys.exit(1)
+        elif len(arguments) > 3:
+            error("\nToo many arguments!\n")
+            sys.exit(1)
+
         branch = arguments[1]
 
     commit_made = git_commit(arguments[-1])
@@ -422,8 +438,7 @@ def main():
         warning("Please run 'gitgo update' first to fix the issue.\n")
         sys.exit(1)
 
-    if type_of_operation == "push" and len(arguments) > 2:
-        error("\nIt passed!!!\n")
+    if type_of_operation == "push" and len(arguments) >= 2:
         push_operation(arguments)
     elif type_of_operation == "link":
         link_operation(arguments)
