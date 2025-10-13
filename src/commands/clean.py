@@ -9,7 +9,9 @@ def clean_project(arguments):
     if len(arguments) > 1:
         if arguments[1] in ("-h", "--help", "help"):
             print("\nUsage: gitgo clean\n")
-            print("Cleans the project by removing build directories and temporary files.\n")
+            print("This helps to free up space and remove unnecessary files from the project.\n")
+            print("\nSyntax:\n")
+            print("        gitgo clean               # Cleans the project by removing build directories and temporary files\n")
             sys.exit(0)
 
         error("\nToo many arguments for clean operation!\n")
