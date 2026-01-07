@@ -168,12 +168,12 @@ def delete_state(arguments):
 
 
 def state_operations_help():
-    print("\nState Operations Help:\n")
+    warning("\nState Operations Help:\n")
     print("  list, -l      Display all saved states.")
     print("  load, -o      Load a previously saved working state.")
     print("  save, -s      Save the current working state with a given name.")
     print("  delete, -d    Delete a previously saved working state.\n")
-    print("Use 'gitgo state <operation> --help' for more information on a specific operation.\n")
+    info("Use 'gitgo state <operation> --help' for more information on a specific operation.\n")
 
 
 def state_operations(arguments):
