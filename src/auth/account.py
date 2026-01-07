@@ -19,7 +19,9 @@ def get_user():
 def set_user(name, email):
     run_command(["git", "config", "--global", "user.name", name])
     run_command(["git", "config", "--global", "user.email", email])
-    success(f"Git user configured: {name} <{email}>")
+    success(f"\nGit user configured Successfully")
+    print(f"{BLUE}Username{RESET} : {name}")
+    print(f"{BLUE}Email    {RESET}: {email}")
 
 def ensure_user_configure(default_email=None, default_username=None):
 
