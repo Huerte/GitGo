@@ -28,9 +28,9 @@ def login():
     if pub_key:
         success("SSH Key generated successfully!")
 
-        print("\n" + "="*50)
+        print("\n" + "=" * len(pub_key))
         print(pub_key, end='')
-        print("="*50 + "\n")
+        print("=" * len(pub_key) + "\n")
         
         info("Copy the key above (between the lines).")
 
@@ -45,7 +45,7 @@ def login():
         error("Failed to read the generated public key.")
         return False
     
-    input(info("\nPress Enter after adding the key to GitHub..."))
+    input("\nPress Enter after adding the key to GitHub...")
 
     if ssh_utils.check_connection():
         from .account import ensure_user_configure
@@ -54,7 +54,7 @@ def login():
 
         ensure_user_configure(default_email=email, default_username=github_username)
 
-        success("Login Successful! You are connected.")
+        success("\nLogin Successful! You are connected.\n")
         return True
     
     error("Login Failed. Please try again.")
