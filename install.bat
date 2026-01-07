@@ -105,7 +105,7 @@ echo [INFO] Testing installation...
 
 setlocal
 set "PATH=%PATH%;%INSTALL_DIR%"
-gitgo -r >nul 2>&1
+call gitgo -r >nul 2>&1
 if %errorLevel% == 0 (
     echo [SUCCESS] GitGo is working correctly!
     echo.
