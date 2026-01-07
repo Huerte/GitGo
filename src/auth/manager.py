@@ -40,6 +40,10 @@ def login():
     input("Press Enter after adding the key to GitHub...")
 
     if ssh_utils.check_connection():
+        from .account import ensure_user_configure
+
+        ensure_user_configure(default_email=email)
+
         success("Login Successful! You are connected.")
         return True
     
@@ -60,4 +64,4 @@ def logout():
     except Exception as e:
         error(f"Failed to remove SSH keys\nCAUSE OF ERROR: {e}")
         return False
-    
+

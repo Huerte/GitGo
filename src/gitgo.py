@@ -1,6 +1,9 @@
 from commands.state import state_operations
+from auth.ssh_utils import check_connection
 from commands.clean import clean_project
 from utils.executor import run_command
+from auth.manager import login, logout
+from auth.account import get_user
 from utils.colors import *
 import subprocess
 import shutil
@@ -8,7 +11,7 @@ import sys
 import os
 
 
-GITGO_OPERATIONS = ["push", "link", "update", "state", "clean"]
+GITGO_OPERATIONS = ["push", "link", "update", "state", "clean", "login", "logout"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 
@@ -389,6 +392,17 @@ def validate_operation(operation):
         warning(f"Supported operations are: {', '.join(GITGO_OPERATIONS)}\n")
         sys.exit(1)
 
+def display_current_user():
+    username, email = get_user()
+    if username and email:
+        print("\n" + "="*40)
+        info(f"Git User:  {username}")
+        info(f"Git Email: {email}")
+        print("="*40 + "\n")
+    else:
+        warning("\nNo Git user identity configured.")
+        info("Run 'gitgo login' or use git config to set it.\n")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -427,6 +441,9 @@ def main():
         warning("Please run 'gitgo update' first to fix the issue.\n")
         sys.exit(1)
 
+    if not check_connection():
+        login()
+
     if type_of_operation == "push" and len(arguments) >= 2:
         push_operation(arguments)
     elif type_of_operation == "link":
@@ -435,6 +452,12 @@ def main():
         clean_project(arguments)
     elif type_of_operation == "state":
         state_operations(arguments[1:]) # This only passes the argument like load, save, delete
+    elif type_of_operation == "login":
+        login()
+    elif type_of_operation == "logout":
+        logout()
+    elif type_of_operation == "user":
+        display_current_user()
     else:
         error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
         sys.exit(1)
