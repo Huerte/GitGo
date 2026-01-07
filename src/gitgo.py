@@ -11,7 +11,7 @@ import sys
 import os
 
 
-GITGO_OPERATIONS = ["push", "link", "update", "state", "clean", "login", "logout"]
+GITGO_OPERATIONS = ["push", "link", "update", "state", "clean", "user"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 
@@ -404,6 +404,41 @@ def display_current_user():
         info("Run 'gitgo login' or use git config to set it.\n")
 
 
+def user_management(operation):
+    if not operation:
+        display_current_user()
+        exit(0)
+    if len(operation) > 1:
+        if operation[1] in HELP_COMMANDS:
+            if operation[0] == "login":
+                info("\nUsage: gitgo user login\n")
+                info("Sets up your Git user identity (name and email) for commits.\n")
+            elif operation[0] == "logout":
+                info("\nUsage: gitgo user logout\n")
+                info("Removes your Git user identity configuration.\n")
+            else:
+                warning("\nUsage: gitgo user <login | logout>\n")
+                warning("login: Configure your Git user identity.")
+                warning("logout: Remove your Git user identity configuration.\n")
+            sys.exit(0)
+        else:
+            error("\nToo many arguments for user management!\n")
+            sys.exit(1)
+
+    if operation[0] == "login":
+        login()
+    elif operation[0] == "logout":
+        logout()
+    elif operation[0] in HELP_COMMANDS:
+        warning("\nUsage: gitgo user <login | logout>\n")
+        warning("login: Configure your Git user identity.")
+        warning("logout: Remove your Git user identity configuration.\n")
+        sys.exit(0)
+    else:
+        error(f"\nInvalid user operation '{operation[0]}'!\n")
+        sys.exit(1)
+
+
 def main():
     if len(sys.argv) < 2:
         error("\nInvalid arguments!\n")
@@ -452,12 +487,8 @@ def main():
         clean_project(arguments)
     elif type_of_operation == "state":
         state_operations(arguments[1:]) # This only passes the argument like load, save, delete
-    elif type_of_operation == "login":
-        login()
-    elif type_of_operation == "logout":
-        logout()
     elif type_of_operation == "user":
-        display_current_user()
+        user_management(arguments[1:])
     else:
         error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
         sys.exit(1)
