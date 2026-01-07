@@ -65,13 +65,7 @@ if not "!NEW_PATH!"=="!USER_PATH!" (
 
 :refresh_path
 echo [INFO] Refreshing PATH for current session...
-powershell -ExecutionPolicy Bypass -Command ^
-"try {
-    $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH','User');
-    Write-Host '[SUCCESS] PATH refreshed for current session!' -ForegroundColor Green
-} catch {
-    Write-Host '[INFO] Manual PATH refresh may be needed in IDE terminals.' -ForegroundColor Yellow
-}" 2>nul
+powershell -ExecutionPolicy Bypass -Command "try { $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH','User'); Write-Host '[SUCCESS] PATH refreshed for current session!' -ForegroundColor Green } catch { Write-Host '[INFO] Manual PATH refresh may be needed in IDE terminals.' -ForegroundColor Yellow }" 2>nul
 
 echo.
 echo ========================================
