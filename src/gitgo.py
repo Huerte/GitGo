@@ -1,5 +1,5 @@
+from auth.ssh_utils import ensure_github_known_host
 from commands.state import state_operations
-from auth.ssh_utils import check_connection
 from commands.clean import clean_project
 from utils.executor import run_command
 from auth.manager import login, logout
@@ -401,7 +401,7 @@ def display_current_user():
         print("="*40 + "\n")
     else:
         warning("\nNo Git user identity configured.")
-        info("Run 'gitgo login' or use git config to set it.\n")
+        info("Run 'gitgo user login'\n")
 
 
 def user_management(operation):
@@ -476,8 +476,7 @@ def main():
         warning("Please run 'gitgo update' first to fix the issue.\n")
         sys.exit(1)
 
-    if not check_connection():
-        login()
+    ensure_github_known_host()
 
     if type_of_operation == "push" and len(arguments) >= 2:
         push_operation(arguments)

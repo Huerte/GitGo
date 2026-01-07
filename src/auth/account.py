@@ -21,17 +21,27 @@ def set_user(name, email):
     run_command(["git", "config", "--global", "user.email", email])
     success(f"Git user configured: {name} <{email}>")
 
-def ensure_user_configure(default_email=None):
+def ensure_user_configure(default_email=None, default_username=None):
 
     name, email = get_user()
 
     if name and email:
         return True
     
+    if default_username and default_email:
+        info(f"\nConfiguring Git identity from GitHub...")
+        set_user(default_username, default_email)
+        return True
+    
     warning("\nGit user identity is not configured!")
     info("This is required for your commits to be attributed correctly.")
     
-    new_username = input("Enter your Username (for commits): ").strip()
+    # Use default_username if provided, otherwise ask
+    if default_username:
+        new_username = default_username
+        info(f"Using GitHub username: {new_username}")
+    else:
+        new_username = input("Enter your Username (for commits): ").strip()
     
     prompt_email = "Enter your Email (for commits)"
     if default_email:
