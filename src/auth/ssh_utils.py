@@ -1,5 +1,6 @@
 from utils.executor import run_command
 from utils.colors import *
+from utils import platform_utils
 from pathlib import Path
 import sys
 import os
@@ -86,12 +87,13 @@ def generate_ssh_key(email):
 
 def open_github_settings():
     url = "https://github.com/settings/ssh/new"
-    if sys.platform.startswith("win"):
-        # Windows
+    if platform_utils.is_windows():
         os.system(f"start {url}")
-    elif "TERMUX_VERSION" in os.environ:
-        # Termux app | ADDED FOR MY OWN USE
+    elif platform_utils.is_termux():
         os.system(f"termux-open {url}")
-    else:
-        # Linux / Mac
+    elif platform_utils.is_linux() or platform_utils.is_macos():
         os.system(f"xdg-open {url}")
+    else:
+        # Fallback for other platforms
+        import webbrowser
+        webbrowser.open(url)
