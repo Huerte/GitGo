@@ -97,3 +97,26 @@ def open_github_settings():
         # Fallback for other platforms
         import webbrowser
         webbrowser.open(url)
+
+
+def convert_https_to_ssh(url):
+
+    # Convert HTTPS GitHub URL to SSH format.
+    # Example: https://github.com/user/repo.git -> git@github.com:user/repo.git
+
+    import re
+    
+    # Match HTTPS GitHub URLs
+    pattern = r'^https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$'
+    match = re.match(pattern, url.strip())
+    
+    if match:
+        owner = match.group(1)
+        repo = match.group(2)
+        return f"git@github.com:{owner}/{repo}.git"
+    
+    return None
+
+
+def is_ssh_url(url):
+    return url.strip().startswith("git@")
