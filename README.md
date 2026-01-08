@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Termux-lightgrey.svg)](https://github.com/Huerte/GitGo)
 [![Git](https://img.shields.io/badge/git-2.x+-orange.svg)](https://git-scm.com/)
 
 *Streamline your Git workflow with intelligent automation and save valuable development time*
@@ -82,20 +82,126 @@ Before installing GitGo, ensure you have:
 |-------------|---------|----------|
 | 🐍 **Python** | 3.6+ | [Download Python](https://www.python.org/downloads/) |
 | 📦 **Git** | 2.x+ | [Download Git](https://git-scm.com/downloads) |
-| 💻 **Windows** | 10/11 | [Windows Terminal](https://aka.ms/terminal) (Recommended) |
+| 💻 **Operating System** | Windows 10/11, Linux, or Termux | Supported on all major platforms |
 
 </div>
+
+**Platform-Specific Notes:**
+- **Windows**: [Windows Terminal](https://aka.ms/terminal) recommended for best experience
+- **Linux**: Most distributions come with Python and Git pre-installed
+- **Termux**: Install via `pkg install python git`
 
 ---
 
 ## 🛠️ Installation
 
-### Step 1: Clone the Repository
+Choose the installation method for your platform:
+
+### 🪟 Windows Installation
+
+#### Step 1: Clone the Repository
 
 ```powershell
 git clone https://github.com/Huerte/GitGo.git
 cd GitGo
 ```
+
+#### Step 2: Run the Installer
+
+```powershell
+.\install.bat
+```
+
+The installer will:
+- ✅ Check for Python and Git
+- ✅ Copy files to `%APPDATA%\GitGo`
+- ✅ Add GitGo to your system PATH
+- ✅ Test the installation
+
+#### Step 3: Restart Your Terminal
+
+Close and reopen your terminal or IDE for PATH changes to take effect.
+
+---
+
+### � Linux Installation
+
+#### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/Huerte/GitGo.git
+cd GitGo
+```
+
+#### Step 2: Make Installer Executable
+
+```bash
+chmod +x install.sh
+```
+
+#### Step 3: Run the Installer
+
+```bash
+./install.sh
+```
+
+The installer will:
+- ✅ Detect your Linux distribution
+- ✅ Install files to `~/.local/share/gitgo`
+- ✅ Create wrapper script in `~/.local/bin`
+- ✅ Provide PATH setup instructions if needed
+
+#### Step 4: Update PATH (if needed)
+
+If the installer indicates that `~/.local/bin` is not in your PATH, add this line to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export PATH="$PATH:$HOME/.local/bin"
+```
+
+Then reload your shell configuration:
+
+```bash
+source ~/.bashrc  # or source ~/.zshrc
+```
+
+---
+
+### 📱 Termux Installation (Android)
+
+#### Step 1: Install Prerequisites
+
+```bash
+pkg update
+pkg install python git
+```
+
+#### Step 2: Clone the Repository
+
+```bash
+git clone https://github.com/Huerte/GitGo.git
+cd GitGo
+```
+
+#### Step 3: Make Installer Executable
+
+```bash
+chmod +x install.sh
+```
+
+#### Step 4: Run the Installer
+
+```bash
+./install.sh
+```
+
+The installer will:
+- ✅ Detect Termux environment
+- ✅ Install files to `$PREFIX/share/gitgo`
+- ✅ Create wrapper script in `$PREFIX/bin`
+- ✅ Test the installation
+
+**Note**: In Termux, `$PREFIX/bin` is automatically in your PATH, so no additional configuration is needed!
 
 ---
 
@@ -208,7 +314,7 @@ gitgo link --help
 
 ### 🔧 Update Command Deep Dive
 
-The `gitgo update` command fixes PATH issues when GitGo has been moved to a different location. Here's what it does:
+The `gitgo update` command fixes PATH issues when GitGo has been moved to a different location. **Now works on Windows, Linux, and Termux!**
 
 **When to Use Update:**
 - 🚨 When you see "PATH OUTDATED DETECTED!" warnings
@@ -217,15 +323,15 @@ The `gitgo update` command fixes PATH issues when GitGo has been moved to a diff
 - 🛠️ During initial setup if PATH configuration fails
 
 **Step-by-Step Process:**
-1. 🔍 **Path Detection** - Identifies current GitGo script location
-2. 📝 **Batch File Creation** - Creates/updates `gitgo.bat` in system directory
+1. 🔍 **Platform Detection** - Automatically detects your operating system
+2. 📝 **Wrapper Creation** - Creates/updates wrapper script (`.bat` for Windows, shell script for Linux/Termux)
 3. 🎯 **PATH Validation** - Checks if target directory is in system PATH
-4. 📋 **Instructions** - Provides manual PATH setup steps if needed
+4. 📋 **Instructions** - Provides platform-specific PATH setup steps if needed
 5. ✅ **Verification** - Confirms successful update
 
 **Usage Examples:**
 ```bash
-# Basic update command
+# Basic update command (works on all platforms)
 gitgo update
 
 # Get help for update command
@@ -233,10 +339,15 @@ gitgo update --help
 ```
 
 **What Makes Update Special:**
-- 🛡️ **Smart Detection** - Automatically finds the best system directory
-- 🔄 **Cross-Directory Support** - Works regardless of current location
-- 📋 **Clear Instructions** - Provides step-by-step PATH setup guide
+- 🛡️ **Cross-Platform** - Automatically detects and configures for your OS
+- 🔄 **Smart Detection** - Finds the best system directory for your platform
+- 📋 **Clear Instructions** - Provides platform-specific PATH setup guide
 - ⚡ **Quick Fix** - Resolves PATH issues in seconds
+
+**Platform-Specific Behavior:**
+- **Windows**: Creates `gitgo.bat` in `%APPDATA%\Local\Microsoft\WindowsApps` or `%USERPROFILE%\bin`
+- **Linux**: Creates `gitgo` shell script in `~/.local/bin`
+- **Termux**: Creates `gitgo` shell script in `$PREFIX/bin`
 
 **Common Update Scenarios:**
 ```bash
@@ -245,9 +356,10 @@ gitgo update --help
 gitgo update
 
 # Scenario 2: Fresh installation
-# Error: "'gitgo' is not recognized as an internal or external command"
-cd path\to\GitGo\src
-python gitgo.py update
+# Error: "'gitgo' is not recognized..." or "command not found"
+cd path/to/GitGo/src
+python gitgo.py update  # Windows
+python3 gitgo.py update # Linux/Termux
 
 # Scenario 3: After system changes
 # GitGo stops working from other directories
@@ -343,13 +455,49 @@ If you encounter any issues or have questions:
 
 **Common Issues:**
 
-| Problem | Solution |
-|---------|----------|
-| `gitgo` command not found | Run `gitgo update` or close current terminal and open a new one after PATH setup |
-| PATH OUTDATED DETECTED warning | Run `gitgo update` to fix PATH configuration |
-| Permission errors | Run PowerShell as Administrator |
-| Git errors | Verify you're in a Git repository |
-| GitGo stops working after moving folder | Run `gitgo update` from the new location |
+| Problem | Solution | Platform |
+|---------|----------|----------|
+| `gitgo` command not found | Run `gitgo update` from GitGo directory, or restart terminal after installation | All |
+| PATH OUTDATED DETECTED warning | Run `gitgo update` to fix PATH configuration | All |
+| Permission errors (Windows) | Run PowerShell as Administrator | Windows |
+| Permission errors (Linux/Termux) | Check file permissions: `chmod +x ~/.local/bin/gitgo` | Linux/Termux |
+| Git errors | Verify you're in a Git repository | All |
+| GitGo stops working after moving folder | Run `gitgo update` from the new location | All |
+| `~/.local/bin` not in PATH | Add `export PATH="$PATH:$HOME/.local/bin"` to `~/.bashrc` | Linux |
+| Python not found (Termux) | Run `pkg install python` | Termux |
+
+**Platform-Specific Troubleshooting:**
+
+**Windows:**
+```powershell
+# If gitgo command not found after installation:
+cd "C:\Programs\Git Tools\GitGo\src"
+python gitgo.py update
+
+# Then restart your terminal
+```
+
+**Linux:**
+```bash
+# If gitgo command not found:
+cd ~/path/to/GitGo
+./install.sh
+
+# If still not working, manually add to PATH:
+echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Termux:**
+```bash
+# If gitgo command not found:
+cd ~/GitGo
+./install.sh
+
+# Verify installation:
+which gitgo
+gitgo -r
+```
 
 ---
 

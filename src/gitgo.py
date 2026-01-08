@@ -3,6 +3,7 @@ from commands.state import state_operations
 from commands.clean import clean_project
 from utils.executor import run_command
 from auth.manager import login, logout
+from utils.platform_utils import *
 from auth.account import get_user
 from utils.colors import *
 import subprocess
@@ -25,7 +26,8 @@ def get_system_gitgo_path():
     gitgo_path = shutil.which("gitgo")
     if gitgo_path:
         # resolve any symlinks or batch files to get the actual script path
-        if gitgo_path.endswith('.bat'):
+        if is_windows() and gitgo_path.endswith('.bat'):
+            # Windows batch file - extract python script path
             try:
                 with open(gitgo_path, 'r') as f:
                     content = f.read()
@@ -33,6 +35,21 @@ def get_system_gitgo_path():
                     for line in content.split('\n'):
                         if 'python' in line.lower() and 'gitgo.py' in line:
                             # extract the path - basic parsing, might need adjustment
+                            parts = line.split()
+                            for part in parts:
+                                if 'gitgo.py' in part:
+                                    return os.path.abspath(part.strip('"\''))
+            except:
+                pass
+        else:
+            # Unix shell script - extract python script path
+            try:
+                with open(gitgo_path, 'r') as f:
+                    content = f.read()
+                    # look for exec python line
+                    for line in content.split('\n'):
+                        if 'exec' in line and 'gitgo.py' in line:
+                            # extract the path from exec command
                             parts = line.split()
                             for part in parts:
                                 if 'gitgo.py' in part:
@@ -62,14 +79,15 @@ def is_path_outdated():
 def check_path_validity():
     # validate path and warn user if needed - fr fr this is important
     if is_path_outdated():
-        warning("\n\⚠️  PATH OUTDATED DETECTED! ⚠️")
+        warning("\n⚠️  PATH OUTDATED DETECTED! ⚠️")
         error("Your system PATH points to an outdated GitGo location.")
         warning(f"Current script: {get_current_script_path()}")
         warning(f"System PATH: {get_system_gitgo_path() or 'Not found'}")
+        warning(f"Platform: {get_platform_display_name()}")
 
         info("\nTo fix this issue, run:")
         success("    gitgo update")
-        warning("This will update your system PATH to the current location.\n")
+        warning("This will update your wrapper script to the current location.\n")
         return False
     return True
 
@@ -315,74 +333,79 @@ def push_operation(arguments):
 
 
 def update_operation(arguments):
-    # handle gitgo update command - update PATH to current location
+    # handle gitgo update command - update wrapper to current location (cross-platform)
     if len(arguments) > 1 and arguments[1] in HELP_COMMANDS:
         warning("\nUsage: gitgo update\n")
-        warning("Updates your system PATH to point to the current GitGo location.")
+        warning("Updates your gitgo wrapper to point to the current GitGo location.")
         warning("This fixes issues when GitGo is moved to a different directory.\n")
         sys.exit(0)
     
-    info("\n🔧 INITIATING PATH UPDATE OPERATION...")
+    info(f"\n🔧 INITIATING UPDATE OPERATION... [{get_platform_display_name()}]")
     
     current_script = get_current_script_path()
     current_dir = os.path.dirname(current_script)
     
     info(f"Current GitGo location: {current_dir}")
     
-    # create or update batch file in a system-accessible location
+    # create or update wrapper script in a system-accessible location
     try:
-        # try to use a common system path location
-        system_paths = [
-            os.path.expanduser("~\\AppData\\Local\\Microsoft\\WindowsApps"),
-            "C:\\Windows\\System32",
-            os.path.expanduser("~\\bin")
-        ]
+        # Get platform-specific bin directory
+        target_dir = get_bin_directory()
         
-        target_dir = None
-        for path in system_paths:
-            if os.path.exists(path) and os.access(path, os.W_OK):
-                target_dir = path
-                break
-        
-        if not target_dir:
-            # create user bin directory if none available
-            target_dir = os.path.expanduser("~\\bin")
+        if not os.path.exists(target_dir):
             os.makedirs(target_dir, exist_ok=True)
+            success(f"✅ Created directory: {target_dir}")
         
-        batch_file = os.path.join(target_dir, "gitgo.bat")
+        # Get wrapper filename (gitgo.bat for Windows, gitgo for Unix)
+        wrapper_name = get_executable_name()
+        wrapper_path = os.path.join(target_dir, wrapper_name)
         
-        # create batch file that points to current script
-        batch_content = f'@echo off\npython "{current_script}" %*\n'
+        # Create wrapper content
+        wrapper_content = create_wrapper_script(current_script, current_dir)
         
-        with open(batch_file, 'w') as f:
-            f.write(batch_content)
+        # Write wrapper file
+        with open(wrapper_path, 'w', newline='\n' if not is_windows() else None) as f:
+            f.write(wrapper_content)
         
-        success(f"✅ Batch file created: {batch_file}")
+        # Make executable on Unix systems
+        if not is_windows():
+            import stat
+            os.chmod(wrapper_path, os.stat(wrapper_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         
-        # check if target_dir is in PATH
-        current_path = os.environ.get('PATH', '')
-        if target_dir.lower() not in current_path.lower():
-            warning("⚠️  MANUAL ACTION REQUIRED ⚠️")
+        success(f"✅ Wrapper created: {wrapper_path}")
+        
+        # Check if target_dir is in PATH
+        if not is_in_path(target_dir):
+            warning("\n⚠️  MANUAL ACTION REQUIRED ⚠️")
             warning("Add this directory to your system PATH:")
             success(f"    {target_dir}")
-
-            info("How to add to PATH:")
-            warning("1. Press Win + R, type 'sysdm.cpl', press Enter")
-            warning("2. Click 'Environment Variables' button")
-            warning("3. Under 'User variables', find and select 'Path', click 'Edit'")
-            warning(f"4. Click 'New' and add: {target_dir}")
-            warning("5. Click 'OK' on all dialogs")
-            warning("6. Restart your terminal")
+            
+            if is_windows():
+                info("\nHow to add to PATH on Windows:")
+                warning("1. Press Win + R, type 'sysdm.cpl', press Enter")
+                warning("2. Click 'Environment Variables' button")
+                warning("3. Under 'User variables', find and select 'Path', click 'Edit'")
+                warning(f"4. Click 'New' and add: {target_dir}")
+                warning("5. Click 'OK' on all dialogs")
+                warning("6. Restart your terminal")
+            else:
+                info("\nHow to add to PATH on Linux/Termux:")
+                warning("Add this line to your shell configuration file (~/.bashrc or ~/.zshrc):")
+                success(f"    export PATH=\"$PATH:{target_dir}\"")
+                warning("\nThen run: source ~/.bashrc (or ~/.zshrc)")
         else:
             success("✅ Directory already in PATH!")
-
-        success("🎯 PATH UPDATE COMPLETE!")
+        
+        success("\n🎯 UPDATE COMPLETE!")
         info("GitGo should now work from any location.")
         warning("If issues persist, restart your terminal.")
-
+    
     except Exception as e:
         error(f"❌ Update failed: {str(e)}")
-        warning("You may need to run this command as Administrator.")
+        if is_windows():
+            warning("You may need to run this command as Administrator.")
+        else:
+            warning("Check file permissions and try again.")
         sys.exit(1)
 
 
