@@ -176,22 +176,27 @@ pkg update
 pkg install python git
 ```
 
-#### Step 2: Clone the Repository
+#### Step 2: Clone or Move the Repository
+
+If you downloaded the repository to your Android "Download" folder, move it to your Termux home directory first (required for executable permissions):
 
 ```bash
+# Move from shared storage to Termux home
+mv /storage/emulated/0/Download/GitGo $HOME/GitGo
+cd $HOME/GitGo
+```
+
+*Alternatively, clone it directly into Termux:*
+```bash
+cd $HOME
 git clone https://github.com/Huerte/GitGo.git
 cd GitGo
 ```
 
-#### Step 3: Make Installer Executable
+#### Step 3: Run the Installer
 
 ```bash
 chmod +x install.sh
-```
-
-#### Step 4: Run the Installer
-
-```bash
 ./install.sh
 ```
 
@@ -459,6 +464,7 @@ If you encounter any issues or have questions:
 |---------|----------|----------|
 | `gitgo` command not found | Run `gitgo update` from GitGo directory, or restart terminal after installation | All |
 | PATH OUTDATED DETECTED warning | Run `gitgo update` to fix PATH configuration | All |
+| Dubious Ownership / Security Alert | **Smart Fix:** GitGo will detect this and offer to fix it automatically! | All (Common in Termux) |
 | Permission errors (Windows) | Run PowerShell as Administrator | Windows |
 | Permission errors (Linux/Termux) | Check file permissions: `chmod +x ~/.local/bin/gitgo` | Linux/Termux |
 | Git errors | Verify you're in a Git repository | All |
