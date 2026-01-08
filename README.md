@@ -459,6 +459,7 @@ If you encounter any issues or have questions:
 |---------|----------|----------|
 | `gitgo` command not found | Run `gitgo update` from GitGo directory, or restart terminal after installation | All |
 | PATH OUTDATED DETECTED warning | Run `gitgo update` to fix PATH configuration | All |
+| Dubious Ownership / Security Alert | **Smart Fix:** GitGo will detect this and offer to fix it automatically! | All (Common in Termux) |
 | Permission errors (Windows) | Run PowerShell as Administrator | Windows |
 | Permission errors (Linux/Termux) | Check file permissions: `chmod +x ~/.local/bin/gitgo` | Linux/Termux |
 | Git errors | Verify you're in a Git repository | All |
