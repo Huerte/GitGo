@@ -1,4 +1,4 @@
-from auth.ssh_utils import ensure_github_known_host
+from auth.ssh_utils import ensure_github_known_host, convert_https_to_ssh, is_ssh_url, check_connection
 from commands.state import state_operations
 from commands.clean import clean_project
 from utils.executor import run_command
@@ -206,6 +206,20 @@ def check_and_sync_branch(branch):
 
 
 def git_push(branch):
+    # Check if remote is using HTTPS and SSH is available
+    remote_url = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
+    
+    if not isinstance(remote_url, subprocess.CalledProcessError) and remote_url:
+        remote_url = remote_url.strip()
+        
+        # If using HTTPS and SSH is set up, convert to SSH
+        if not is_ssh_url(remote_url) and check_connection():
+            ssh_url = convert_https_to_ssh(remote_url)
+            if ssh_url:
+                info(f"Converting remote from HTTPS to SSH for secure push...")
+                run_command(["git", "remote", "set-url", "origin", ssh_url])
+                success(f"Remote updated to: {ssh_url}")
+    
     print(run_command(["git", "push", "-u", "origin", branch]))
     success(f"\nPushed to remote branch '{branch}'.\n")
 
