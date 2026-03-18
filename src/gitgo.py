@@ -1,6 +1,5 @@
 from auth.ssh_utils import ensure_github_known_host, convert_https_to_ssh, is_ssh_url, check_connection
 from commands.state import state_operations
-from commands.clean import clean_project
 from utils.executor import run_command
 from auth.manager import login, logout
 from utils.platform_utils import *
@@ -12,7 +11,7 @@ import sys
 import os
 
 
-GITGO_OPERATIONS = ["push", "link", "update", "state", "clean", "user"]
+GITGO_OPERATIONS = ["push", "link", "update", "state", "user"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 
 
@@ -92,6 +91,12 @@ def check_path_validity():
     return True
 
 
+def get_current_branch():
+    return run_command(["git", "branch", "--show-current"])
+
+def is_branch_exist(branch):
+    # This one check if the branch existed from both remote and local branches
+    return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
 
 
 def git_new_branch(branch):
@@ -172,8 +177,6 @@ def create_main_branch():
         run_command(["git", "branch", "-m", "main"])
     else:
         success("Already on 'main' branch! 👌")
-    
-    success("Main branch ready! 🚀")
 
 
 def check_and_sync_branch(branch):
@@ -282,13 +285,19 @@ def link_operation(arguments):
         return
     
     # Step 6: Create/switch to main branch
-    create_main_branch()
+    current_branch = get_current_branch()
     
     print("\n" + ("=" * 90))
     success("🎯 LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
     success("Ready to push with: gitgo push main 'your message'")
     info("AWAITING FURTHER ORDERS...\n")
 
+    user_choice = input(f"\nDo you want to push now? (y/n): ").lower()
+    if user_choice != 'y':
+        return
+    
+    push_operation(current_branch, "init: Project Initialization.")
+    
 
 def push_operation(arguments):
     if arguments[1] in HELP_COMMANDS:
@@ -312,6 +321,9 @@ def push_operation(arguments):
         git_new_branch(branch)
     else:
         if len(arguments) < 2:
+
+            # TODO: add a feature here where i can do `gitgo push "msg" or gitgo push`
+            
             error("\nBranch name required!\n")
             sys.exit(1)
         elif len(arguments) < 3:
@@ -519,8 +531,6 @@ def main():
         push_operation(arguments)
     elif type_of_operation == "link":
         link_operation(arguments)
-    elif type_of_operation == "clean":
-        clean_project(arguments)
     elif type_of_operation == "state":
         state_operations(arguments[1:]) # This only passes the argument like load, save, delete
     elif type_of_operation == "user":
