@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 set "SCRIPT_DIR=%~dp0"
-set "SRC_DIR=%SCRIPT_DIR%src"
+set "SRC_DIR=%SCRIPT_DIR%..\..\src"
 
 echo.
 echo ========================================
