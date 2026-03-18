@@ -29,7 +29,7 @@ def display_save_states():
 
 
 def validate_state_id(state_id, save_states):
-    if not state_id.isdigit:
+    if not state_id.isdigit():
         error("\nInvalid input. Please enter a valid state ID.\n")
         return False
     elif (int(state_id) - 1) < 0:
@@ -70,10 +70,16 @@ def state_list(arguments):
 
 
 def load_state(arguments):
+    if len(arguments) > 2:
+        error("\nToo many arguments for load operation!\n")
+        sys.exit(1)
+
+    # Get the list of all saved states once
+    save_states = all_save_state()
     proceed = False
+    state_id = None
 
-    if len(arguments) > 1:
-
+    if len(arguments) == 2:
         if arguments[1] in ("-h", "--help", "help"):
             print("\nLoad a previously saved working state.\n")
             warning("\nUsage:\n")
@@ -81,17 +87,15 @@ def load_state(arguments):
             print("  gitgo state load        # Show all saved states and prompt for selection")
             print("  gitgo state -o <id>     # Alias\n")
             sys.exit(0)
-
         elif arguments[1].isdigit():
             state_id = arguments[1]
-            proceed = validate_state_id(state_id, all_save_state())
-
+            proceed = validate_state_id(state_id, save_states)
+            if not proceed:
+                # Fall through to exit if ID is invalid
+                sys.exit(1)
         else:
-            error("\nToo many arguments for save operation!\n")
+            error(f"\nInvalid argument '{arguments[1]}' for load operation. Expected a state ID.\n")
             sys.exit(1)
-
-    # All list of all saved state
-    save_states = all_save_state()
     
     if not proceed:
         display_save_states()
@@ -105,7 +109,6 @@ def load_state(arguments):
 
 
 def save_state(arguments):
-    print(arguments)
     if len(arguments) > 2:
         error("\nToo many arguments for save operation!\n")
         sys.exit(1)
@@ -188,7 +191,7 @@ def state_operations(arguments):
         load_state(arguments)
     elif type_of_operation in ["save", "-s"]:
         save_state(arguments)
-    elif type_of_operation in ["delete", "d"]:
+    elif type_of_operation in ["delete", "-d"]:
         delete_state(arguments)
     else:
         error(f"\nUnknown state operation: {type_of_operation}\n")

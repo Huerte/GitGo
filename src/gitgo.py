@@ -141,7 +141,7 @@ def add_remote_origin(repo_url):
         info("Adding remote origin...")
         run_command(["git", "remote", "add", "origin", clean_url])
     
-    success("Remote origin set to: {clean_url} ✨")
+    success(f"Remote origin set to: {clean_url} ✨")
 
 
 def confirm_remote_link():
