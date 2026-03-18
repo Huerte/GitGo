@@ -1,5 +1,5 @@
 from utils.executor import run_command
-from utils.colors import *
+from utils.colors import info, highlight, error, warning, success
 import sys
 
 
