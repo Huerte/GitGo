@@ -13,7 +13,8 @@ import os
 
 GITGO_OPERATIONS = ["push", "link", "update", "state", "user"]
 HELP_COMMANDS = ["help", "--help", "-h"]
-
+DEFAULT_COMMIT_MSG = "New Project Update"
+DEFAULT_MAIN_BRANCH = "main"
 
 def get_current_script_path():
     # get the actual path where gitgo.py is located - no cap
@@ -92,7 +93,11 @@ def check_path_validity():
 
 
 def get_current_branch():
-    return run_command(["git", "branch", "--show-current"])
+    branch = run_command(["git", "branch", "--show-current"])
+    if branch.strip() == "":
+        branch = git_new_branch(DEFAULT_MAIN_BRANCH)
+
+    return branch
 
 def is_branch_exist(branch):
     # This one check if the branch existed from both remote and local branches
@@ -102,6 +107,8 @@ def is_branch_exist(branch):
 def git_new_branch(branch):
     print(run_command(["git", "checkout", "-b", branch]))
     success(f"\nBranch '{branch}' created.\n")
+
+    return branch
 
 
 def git_commit(commit_message):
@@ -305,14 +312,16 @@ def push_operation(arguments):
         warning("branch: The branch to push to (default: main)")
         warning("commit_message: The commit message (default: empty string)\n")
         sys.exit(0)
+    
+    branch = None
+    message = None
 
     if arguments[1] in ["-n", "new"]:
         if len(arguments) < 3:
             error("\nBranch name required for new branch creation!\n")
             sys.exit(1)
         elif len(arguments) < 4:
-            error("\nCommit message required!\n")
-            sys.exit(1)
+            message = DEFAULT_COMMIT_MSG
         elif len(arguments) > 4:
             error("\nToo many arguments for new branch creation!\n")
             sys.exit(1)
@@ -321,21 +330,18 @@ def push_operation(arguments):
         git_new_branch(branch)
     else:
         if len(arguments) < 2:
-
-            # TODO: add a feature here where i can do `gitgo push "msg" or gitgo push`
-            
-            error("\nBranch name required!\n")
-            sys.exit(1)
+            branch = get_current_branch()
+            message = DEFAULT_COMMIT_MSG
         elif len(arguments) < 3:
-            error("\nCommit message required!\n")
-            sys.exit(1)
+            message = DEFAULT_COMMIT_MSG
         elif len(arguments) > 3:
             error("\nToo many arguments!\n")
             sys.exit(1)
 
-        branch = arguments[1]
+    branch = branch if branch else arguments[1]
+    message = message if message else arguments[2]
 
-    commit_made = git_commit(arguments[-1])
+    commit_made = git_commit(message)
     
     if commit_made:
         git_push(branch)
@@ -527,7 +533,7 @@ def main():
 
     ensure_github_known_host()
 
-    if type_of_operation == "push" and len(arguments) >= 2:
+    if type_of_operation == "push":
         push_operation(arguments)
     elif type_of_operation == "link":
         link_operation(arguments)
