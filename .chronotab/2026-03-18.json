@@ -1,7 +1,7 @@
 {
   "project": "GitGo",
   "date": "2026-03-18",
-  "totalSeconds": 2957,
+  "totalSeconds": 3204,
   "branches": {
     "fix/state-ops-and-errors": {
       "README.md": {
@@ -39,8 +39,18 @@
     },
     "feature/cli-flow": {
       "gitgo.py": {
-        "seconds": 136,
-        "lastActive": "2026-03-18T09:34:10.594Z"
+        "seconds": 241,
+        "lastActive": "2026-03-18T10:02:10.947Z"
+      },
+      "install.bat": {
+        "seconds": 34,
+        "lastActive": "2026-03-18T09:53:59.148Z"
+      }
+    },
+    "refactor/installer-paths": {
+      ".gitignore": {
+        "seconds": 108,
+        "lastActive": "2026-03-18T10:04:10.890Z"
       }
     }
   }
