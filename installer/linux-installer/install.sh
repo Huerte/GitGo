@@ -77,7 +77,7 @@ main() {
     
     # Verify source files exist
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    SRC_DIR="$SCRIPT_DIR/src"
+    SRC_DIR="$SCRIPT_DIR/../../src"
     
     if [ ! -f "$SRC_DIR/gitgo.py" ]; then
         print_error "gitgo.py not found in src directory!"
