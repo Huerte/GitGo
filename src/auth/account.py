@@ -8,9 +8,9 @@ def get_user():
         name = run_command(["git", "config", "--global", "user.name"], allow_fail=True)
         email = run_command(["git", "config", "--global", "user.email"], allow_fail=True)
 
-        if not name or isinstance(name, subprocess.SubprocessError):
+        if not name or isinstance(name, subprocess.CalledProcessError):
             name = None
-        if not email or isinstance(email, subprocess.SubprocessError):
+        if not email or isinstance(email, subprocess.CalledProcessError):
             email = None
         return name, email
     except:
