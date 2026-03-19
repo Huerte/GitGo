@@ -3,7 +3,7 @@ from utils.executor import run_command
 from utils.colors import info, success, warning, error
 import subprocess
 import sys
-
+import os
 
 DEFAULT_MAIN_BRANCH = "main"
 
@@ -42,14 +42,17 @@ def git_commit(commit_message):
 
 
 def git_init():
-    # check if already a git repo - no cap fr fr
-    git_check = run_command(["git", "status"], allow_fail=True)
-    if not isinstance(git_check, subprocess.CalledProcessError):
+    if os.path.isdir(".git"):
         warning("Already a git repository! Skipping init...")
         return True
     
     info("Initializing git repository...")
-    run_command(["git", "init"])
+    # Use -b main to set default branch to 'main' (Git >= 2.28)
+    result = run_command(["git", "init", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True)
+    if isinstance(result, subprocess.CalledProcessError):
+        # Fallback for older Git versions that don't support -b
+        run_command(["git", "init"])
+        run_command(["git", "checkout", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True)
 
     success("Git repository initialized! 🎯")
     return True
@@ -59,7 +62,6 @@ def add_remote_origin(repo_url):
     # clean the URL - remove quotes if present, dili na kailangan og quotes
     clean_url = repo_url.strip('"\'')
     
-    # check if remote already exists
     existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
     if not isinstance(existing_remote, subprocess.CalledProcessError):
         warning(f"Remote origin already exists: {existing_remote}")

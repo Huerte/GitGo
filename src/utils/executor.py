@@ -15,7 +15,7 @@ def run_command(command, allow_fail=False, return_complete=False):
     try:
         result = subprocess.run(
             command,
-            check=not allow_fail,  # only raise if not allow_fail
+            check=True,
             capture_output=True,
             text=True
         )

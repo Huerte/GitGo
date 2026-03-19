@@ -115,7 +115,6 @@ def get_python_executable():
     if is_windows():
         return 'python'
     else:
-        # Check if python is available
         import shutil
         if shutil.which('python3'):
             return 'python3'
@@ -129,8 +128,7 @@ def create_wrapper_script(script_path, install_dir):
     current_platform = get_platform()
     
     if current_platform == 'windows':
-        # Windows batch file
-        return f'@echo off\n{get_python_executable()} "{script_path}" %*\n'
+        return f'@echo off\npy "{script_path}" %*\nexit /b %errorlevel%\n'
     
     else:
         # Unix shell script

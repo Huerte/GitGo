@@ -38,42 +38,57 @@ def link_operation(arguments):
     info("\n🚀 INITIATING LINK OPERATION...")
     info(f"Target: {repo_url}\n")
     
-    # Step 1: Initialize git repository
     if not git_init():
         return
     
-    # Step 2: Add all files - stage everything
     info("Adding all files...")
     run_command(["git", "add", "."])
     success("Files staged for commit! 📁")
     
-    # Step 3: Create initial commit with custom or default message
     clean_message = commit_message.strip('"\'')
     info("Creating initial commit...")
     run_command(["git", "commit", "-m", clean_message])
     success("Initial commit created! 💾")
     
-    # Step 4: Add remote origin
     add_remote_origin(repo_url)
     
-    # Step 5: Confirm remote link - make sure connection works
     if not confirm_remote_link():
         error("Link operation failed! Check your repository URL.")
         return
     
-    # Step 6: Create/switch to main branch
     current_branch = get_current_branch()
+    if current_branch.strip() != DEFAULT_MAIN_BRANCH:
+        info(f"Renaming branch '{current_branch.strip()}' to '{DEFAULT_MAIN_BRANCH}'...")
+        run_command(["git", "branch", "-m", DEFAULT_MAIN_BRANCH])
+        current_branch = DEFAULT_MAIN_BRANCH
+    
+    remote_refs = run_command(["git", "ls-remote", "--heads", "origin", DEFAULT_MAIN_BRANCH], allow_fail=True)
+    if not isinstance(remote_refs, subprocess.CalledProcessError) and remote_refs.strip():
+        info("Remote branch has existing commits. Pulling and merging...")
+        pull_result = run_command(
+            ["git", "pull", "origin", DEFAULT_MAIN_BRANCH, "--allow-unrelated-histories", "--no-edit"],
+            allow_fail=True
+        )
+        if isinstance(pull_result, subprocess.CalledProcessError):
+            error("Failed to merge remote content. You may need to resolve conflicts manually.")
+            warning("Run: git pull origin main --allow-unrelated-histories")
+            warning("Then: gitgo push main 'your message'\n")
+            return
+        success("Remote content merged successfully! 🔄")
     
     print("\n" + ("=" * 90))
     success("🎯 LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
-    success("Ready to push with: gitgo push main 'your message'")
+    success(f"Ready to push with: gitgo push {DEFAULT_MAIN_BRANCH} 'your message'")
     info("AWAITING FURTHER ORDERS...\n")
 
     user_choice = input(f"\nDo you want to push now? (y/n): ").lower()
     if user_choice != 'y':
         return
     
-    push_operation(current_branch, "init: Project Initialization.")
+    git_push(current_branch)
+    
+    print("\n" + ("=" * 90))
+    success("MISSION COMPLETE ✅ — REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
     
 
 def push_operation(arguments):
@@ -192,7 +207,6 @@ def main():
         error("\nInvalid arguments!\n")
         sys.exit(1)
 
-    # This list will return all arguments except the script name "gitgo"
     arguments = sys.argv[1:]
 
     type_of_operation = arguments[0].lower()
@@ -211,14 +225,12 @@ def main():
         warning("Feature is currently in development.\n")
         sys.exit(0)
 
-    # handle update operation first - no path validation needed for update
     if type_of_operation == "update":
         update_operation(arguments)
         sys.exit(0)
 
     validate_operation(type_of_operation)
 
-    # check path validity for all operations except update - lowkey important
     if not check_path_validity():
         error("Operation aborted due to outdated PATH.")
         warning("Please run 'gitgo update' first to fix the issue.\n")
@@ -231,7 +243,7 @@ def main():
     elif type_of_operation == "link":
         link_operation(arguments)
     elif type_of_operation == "state":
-        state_operations(arguments[1:]) # This only passes the argument like load, save, delete
+        state_operations(arguments[1:])
     elif type_of_operation == "user":
         user_management(arguments[1:])
     else:
