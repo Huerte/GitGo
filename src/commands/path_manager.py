@@ -6,6 +6,7 @@ from utils.colors import info, success, warning, error
 import shutil
 import sys
 import os
+import re
 
 
 def get_current_script_path():
@@ -13,41 +14,35 @@ def get_current_script_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'gitgo.py'))
 
 
+def _extract_script_path(content):
+    """Extract gitgo.py path from wrapper script content using regex.
+    Handles quoted paths with spaces correctly (e.g. 'Git Tools').
+    """
+    # Try to find a quoted path containing gitgo.py first
+    match = re.search(r'"([^"]*gitgo\.py[^"]*)"', content)
+    if match:
+        return os.path.abspath(match.group(1))
+    
+    # Fallback: try unquoted path (no spaces)
+    match = re.search(r'(\S*gitgo\.py\S*)', content)
+    if match:
+        return os.path.abspath(match.group(1).strip("'"))
+    
+    return None
+
+
 def get_system_gitgo_path():
-    # check where the system thinks gitgo is located
     gitgo_path = shutil.which("gitgo")
     if gitgo_path:
         # resolve any symlinks or batch files to get the actual script path
-        if is_windows() and gitgo_path.endswith('.bat'):
-            # Windows batch file - extract python script path
-            try:
-                with open(gitgo_path, 'r') as f:
-                    content = f.read()
-                    # look for python script path in batch file
-                    for line in content.split('\n'):
-                        if 'python' in line.lower() and 'gitgo.py' in line:
-                            # extract the path - basic parsing, might need adjustment
-                            parts = line.split()
-                            for part in parts:
-                                if 'gitgo.py' in part:
-                                    return os.path.abspath(part.strip('"\''))
-            except:
-                pass
-        else:
-            # Unix shell script - extract python script path
-            try:
-                with open(gitgo_path, 'r') as f:
-                    content = f.read()
-                    # look for exec python line
-                    for line in content.split('\n'):
-                        if 'exec' in line and 'gitgo.py' in line:
-                            # extract the path from exec command
-                            parts = line.split()
-                            for part in parts:
-                                if 'gitgo.py' in part:
-                                    return os.path.abspath(part.strip('"\''))
-            except:
-                pass
+        try:
+            with open(gitgo_path, 'r') as f:
+                content = f.read()
+                extracted = _extract_script_path(content)
+                if extracted:
+                    return extracted
+        except:
+            pass
     return gitgo_path
 
 
@@ -114,10 +109,8 @@ def update_operation(arguments):
         wrapper_name = get_executable_name()
         wrapper_path = os.path.join(target_dir, wrapper_name)
         
-        # Create wrapper content
         wrapper_content = create_wrapper_script(current_script, current_dir)
         
-        # Write wrapper file
         with open(wrapper_path, 'w', newline='\n' if not is_windows() else None) as f:
             f.write(wrapper_content)
         
@@ -127,6 +120,20 @@ def update_operation(arguments):
             os.chmod(wrapper_path, os.stat(wrapper_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         
         success(f"✅ Wrapper created: {wrapper_path}")
+        
+        # Clean up stale wrappers from other known locations
+        if is_windows():
+            stale_locations = [
+                os.path.join(os.environ.get('APPDATA', ''), 'GitGo', 'gitgo.bat'),
+            ]
+            for stale_path in stale_locations:
+                if os.path.exists(stale_path) and os.path.abspath(stale_path) != os.path.abspath(wrapper_path):
+                    try:
+                        os.remove(stale_path)
+                        success(f"🗑️  Removed stale wrapper: {stale_path}")
+                    except Exception:
+                        warning(f"⚠️  Could not remove stale wrapper: {stale_path}")
+                        warning("    You may want to delete it manually.")
         
         # Check if target_dir is in PATH
         if not is_in_path(target_dir):

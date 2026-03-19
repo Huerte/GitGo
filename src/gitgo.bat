@@ -6,3 +6,4 @@
 :: %* stands for "all the arguments passed to this script"
 :: so this line runs gitgo.py located in the same folder as this .bat file
 py "%~dp0gitgo.py" %*
+exit /b %errorlevel%
