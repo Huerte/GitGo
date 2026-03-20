@@ -1,10 +1,11 @@
+from utils.colors import error, info, success, warning
+from yaspin import yaspin
 import subprocess
 import sys
 import os
-from utils.colors import error, info, success, warning
 
 
-def run_command(command, allow_fail=False, return_complete=False):
+def run_command(command, allow_fail=False, return_complete=False, loading_msg=None):
     """
     Runs a shell command safely.
     
@@ -12,6 +13,15 @@ def run_command(command, allow_fail=False, return_complete=False):
     :param allow_fail: if True, do not exit on error
     :param return_complete: if True, return subprocess.CompletedProcess instead of stdout
     """
+
+    spinner = yaspin(
+        text=loading_msg,
+        color="cyan"
+    ) if loading_msg else None
+
+    if spinner:
+        spinner.start()
+
     try:
         result = subprocess.run(
             command,
@@ -19,10 +29,17 @@ def run_command(command, allow_fail=False, return_complete=False):
             capture_output=True,
             text=True
         )
+
+        if spinner:
+            spinner.ok('✔')
+
         return result if return_complete else result.stdout.strip()
     except subprocess.CalledProcessError as e:
         stderr = e.stderr.strip() if e.stderr else ""
         
+        if spinner:
+            spinner.fail('✖')
+
         # Check for dubious ownership error (common in Termux/shared storage)
         if "detected dubious ownership" in stderr:
             error(f"\nSECURITY ALERT: {stderr}")
@@ -46,7 +63,7 @@ def run_command(command, allow_fail=False, return_complete=False):
                     success("Success! Directory added to safe list.")
                     info("Retrying your original command...\n")
                     # Recursive call to retry the original command
-                    return run_command(command, allow_fail, return_complete)
+                    return run_command(command, allow_fail, return_complete, loading_msg=loading_msg)
                 except Exception as fix_err:
                     error(f"Failed to apply fix: {fix_err}")
             else:

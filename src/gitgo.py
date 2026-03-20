@@ -35,20 +35,18 @@ def link_operation(arguments):
     repo_url = arguments[1]
     commit_message = arguments[2] if len(arguments) > 2 else "Initial commit"
     
-    info("\n🚀 INITIATING LINK OPERATION...")
+    info("\nINITIATING LINK OPERATION...")
     info(f"Target: {repo_url}\n")
     
     if not git_init():
         return
     
-    info("Adding all files...")
-    run_command(["git", "add", "."])
-    success("Files staged for commit! 📁")
+    run_command(["git", "add", "."], loading_msg="Staging files...")
+    success("Files staged for commit.")
     
     clean_message = commit_message.strip('"\'')
-    info("Creating initial commit...")
-    run_command(["git", "commit", "-m", clean_message])
-    success("Initial commit created! 💾")
+    run_command(["git", "commit", "-m", clean_message], loading_msg="Creating initial commit...")
+    success("Initial commit created.")
     
     add_remote_origin(repo_url)
     
@@ -58,26 +56,24 @@ def link_operation(arguments):
     
     current_branch = get_current_branch()
     if current_branch.strip() != DEFAULT_MAIN_BRANCH:
-        info(f"Renaming branch '{current_branch.strip()}' to '{DEFAULT_MAIN_BRANCH}'...")
-        run_command(["git", "branch", "-m", DEFAULT_MAIN_BRANCH])
+        run_command(["git", "branch", "-m", DEFAULT_MAIN_BRANCH], loading_msg=f"Renaming branch '{current_branch.strip()}' to '{DEFAULT_MAIN_BRANCH}'...")
         current_branch = DEFAULT_MAIN_BRANCH
     
-    remote_refs = run_command(["git", "ls-remote", "--heads", "origin", DEFAULT_MAIN_BRANCH], allow_fail=True)
+    remote_refs = run_command(["git", "ls-remote", "--heads", "origin", DEFAULT_MAIN_BRANCH], allow_fail=True, loading_msg="Checking remote branches...")
     if not isinstance(remote_refs, subprocess.CalledProcessError) and remote_refs.strip():
-        info("Remote branch has existing commits. Pulling and merging...")
         pull_result = run_command(
             ["git", "pull", "origin", DEFAULT_MAIN_BRANCH, "--allow-unrelated-histories", "--no-edit"],
-            allow_fail=True
+            allow_fail=True, loading_msg="Pulling and merging remote content..."
         )
         if isinstance(pull_result, subprocess.CalledProcessError):
             error("Failed to merge remote content. You may need to resolve conflicts manually.")
             warning("Run: git pull origin main --allow-unrelated-histories")
             warning("Then: gitgo push main 'your message'\n")
             return
-        success("Remote content merged successfully! 🔄")
+        success("Remote content merged successfully.")
     
     print("\n" + ("=" * 90))
-    success("🎯 LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
+    success("LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
     success(f"Ready to push with: gitgo push {DEFAULT_MAIN_BRANCH} 'your message'")
     info("AWAITING FURTHER ORDERS...\n")
 
@@ -88,7 +84,7 @@ def link_operation(arguments):
     git_push(current_branch)
     
     print("\n" + ("=" * 90))
-    success("MISSION COMPLETE ✅ — REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+    success("MISSION COMPLETE — REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
     
 
 def push_operation(arguments):
@@ -130,7 +126,7 @@ def push_operation(arguments):
             sys.exit(1)
 
         branch = branch if branch else arguments[1]
-
+    
     message = message if message else arguments[-1]
 
     commit_made = git_commit(message)
@@ -139,12 +135,12 @@ def push_operation(arguments):
         git_push(branch)
     else:
         try:
-            unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True)
+            unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True, loading_msg="Checking for unpushed commits...")
             if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
                 warning("\nNo changes to commit, but found unpushed commits. Pushing to remote...")
                 git_push(branch)
             else:
-                info("\nWorking tree is clean and everything is up to date! 😎")
+                info("\nWorking tree is clean and everything is up to date.")
                 warning("Make some changes first before using GitGo to commit and push.")
                 return
         except:
@@ -153,7 +149,7 @@ def push_operation(arguments):
             return
 
     print("\n" + ("=" * 90))
-    success("MISSION COMPLETE ✅ — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+    success("MISSION COMPLETE — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
 
 
 def validate_operation(operation):

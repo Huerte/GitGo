@@ -21,7 +21,7 @@ def is_branch_exist(branch):
 
 
 def git_new_branch(branch):
-    print(run_command(["git", "checkout", "-b", branch]))
+    run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
     success(f"\nBranch '{branch}' created.\n")
 
     return branch
@@ -32,10 +32,10 @@ def git_commit(commit_message):
     if isinstance(status_result, subprocess.CalledProcessError) or not status_result.strip():
         return False
 
-    print(run_command(["git", "add", "."]))
+    run_command(["git", "add", "."], loading_msg="Staging files...")
     clean_message = commit_message.strip('"\'')
     
-    print(run_command(["git", "commit", "-m", clean_message]))
+    run_command(["git", "commit", "-m", clean_message], loading_msg="Committing changes...")
 
     success("\nChanges committed.\n")
     return True
@@ -46,15 +46,14 @@ def git_init():
         warning("Already a git repository! Skipping init...")
         return True
     
-    info("Initializing git repository...")
     # Use -b main to set default branch to 'main' (Git >= 2.28)
-    result = run_command(["git", "init", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True)
+    result = run_command(["git", "init", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True, loading_msg="Initializing git repository...")
     if isinstance(result, subprocess.CalledProcessError):
         # Fallback for older Git versions that don't support -b
-        run_command(["git", "init"])
+        run_command(["git", "init"], loading_msg="Initializing git repository...")
         run_command(["git", "checkout", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True)
 
-    success("Git repository initialized! 🎯")
+    success("Git repository initialized.")
     return True
 
 
@@ -65,26 +64,23 @@ def add_remote_origin(repo_url):
     existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
     if not isinstance(existing_remote, subprocess.CalledProcessError):
         warning(f"Remote origin already exists: {existing_remote}")
-        warning("Updating to new URL...")
-        run_command(["git", "remote", "set-url", "origin", clean_url])
+        run_command(["git", "remote", "set-url", "origin", clean_url], loading_msg="Updating remote URL...")
     else:
-        info("Adding remote origin...")
-        run_command(["git", "remote", "add", "origin", clean_url])
+        run_command(["git", "remote", "add", "origin", clean_url], loading_msg="Adding remote origin...")
     
-    success(f"Remote origin set to: {clean_url} ✨")
+    success(f"Remote origin set to: {clean_url}")
 
 
 def confirm_remote_link():
     # test connection to remote - make sure it's not cap
-    info("Testing connection to remote...")
-    test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True)
+    test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True, loading_msg="Testing connection to remote...")
     
     if isinstance(test_result, subprocess.CalledProcessError):
-        error("Failed to connect to remote repository! 💀")
+        error("Failed to connect to remote repository!")
         warning("Please check your repository URL and network connection.")
         return False
     
-    success("Successfully connected to remote repository! 🔗")
+    success("Successfully connected to remote repository.")
     return True
 
 
@@ -94,20 +90,17 @@ def create_main_branch():
     
     if isinstance(current_branch, subprocess.CalledProcessError) or not current_branch.strip():
         # no commits yet, set default branch to main
-        info("Setting default branch to 'main'...")
-        run_command(["git", "checkout", "-b", "main"])
+        run_command(["git", "checkout", "-b", "main"], loading_msg="Setting default branch to 'main'...")
     elif current_branch.strip() != "main":
         # rename current branch to main
-        info(f"Renaming branch '{current_branch.strip()}' to 'main'...")
-        run_command(["git", "branch", "-m", "main"])
+        run_command(["git", "branch", "-m", "main"], loading_msg=f"Renaming branch '{current_branch.strip()}' to 'main'...")
     else:
-        success("Already on 'main' branch! 👌")
+        success("Already on 'main' branch.")
 
 
 def check_and_sync_branch(branch):
     try:
-        warning("Checking if branch is up to date...")
-        run_command(["git", "fetch", "origin"])
+        run_command(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date...")
 
         try:
             local_commit = run_command(["git", "rev-parse", branch])
@@ -119,7 +112,7 @@ def check_and_sync_branch(branch):
                 )
                 if behind_check and int(behind_check) > 0:
                     warning(f"Local branch is behind remote by {behind_check} commit(s). Pulling changes...")
-                    output = run_command(["git", "pull", "--rebase", "origin", branch])
+                    output = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...")
                     if output:
                         print(output)
                     success("Successfully synced with remote!")
@@ -144,11 +137,10 @@ def git_push(branch):
         if not is_ssh_url(remote_url) and check_connection():
             ssh_url = convert_https_to_ssh(remote_url)
             if ssh_url:
-                info(f"Converting remote from HTTPS to SSH for secure push...")
-                run_command(["git", "remote", "set-url", "origin", ssh_url])
+                run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...")
                 success(f"Remote updated to: {ssh_url}")
     
-    print(run_command(["git", "push", "-u", "origin", branch]))
+    run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
     success(f"\nPushed to remote branch '{branch}'.\n")
 
 
