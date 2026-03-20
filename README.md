@@ -8,7 +8,6 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
-[![Tests](https://github.com/Huerte/GitGo/actions/workflows/test.yml/badge.svg)](https://github.com/Huerte/GitGo/actions)
 
 <!-- Replace this comment with a demo GIF: record with asciinema or terminalizer -->
 <!-- ![GitGo demo](https://raw.githubusercontent.com/Huerte/GitGo/main/assets/demo.gif) -->
