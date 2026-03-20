@@ -124,7 +124,7 @@ def push_operation(arguments):
                 message = DEFAULT_COMMIT_MSG
             else:
                 branch = get_current_branch()
-                message = DEFAULT_COMMIT_MSG
+                message = arguments[1]
         elif len(arguments) > 3:
             error("\nToo many arguments!\n")
             sys.exit(1)
