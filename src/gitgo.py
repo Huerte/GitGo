@@ -100,7 +100,7 @@ def push_operation(arguments):
     
     branch = None
     message = None
-
+    
     if len(arguments) > 1 and arguments[1] in ["-n", "new"]:
         # [push, -n, branch, commit_msg]
         if len(arguments) < 3:
