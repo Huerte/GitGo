@@ -1,5 +1,5 @@
-from utils.executor import run_command
-from utils.colors import info, success, warning, error
+from pygitgo.utils.executor import run_command
+from pygitgo.utils.colors import info, success, warning, error
 from . import ssh_utils
 import os
 
@@ -18,7 +18,6 @@ def login():
             error("Please enter a valid email address.")
         
 
-    # GENERATE KEY
     key_path = ssh_utils.generate_ssh_key(email=email)
     pub_key_path = str(key_path) + ".pub"
 
@@ -77,4 +76,3 @@ def logout():
     except Exception as e:
         error(f"Failed to remove SSH keys\nCAUSE OF ERROR: {e}")
         return False
-

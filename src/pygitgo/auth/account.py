@@ -1,5 +1,5 @@
-from utils.executor import run_command
-from utils.colors import info, success, warning, error, BLUE, RESET
+from pygitgo.utils.executor import run_command
+from pygitgo.utils.colors import info, success, warning, error, BLUE, RESET
 import subprocess
 
 
@@ -38,7 +38,6 @@ def ensure_user_configure(default_email=None, default_username=None):
     warning("\nGit user identity is not configured!")
     info("This is required for your commits to be attributed correctly.")
     
-    # Use default_username if provided, otherwise ask
     if default_username:
         new_username = default_username
         info(f"Using GitHub username: {new_username}")
@@ -60,4 +59,3 @@ def ensure_user_configure(default_email=None, default_username=None):
     
     error("Invalid configuration. Name and Email are required.")
     return False
-

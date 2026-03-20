@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygitgo"
+version = "1.0.0"
+description = "GitGo CLI - Your Fast Git Companion. Simplifies git push, link, stash, and user management."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Huerte"}
+]
+keywords = ["git", "cli", "push", "github", "automation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Software Development :: Version Control :: Git",
+]
+dependencies = [
+    "yaspin>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Huerte/GitGo"
+Repository = "https://github.com/Huerte/GitGo"
+
+[project.scripts]
+gitgo = "pygitgo.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

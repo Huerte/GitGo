@@ -1,6 +1,6 @@
-from utils.executor import run_command
-from utils.colors import info, success, warning, error
-from utils import platform_utils
+from pygitgo.utils.executor import run_command
+from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils import platform_utils
 from pathlib import Path
 import sys
 import os
@@ -8,11 +8,9 @@ import os
 
 
 def ensure_github_known_host():
-    # Make sure github.com is in the known_hosts file to avoid authenticity prompts.
     known_hosts = Path.home() / ".ssh" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
-    # Only add if github.com is not already there
     try:
         if known_hosts.exists():
             with open(known_hosts, "r") as f:
@@ -24,7 +22,6 @@ def ensure_github_known_host():
     info("Adding GitHub to known_hosts...")
     result = run_command(["ssh-keyscan", "-H", "github.com"], allow_fail=True, return_complete=True)
     
-    # Check if command succeeded and has output
     if not isinstance(result, Exception) and result.stdout and "github.com" in result.stdout:
         with open(known_hosts, "a") as f:
             f.write(result.stdout)
@@ -94,19 +91,14 @@ def open_github_settings():
     elif platform_utils.is_linux() or platform_utils.is_macos():
         os.system(f"xdg-open {url}")
     else:
-        # Fallback for other platforms
         import webbrowser
         webbrowser.open(url)
 
 
 def convert_https_to_ssh(url):
 
-    # Convert HTTPS GitHub URL to SSH format.
-    # Example: https://github.com/user/repo.git -> git@github.com:user/repo.git
-
     import re
     
-    # Match HTTPS GitHub URLs
     pattern = r'^https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$'
     match = re.match(pattern, url.strip())
     
