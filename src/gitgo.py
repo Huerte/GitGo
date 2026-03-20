@@ -205,6 +205,49 @@ def user_management(operation):
         sys.exit(1)
 
 
+def get_version():
+    try:
+        from importlib.metadata import version
+        return version("gitgo")
+    except Exception:
+        return "1.0 (Source)"
+
+def display_help():
+    print("")
+    highlight("       GitGo CLI - Your Fast Git Companion")
+    warning("=" * 60)
+    info("Usage: gitgo <command> [arguments]\n")
+    
+    warning("CORE COMMANDS:")
+    success("  push")
+    print("      gitgo push [branch] [message]       Push branch to remote")
+    print("      gitgo push -n <branch> [msg]        Create new branch & push\n")
+    
+    success("  link")
+    print("      gitgo link <url> [message]          Init, commit, and link to repo\n")
+    
+    warning("STATE MANAGEMENT:")
+    success("  state")
+    print("      gitgo state list | -l               List all saved states (stashes)")
+    print("      gitgo state save | -s [name]        Save the current working state")
+    print("      gitgo state load | -o [id]          Load a previously saved state")
+    print("      gitgo state delete | -d [id] | -a   Delete a specific or all states\n")
+    
+    warning("USER CONFIGURATION:")
+    success("  user")
+    print("      gitgo user login                    Setup Git username and email")
+    print("      gitgo user logout                   Remove Git user configuration\n")
+    
+    warning("SYSTEM:")
+    success("  update")
+    print("      gitgo update                        Update system wrapper location\n")
+    
+    warning("GLOBAL FLAGS:")
+    print("  -h, --help, help                        Show this complete help manual")
+    print("  -v, version                             Show GitGo version")
+    print("  -r, ready                               Check tool readiness\n")
+    sys.exit(0)
+
 def main():
     if len(sys.argv) < 2:
         error("\nInvalid arguments!\n")
@@ -219,14 +262,11 @@ def main():
         sys.exit(0)
 
     if type_of_operation in ["-v", "version"]:
-        highlight("\nGitGo Version 1.0\n")
+        highlight(f"\nGitGo Version {get_version()}\n")
         sys.exit(0)
 
     if type_of_operation in HELP_COMMANDS:
-        warning("\nUsage: Help Manual for gitgo\n")
-        warning("=" * 50)
-        warning("Feature is currently in development.\n")
-        sys.exit(0)
+        display_help()
 
     if type_of_operation == "update":
         update_operation(arguments)

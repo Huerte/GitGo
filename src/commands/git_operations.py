@@ -37,7 +37,6 @@ def git_commit(commit_message):
     
     run_command(["git", "commit", "-m", clean_message], loading_msg="Committing changes...")
 
-    success("\nChanges committed.\n")
     return True
 
 
@@ -141,7 +140,6 @@ def git_push(branch):
                 success(f"Remote updated to: {ssh_url}")
     
     run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
-    success(f"\nPushed to remote branch '{branch}'.\n")
 
 
 def handle_rebase():
