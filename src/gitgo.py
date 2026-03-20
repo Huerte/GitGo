@@ -102,6 +102,7 @@ def push_operation(arguments):
     message = None
 
     if arguments[1] in ["-n", "new"]:
+        # [push, -n, branch, commit_msg]
         if len(arguments) < 3:
             error("\nBranch name required for new branch creation!\n")
             sys.exit(1)
@@ -114,17 +115,23 @@ def push_operation(arguments):
         branch = arguments[2]
         git_new_branch(branch)
     else:
+        # [push, branch, commit_msg]
         if len(arguments) < 2:
             branch = get_current_branch()
             message = DEFAULT_COMMIT_MSG
         elif len(arguments) < 3:
-            message = DEFAULT_COMMIT_MSG
+            if is_branch_exist(arguments[1]):
+                message = DEFAULT_COMMIT_MSG
+            else:
+                branch = get_current_branch()
+                message = DEFAULT_COMMIT_MSG
         elif len(arguments) > 3:
             error("\nToo many arguments!\n")
             sys.exit(1)
 
-    branch = branch if branch else arguments[1]
-    message = message if message else arguments[2]
+        branch = branch if branch else arguments[1]
+
+    message = message if message else arguments[-1]
 
     commit_made = git_commit(message)
     
