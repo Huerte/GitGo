@@ -130,7 +130,7 @@ def push_operation(arguments):
             sys.exit(1)
 
         branch = branch if branch else arguments[1]
-
+    
     message = message if message else arguments[-1]
 
     commit_made = git_commit(message)
