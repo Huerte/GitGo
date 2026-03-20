@@ -6,7 +6,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
 
 <!-- Replace this comment with a demo GIF: record with asciinema or terminalizer -->
@@ -203,7 +203,7 @@ Please open an issue first for significant changes so we can discuss the approac
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+GPLv3 — see [LICENSE](LICENSE) for details.
 
 ---
 

@@ -98,7 +98,7 @@ def load_state(arguments):
         info("\nEnter the ID of the state you want to load (or 'q' to cancel): ")
         state_id = ask_state_id(save_states)
         
-    run_command(["git", "stash", "apply", f"stash@{{{int(state_id) - 1}}}"])
+    run_command(["git", "stash", "apply", str(int(state_id) - 1)])
 
     success(f"\nState '{save_states[int(state_id) - 1]}' loaded successfully.\n")
 
@@ -160,7 +160,7 @@ def delete_state(arguments):
         if not validate_state_id(state_id, all_save_state()):
             sys.exit(1)
     
-    run_command(["git", "stash", "drop", f"stash@{{{int(state_id) - 1}}}"])
+    run_command(["git", "stash", "drop", str(int(state_id) - 1)])
     success(f"\nState with ID '{state_id}' deleted successfully.\n")
 
 
