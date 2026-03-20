@@ -24,7 +24,6 @@ def is_linux():
 
 
 def is_termux():
-    # Termux sets PREFIX environment variable
     if os.environ.get('PREFIX', '').startswith('/data/data/com.termux'):
         return True
     
@@ -35,7 +34,6 @@ def is_termux():
 
 
 def is_macos():
-    """Check if running on macOS"""
     return get_platform() == 'macos'
 
 
@@ -43,16 +41,13 @@ def get_install_directory():
     current_platform = get_platform()
     
     if current_platform == 'windows':
-        # Windows: Use AppData\GitGo
         return os.path.join(os.environ.get('APPDATA', ''), 'GitGo')
     
     elif current_platform == 'termux':
-        # Termux: Use $PREFIX/share/gitgo
         prefix = os.environ.get('PREFIX', '/data/data/com.termux/files/usr')
         return os.path.join(prefix, 'share', 'gitgo')
     
     elif current_platform == 'linux' or current_platform == 'macos':
-        # Linux/macOS: Use ~/.local/share/gitgo
         home = os.path.expanduser('~')
         return os.path.join(home, '.local', 'share', 'gitgo')
     
@@ -61,11 +56,9 @@ def get_install_directory():
 
 
 def get_bin_directory():
-    # Return bin directory path where gitgo wrapper will be placed
     current_platform = get_platform()
     
     if current_platform == 'windows':
-        # Windows: Try multiple locations in preference order
         potential_paths = [
             os.path.expanduser("~\\AppData\\Local\\Microsoft\\WindowsApps"),
             "C:\\Windows\\System32",
@@ -81,12 +74,10 @@ def get_bin_directory():
         return fallback
     
     elif current_platform == 'termux':
-        # Termux: Use $PREFIX/bin
         prefix = os.environ.get('PREFIX', '/data/data/com.termux/files/usr')
         return os.path.join(prefix, 'bin')
     
     elif current_platform == 'linux' or current_platform == 'macos':
-        # Linux/macOS: Use ~/.local/bin
         home = os.path.expanduser('~')
         bin_dir = os.path.join(home, '.local', 'bin')
         os.makedirs(bin_dir, exist_ok=True)
@@ -104,7 +95,6 @@ def get_executable_name():
 
 
 def get_path_separator():
-    # ';' for Windows, ':' for Unix-like systems
     if is_windows():
         return ';'
     else:
@@ -131,7 +121,6 @@ def create_wrapper_script(script_path, install_dir):
         return f'@echo off\npy "{script_path}" %*\nexit /b %errorlevel%\n'
     
     else:
-        # Unix shell script
         python_exec = get_python_executable()
         return f'''#!/bin/sh
 # GitGo CLI Wrapper
@@ -145,8 +134,6 @@ def is_in_path(directory):
     path_env = os.environ.get('PATH', '')
     separator = get_path_separator()
     
-    # Split PATH and normalize for comparison
-    # Yaak kasabot ini suggestion ra ni gpt it
     path_dirs = [os.path.normpath(p) for p in path_env.split(separator)]
     normalized_dir = os.path.normpath(directory)
     

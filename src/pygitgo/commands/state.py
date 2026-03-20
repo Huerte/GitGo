@@ -1,10 +1,9 @@
-from utils.executor import run_command
-from utils.colors import info, highlight, error, warning, success
+from pygitgo.utils.executor import run_command
+from pygitgo.utils.colors import info, highlight, error, warning, success
 import sys
 
 
 def all_save_state():
-    # "--pretty=%gd: %s" this format specifier remove branch from the result
     output = run_command(["git", "stash", "list", "--pretty=%gd: %s"])
     if not output:
         info("\nNo saved states found.\n")
@@ -18,7 +17,6 @@ def all_save_state():
 def display_save_states():
     save_states = all_save_state()
 
-    # Display the list of saved states
     print("\nSaved States:")
     print("-" * 32)
     for state in save_states:
@@ -74,7 +72,6 @@ def load_state(arguments):
         error("\nToo many arguments for load operation!\n")
         sys.exit(1)
 
-    # Get the list of all saved states once
     save_states = all_save_state()
     proceed = False
     state_id = None
@@ -91,7 +88,6 @@ def load_state(arguments):
             state_id = arguments[1]
             proceed = validate_state_id(state_id, save_states)
             if not proceed:
-                # Fall through to exit if ID is invalid
                 sys.exit(1)
         else:
             error(f"\nInvalid argument '{arguments[1]}' for load operation. Expected a state ID.\n")
@@ -102,7 +98,6 @@ def load_state(arguments):
         info("\nEnter the ID of the state you want to load (or 'q' to cancel): ")
         state_id = ask_state_id(save_states)
         
-    # Load the selected state
     run_command(["git", "stash", "apply", f"stash@{{{int(state_id) - 1}}}"])
 
     success(f"\nState '{save_states[int(state_id) - 1]}' loaded successfully.\n")
@@ -115,7 +110,6 @@ def save_state(arguments):
     elif len(arguments) < 2:
         state_name = "Auto-Save"
     
-    # Name of the state to save
     if len(arguments) == 2:
         if arguments[1] in ("-h", "--help", "help"):
             print("\nSave the current working state with an optional name.\n")

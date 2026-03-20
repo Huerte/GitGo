@@ -1,9 +1,35 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.py.class
+
+# PyPI Build and Distribution files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual Environments
+venv/
+env/
+.venv/
+env.bak/
+venv.bak/
+
+# IDEs and Text Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Project-Specific Ignores
 *.txt
+.chronotab/
 ROADMAP.md
 Roadmap.docx
-.chronotab/

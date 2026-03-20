@@ -1,20 +1,19 @@
-from auth.ssh_utils import ensure_github_known_host
-from commands.git_operations import (
+from pygitgo.auth.ssh_utils import ensure_github_known_host
+from pygitgo.commands.git_operations import (
     git_new_branch, git_commit, git_init, add_remote_origin,
     confirm_remote_link, create_main_branch, check_and_sync_branch,
     git_push, handle_rebase, get_current_branch, is_branch_exist
 )
-from commands.path_manager import check_path_validity, update_operation
-from commands.state import state_operations
-from utils.executor import run_command
-from auth.manager import login, logout
-from auth.account import get_user
-from utils.colors import info, success, warning, error, highlight
+from pygitgo.commands.state import state_operations
+from pygitgo.utils.executor import run_command
+from pygitgo.auth.manager import login, logout
+from pygitgo.auth.account import get_user
+from pygitgo.utils.colors import info, success, warning, error, highlight
 import subprocess
 import sys
 
 
-GITGO_OPERATIONS = ["push", "link", "update", "state", "user"]
+GITGO_OPERATIONS = ["push", "link", "state", "user"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 DEFAULT_COMMIT_MSG = "New Project Update"
 DEFAULT_MAIN_BRANCH = "main"
@@ -98,7 +97,6 @@ def push_operation(arguments):
     message = None
 
     if len(arguments) > 1 and arguments[1] in ["-n", "new"]:
-        # [push, -n, branch, commit_msg]
         if len(arguments) < 3:
             error("\nBranch name required for new branch creation!\n")
             sys.exit(1)
@@ -111,7 +109,6 @@ def push_operation(arguments):
         branch = arguments[2]
         git_new_branch(branch)
     else:
-        # [push, branch, commit_msg]
         if len(arguments) < 2:
             branch = get_current_branch()
             message = DEFAULT_COMMIT_MSG
@@ -208,9 +205,9 @@ def user_management(operation):
 def get_version():
     try:
         from importlib.metadata import version
-        return version("gitgo")
+        return version("pygitgo")
     except Exception:
-        return "1.0 (Source)"
+        return "dev"
 
 def display_help():
     print("")
@@ -238,9 +235,6 @@ def display_help():
     print("      gitgo user login                    Setup Git username and email")
     print("      gitgo user logout                   Remove Git user configuration\n")
     
-    warning("SYSTEM:")
-    success("  update")
-    print("      gitgo update                        Update system wrapper location\n")
     
     warning("GLOBAL FLAGS:")
     print("  -h, --help, help                        Show this complete help manual")
@@ -268,16 +262,7 @@ def main():
     if type_of_operation in HELP_COMMANDS:
         display_help()
 
-    if type_of_operation == "update":
-        update_operation(arguments)
-        sys.exit(0)
-
     validate_operation(type_of_operation)
-
-    if not check_path_validity():
-        error("Operation aborted due to outdated PATH.")
-        warning("Please run 'gitgo update' first to fix the issue.\n")
-        sys.exit(1)
 
     ensure_github_known_host()
 
