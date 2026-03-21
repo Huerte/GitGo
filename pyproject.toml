@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pygitgo"
-version = "1.0.0"
+version = "1.0.2"
 description = "GitGo CLI - Your Fast Git Companion. Simplifies git push, link, stash, and user management."
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
@@ -22,6 +22,12 @@ classifiers = [
 ]
 dependencies = [
     "yaspin>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock>=3.10",
 ]
 
 [project.urls]
