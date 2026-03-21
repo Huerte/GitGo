@@ -7,6 +7,8 @@ def get_platform():
     
     if system == 'windows':
         return 'windows'
+    elif system == 'darwin':
+        return 'macos'
     elif system == 'linux':
         if is_termux():
             return 'termux'

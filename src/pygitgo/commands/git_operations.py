@@ -34,7 +34,7 @@ def git_commit(commit_message):
     run_command(["git", "add", "."], loading_msg="Staging files...")
     clean_message = commit_message.strip('"\'')
     
-    run_command(["git", "commit", "-m", clean_message], loading_msg="Committing changes...")
+    run_command(["git", "commit", "-m", clean_message], loading_msg="Commiting changes...")
 
     return True
 
@@ -111,9 +111,9 @@ def check_and_sync_branch(branch):
                     success("Branch is up to date or ahead of remote.")
             else:
                 success("Branch is already up to date.")
-        except:
+        except (subprocess.CalledProcessError, ValueError):
             warning("Remote branch doesn't exist yet. First push will create it.")
-    except:
+    except (subprocess.CalledProcessError, OSError):
         warning("Could not fetch from remote. Proceeding with push...")
 
 

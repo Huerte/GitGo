@@ -2,6 +2,7 @@ from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils import platform_utils
 from pathlib import Path
+import subprocess
 import sys
 import os
 
@@ -77,7 +78,7 @@ def generate_ssh_key(email):
 
     try:
         run_command(["ssh-add", str(key_path)], allow_fail=True)
-    except:
+    except (subprocess.CalledProcessError, OSError):
         pass 
     
     return key_path

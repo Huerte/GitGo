@@ -31,5 +31,5 @@ Thumbs.db
 # Project-Specific Ignores
 *.txt
 .chronotab/
-ROADMAP.md
-Roadmap.docx
+TODO.md
+docs/

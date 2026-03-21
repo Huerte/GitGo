@@ -4,26 +4,51 @@ import sys
 
 
 def all_save_state():
-    output = run_command(["git", "stash", "list", "--pretty=%gd: %s"])
+    output = run_command([
+        "git", "stash", "list",
+        "--date=format:%Y-%m-%d %H:%M:%S",
+        "--pretty=%gd||%cd||%s"
+    ])
+
     if not output:
         info("\nNo saved states found.\n")
         sys.exit(0)
 
-    save_states = [result[6:] for result in output.splitlines()]
-    
+    save_states = []
+
+    for line in output.splitlines():
+        try:
+            stash_ref, date, message = line.split("||", 2)
+
+            index = int(
+                stash_ref.replace("stash@{", "").replace("}", "")
+            )
+
+            save_states.append({
+                "id": index + 1,   
+                "ref": stash_ref,  
+                "date": date,
+                "message": message
+            })
+
+        except ValueError:
+            warning(f"Skipping malformed line: {line}")
+
     return save_states
 
 
 def display_save_states():
     save_states = all_save_state()
 
-    print("\nSaved States:")
-    print("-" * 32)
-    for state in save_states:
-        state_index = state.split(': ', 1)[0].replace("stash@", "").replace("{", "").replace("}", "")
-        highlight(f"{int(state_index) + 1} | {state.split(': ', 1)[1]}")
+    print("\nID | Date                | Saved State")
+    print("-" * 60)
 
-    print("-" * 32 + '\n')
+    for state in save_states:
+        highlight(
+            f"{state['id']:>2} | {state['date']} | {state['message']}"
+        )
+
+    print("-" * 60 + "\n")
 
 
 def validate_state_id(state_id, save_states):
@@ -31,7 +56,7 @@ def validate_state_id(state_id, save_states):
         error("\nInvalid input. Please enter a valid state ID.\n")
         return False
     elif (int(state_id) - 1) < 0:
-        error("\nState ID cannot be negative. Please enter a valid state ID.\n")
+        error("\nState ID cannot be '0' or negative. Please enter a valid state ID.\n")
         return False
     elif (int(state_id) - 1) >= len(save_states):
         error("\nState ID out of range. Please enter a valid state ID.\n")
@@ -42,6 +67,9 @@ def validate_state_id(state_id, save_states):
 def ask_state_id(save_states):
     proceed = False
     state_id = None
+
+    display_save_states()
+    info("\nEnter the ID (or 'q' to cancel): ")
 
     while not proceed:
         state_id = input(">> ").strip().lower()
@@ -94,13 +122,11 @@ def load_state(arguments):
             sys.exit(1)
     
     if not proceed:
-        display_save_states()
-        info("\nEnter the ID of the state you want to load (or 'q' to cancel): ")
         state_id = ask_state_id(save_states)
         
     run_command(["git", "stash", "apply", str(int(state_id) - 1)])
 
-    success(f"\nState '{save_states[int(state_id) - 1]}' loaded successfully.\n")
+    success(f"\nState '{save_states[int(state_id) - 1]['message']}' loaded successfully.\n")
 
 
 def save_state(arguments):
@@ -139,7 +165,7 @@ def delete_state(arguments):
             print("  gitgo state delete <id>   # Delete a specific state by ID")
             print("  gitgo state delete -a     # Delete all saved states")
             print("  gitgo state -d <id>       # Alias\n")
-            print("  gitgo state -d <id>       # Alias for delete all\n")
+            print("  gitgo state -d <id> -a    # Alias for delete all\n")
             sys.exit(0)
         
         elif arguments[1] == '-a':
