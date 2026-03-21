@@ -9,14 +9,35 @@ from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
 from pygitgo.auth.account import get_user
 from pygitgo.utils.colors import info, success, warning, error, highlight
+from pygitgo.exceptions import GitGoError
 import subprocess
+import shutil
 import sys
+import re
 
 
 GITGO_OPERATIONS = ["push", "link", "state", "user"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 DEFAULT_COMMIT_MSG = "New Project Update"
 DEFAULT_MAIN_BRANCH = "main"
+
+
+def validate_repo_url(url):
+    """Validate that the URL looks like a valid Git repository URL."""
+    patterns = [
+        r'^https?://[\w.-]+/[\w.-]+/[\w.-]+(?:\.git)?/?$',  # HTTPS
+        r'^git@[\w.-]+:[\w.-]+/[\w.-]+(?:\.git)?$',          # SSH
+    ]
+    return any(re.match(p, url.strip()) for p in patterns)
+
+
+def check_git_installed():
+    """Verify that Git is installed and available on PATH."""
+    if not shutil.which("git"):
+        error("\nGit is not installed or not found on your PATH!")
+        info("Install Git from: https://git-scm.com/downloads")
+        info("After installing, restart your terminal and try again.\n")
+        sys.exit(1)
 
 
 def link_operation(arguments):
@@ -32,6 +53,13 @@ def link_operation(arguments):
         sys.exit(0)
     
     repo_url = arguments[1]
+
+    if not validate_repo_url(repo_url):
+        error("\nInvalid repository URL!")
+        warning("Expected format: https://github.com/username/repo.git")
+        warning("             or: git@github.com:username/repo.git\n")
+        sys.exit(1)
+
     commit_message = arguments[2] if len(arguments) > 2 else "Initial commit"
     
     info("\nINITIATING LINK OPERATION...")
@@ -262,20 +290,26 @@ def main():
     if type_of_operation in HELP_COMMANDS:
         display_help()
 
+    check_git_installed()
+
     validate_operation(type_of_operation)
 
     ensure_github_known_host()
 
-    if type_of_operation == "push":
-        push_operation(arguments)
-    elif type_of_operation == "link":
-        link_operation(arguments)
-    elif type_of_operation == "state":
-        state_operations(arguments[1:])
-    elif type_of_operation == "user":
-        user_management(arguments[1:])
-    else:
-        error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
+    try:
+        if type_of_operation == "push":
+            push_operation(arguments)
+        elif type_of_operation == "link":
+            link_operation(arguments)
+        elif type_of_operation == "state":
+            state_operations(arguments[1:])
+        elif type_of_operation == "user":
+            user_management(arguments[1:])
+        else:
+            error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
+            sys.exit(1)
+    except GitGoError as e:
+        error(f"\n{e}\n")
         sys.exit(1)
 
 

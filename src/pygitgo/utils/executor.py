@@ -2,6 +2,7 @@ import subprocess
 import sys
 import os
 from pygitgo.utils.colors import error, info, success, warning
+from pygitgo.exceptions import GitCommandError
 
 
 def run_command(command, allow_fail=False, return_complete=False, loading_msg=None):
@@ -9,9 +10,10 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
     Runs a shell command safely.
     
     :param command: list of command + args
-    :param allow_fail: if True, do not exit on error
+    :param allow_fail: if True, do not raise on error
     :param return_complete: if True, return subprocess.CompletedProcess instead of stdout
     :param loading_msg: if provided, show a yaspin spinner with this message
+    :raises GitCommandError: when the command fails and allow_fail is False
     """
     from yaspin import yaspin
 
@@ -58,7 +60,7 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
                     success("Success! Directory added to safe list.")
                     info("Retrying your original command...\n")
                     return run_command(command, allow_fail, return_complete, loading_msg=loading_msg)
-                except Exception as fix_err:
+                except OSError as fix_err:
                     error(f"Failed to apply fix: {fix_err}")
             else:
                 warning("\nFix declined. Operations in this directory will continue to fail.")
@@ -66,6 +68,4 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
         if allow_fail:
             return e
         
-        error(f"\nCommand Failed: {' '.join(command)}")
-        error(f"Error output:\n{stderr or 'No error details available'}\n")
-        sys.exit(1)
+        raise GitCommandError(command, stderr=stderr, returncode=e.returncode)
