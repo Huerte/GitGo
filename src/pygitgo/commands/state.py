@@ -51,14 +51,21 @@ def display_save_states():
     print("-" * 60 + "\n")
 
 
+def is_number(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+    
 def validate_state_id(state_id, save_states):
-    if not state_id.isdigit():
+    if not is_number(state_id):
         error("\nInvalid input. Please enter a valid state ID.\n")
         return False
-    elif (int(state_id) - 1) < 0:
+    elif (int(float(state_id)) - 1) < 0:
         error("\nState ID cannot be '0' or negative. Please enter a valid state ID.\n")
         return False
-    elif (int(state_id) - 1) >= len(save_states):
+    elif (int(float(state_id)) - 1) >= len(save_states):
         error("\nState ID out of range. Please enter a valid state ID.\n")
         return False
     return True
