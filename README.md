@@ -55,6 +55,7 @@ GitGo provides a CLI environment designed for faster and simpler Git workflows. 
 - **Simplified Git Operations:** Replaces chained commands with single intuitive commands for linking, pushing, and stashing.
 - **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
+- **Custom Defaults:** Save your preferred branch name and commit message locally so you never have to type them again.
 - **SSH Auto-Setup:** Generates an SSH key, adds it to `ssh-agent`, and opens your GitHub settings automatically.
 - **HTTPS to SSH Conversion:** Silently converts the remote to SSH before pushing if your SSH is configured.
 - **Termux Compatibility:** Works natively on Android natively handling common issues like dubious ownership errors.
@@ -130,6 +131,14 @@ gitgo state list
 gitgo state load 1
 ```
 
+### 6. Custom Defaults
+Save your preferred settings so you don't have to provide them every time.
+```bash
+gitgo config set default-branch develop
+gitgo config set default-message "WIP: updates"
+gitgo config get default-branch
+```
+
 ---
 
 ## Command Reference
@@ -142,6 +151,9 @@ Stages all changes, commits, and pushes in one command.
 gitgo push [branch] [message]
 gitgo push -n [branch] [message]   # create new branch first
 ```
+
+> [!TIP]
+> Use `gitgo push -h` to see all available flags and examples.
 
 | Flag | Description |
 |------|-------------|
@@ -186,10 +198,25 @@ gitgo user login        # generate SSH key and configure Git identity
 gitgo user logout       # remove SSH keys and Git identity config
 ```
 
+### `gitgo config`
+
+Manage your GitGo defaults.
+
+```bash
+gitgo config set <key> <value>
+gitgo config get <key>
+```
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `default-branch` | The branch used for push/link | `main` |
+| `default-message` | The commit message used for push | `New Project Update` |
+
 ### Global Flags
 
 ```bash
-gitgo -h        # help
+gitgo help      # show complete manual
+gitgo <cmd> -h  # show help for a specific command
 gitgo -v        # version
 gitgo -r        # verify GitGo is ready
 ```

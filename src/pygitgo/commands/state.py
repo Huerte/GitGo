@@ -3,6 +3,13 @@ from pygitgo.utils.colors import info, highlight, error, warning, success
 import sys
 
 
+ALIASES = {
+    "-l": "list",
+    "-s": "save",
+    "-o": "load",
+    "-d": "delete"
+}
+
 def all_save_state():
     output = run_command([
         "git", "stash", "list",
@@ -88,42 +95,21 @@ def ask_state_id(save_states):
     return state_id
 
 
-def state_list(arguments):
-    if len(arguments) > 1:
-        if arguments[1] in ("-h", "--help", "help"):
-            warning("\nUsage: gitgo state list\n")
-            warning("list: Display all saved states (Alias: -l)\n")
-            sys.exit(0)
-        error("\nToo many arguments for list operation!\n")
-        sys.exit(1)
-
+def state_list():
     display_save_states()
 
 
-def load_state(arguments):
-    if len(arguments) > 2:
-        error("\nToo many arguments for load operation!\n")
-        sys.exit(1)
-
+def load_state(state_id=None):
     save_states = all_save_state()
     proceed = False
-    state_id = None
 
-    if len(arguments) == 2:
-        if arguments[1] in ("-h", "--help", "help"):
-            print("\nLoad a previously saved working state.\n")
-            warning("\nUsage:\n")
-            print("  gitgo state load <id>   # Load a specific state by ID")
-            print("  gitgo state load        # Show all saved states and prompt for selection")
-            print("  gitgo state -o <id>     # Alias\n")
-            sys.exit(0)
-        elif arguments[1].isdigit():
-            state_id = arguments[1]
+    if state_id:
+        if state_id.isdigit():
             proceed = validate_state_id(state_id, save_states)
             if not proceed:
                 sys.exit(1)
         else:
-            error(f"\nInvalid argument '{arguments[1]}' for load operation. Expected a state ID.\n")
+            error(f"\nInvalid argument '{state_id}' for load operation. Expected a state ID.\n")
             sys.exit(1)
     
     if not proceed:
@@ -134,46 +120,20 @@ def load_state(arguments):
     success(f"\nState '{save_states[int(state_id) - 1]['message']}' loaded successfully.\n")
 
 
-def save_state(arguments):
-    if len(arguments) > 2:
-        error("\nToo many arguments for save operation!\n")
-        sys.exit(1)
-    elif len(arguments) < 2:
+def save_state(state_name=None):
+    if not state_name:
         state_name = "Auto-Save"
-    
-    if len(arguments) == 2:
-        if arguments[1] in ("-h", "--help", "help"):
-            print("\nSave the current working state with an optional name.\n")
-            warning("\nUsage:\n")
-            print("  gitgo state save <name>   # Save with a specific name")
-            print("  gitgo state save          # Save with default name 'Auto-Save'")
-            print("  gitgo state -s <name>     # Alias\n")
-            sys.exit(0)
-            
-        state_name = arguments[1]
 
     run_command(["git", "stash", "push", "-m", state_name])
 
     success(f"\nState '{state_name}' saved successfully.\n")
 
 
-def delete_state(arguments):
-    if len(arguments) > 2:
-        error("\nToo many arguments for delete operation!\n")
-        sys.exit(1)
-    elif len(arguments) < 2:
+def delete_state(identifier=None):
+    if not identifier:
         state_id = ask_state_id(all_save_state())
     else:
-        if arguments[1] in ("-h", "--help", "help"):
-            print("\nDelete one or all saved working states.\n")
-            warning("\nUsage:\n")
-            print("  gitgo state delete <id>   # Delete a specific state by ID")
-            print("  gitgo state delete -a     # Delete all saved states")
-            print("  gitgo state -d <id>       # Alias\n")
-            print("  gitgo state -d <id> -a    # Alias for delete all\n")
-            sys.exit(0)
-        
-        elif arguments[1] == '-a':
+        if identifier == '-a':
             confirm = input("\nAre you sure you want to delete all saved states? (y/n): ").strip().lower()
             if confirm.lower() == 'y':
                 run_command(["git", "stash", "clear"])
@@ -183,11 +143,11 @@ def delete_state(arguments):
                 warning("\nDelete operation cancelled by user.\n")
                 sys.exit(0)
         
-        elif not arguments[1].isdigit():
+        elif not identifier.isdigit():
             error("\nInvalid input. Please enter a valid state ID.\n")
             sys.exit(1)
 
-        state_id = arguments[1]
+        state_id = identifier
         if not validate_state_id(state_id, all_save_state()):
             sys.exit(1)
     
@@ -195,30 +155,20 @@ def delete_state(arguments):
     success(f"\nState with ID '{state_id}' deleted successfully.\n")
 
 
-def state_operations_help():
-    warning("\nState Operations Help:\n")
-    print("  list, -l      Display all saved states.")
-    print("  load, -o      Load a previously saved working state.")
-    print("  save, -s      Save the current working state with a given name.")
-    print("  delete, -d    Delete a previously saved working state.\n")
-    info("Use 'gitgo state <operation> --help' for more information on a specific operation.\n")
 
 
-def state_operations(arguments):
-    if len(arguments) == 0 or arguments[0] in ("-h", "--help", "help"):
-        state_operations_help()
-        sys.exit(0)
+def state_operations(args):
+    action = ALIASES.get(args.action, args.action)
+    identifier = getattr(args, "identifier", None)
 
-    type_of_operation = arguments[0].lower()
-    if type_of_operation in ["list", "-l"]:
-        state_list(arguments)
-    elif type_of_operation in ["load", "-o"]:
-        load_state(arguments)
-    elif type_of_operation in ["save", "-s"]:
-        save_state(arguments)
-    elif type_of_operation in ["delete", "-d"]:
-        delete_state(arguments)
+    if action == "list":
+        state_list()
+    elif action == "save":
+        save_state(identifier)
+    elif action == "load":
+        load_state(identifier)
+    elif action == "delete":
+        delete_state(identifier)
     else:
-        error(f"\nUnknown state operation: {type_of_operation}\n")
-        state_operations_help()
+        error(f"\nUnknown state operation: {action}\n")
         sys.exit(1)

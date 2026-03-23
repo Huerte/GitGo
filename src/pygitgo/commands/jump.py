@@ -7,9 +7,6 @@ from pygitgo.utils.colors import warning, info, success, error
 import subprocess
 import sys
 
-def jump_operations_help():
-    warning("\nUsage: gitgo jump <branch>\n")
-    warning("branch: The name of the branch to jump to.\n")
 
 def undo_jump_operation(original_branch, stashed_code, created_branch=None):
     if created_branch:
@@ -25,12 +22,10 @@ def undo_jump_operation(original_branch, stashed_code, created_branch=None):
     success(f"\nCanceled safely!")
     success(f"You are back on your original branch '{original_branch}', and your code is totally safe.\n")
 
-def jump_operation(arguments):  
-    if len(arguments) == 0 or arguments[0] in ("-h", "--help", "help"):
-        jump_operations_help()
-        sys.exit(0)
+def jump_operation(args):  
 
-    target_branch = arguments[0]
+
+    target_branch = args.branch
 
     original_branch = get_current_branch().strip()
     
