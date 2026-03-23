@@ -1,17 +1,8 @@
 from pygitgo.commands.jump import undo_jump_operation, jump_operation
-from argparse import Namespace
+from conftest import make_args, capture_system_exit_code
 import subprocess
 import pytest
 
-def make_args(branch):
-    """Helper to create an argparse-like Namespace for jump_operation."""
-    return Namespace(branch=branch)
-
-def check_pytest_system_exit(function):
-    with pytest.raises(SystemExit) as exc_info:
-        function()
-
-    return exc_info.value.code
 
 def test_undo_jump_operation_no_stash(mocker):
     fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value="")
@@ -47,7 +38,7 @@ def test_jump_operation_same_branch(mocker):
     )
     fake_warning = mocker.patch('pygitgo.commands.jump.warning')
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args(main_branch))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args(main_branch))) == 0
 
     fake_warning.assert_called_with(f"\nYou are already on branch '{main_branch}'.\n")
 
@@ -60,7 +51,7 @@ def test_jump_operation_not_valid_repo(mocker):
         return_value=subprocess.CalledProcessError(1, 'git')
     )
     
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('main'))) == 1
+    assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 1
 
     fake_warning.assert_called_with("\nUnable to check for uncommitted changes. Please ensure you're in a valid git repository.")
 
@@ -77,7 +68,7 @@ def test_jump_operation_has_changes_exit(mocker):
         side_effect=['some-changes']
     )
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('main'))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 0
 
     fake_warning.assert_any_call("\nYou cannot switch branches with unsaved changes. Jump canceled.\n")
     fake_run.assert_any_call(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
@@ -94,7 +85,7 @@ def test_jump_operation_save_changes_error(mocker):
         )
     )
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('main'))) == 1
+    assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 1
 
     fake_warning.assert_called_with("\nFailed to save your changes. Please resolve any issues and try again.")
     fake_run.assert_any_call(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
@@ -115,7 +106,7 @@ def test_jump_operation_no_changes(mocker):
 
     target_branch = 'feature'
     
-    assert check_pytest_system_exit(lambda: jump_operation(make_args(target_branch))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args(target_branch))) == 0
 
     fake_success.assert_called_with(f"\nSuccess! You are now on '{target_branch}'.\n")
     fake_run.assert_any_call(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
@@ -143,7 +134,7 @@ def test_jump_operation_branch_not_exist_cancel_operation(mocker):
 
     target_branch = 'feature'
     
-    assert check_pytest_system_exit(lambda: jump_operation(make_args(target_branch))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args(target_branch))) == 0
 
     fake_info.assert_any_call('\nYour changes have been saved. Jumping to the new branch...')
     fake_info.assert_any_call("Exiting without jumping...\n")
@@ -175,7 +166,7 @@ def test_jump_operation_branch_not_exist_create_branch(mocker):
 
     target_branch = 'feature'
     
-    assert check_pytest_system_exit(lambda: jump_operation(make_args(target_branch))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args(target_branch))) == 0
 
     fake_info.assert_called_with('\nYour changes have been saved. Jumping to the new branch...')
     fake_success.assert_any_call(f"\nSuccess! You are now on '{target_branch}'.")
@@ -204,7 +195,7 @@ def test_jump_operation_sync_fail_cancel(mocker):
         )
     )
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('feature'))) == 1
+    assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 1
 
     fake_warning.assert_any_call("\nFailed to pull updates from 'main'. Make sure you have internet or the remote branch exists.")
 
@@ -225,7 +216,7 @@ def test_jump_operation_sync_fail_stay(mocker):
         )
     )
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('feature'))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
     fake_success.assert_any_call("\nOkay! You are on the new branch, but without the latest updates from 'main'.")
 
@@ -247,7 +238,7 @@ def test_jump_operation_merge_conflict_cancel(mocker):
         )
     )
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('feature'))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
     fake_error.assert_any_call("\nSTOP! There is a 'Merge Conflict'.")
 
@@ -270,7 +261,7 @@ def test_jump_operation_merge_conflict_stay(mocker):
         )
     )
 
-    assert check_pytest_system_exit(lambda: jump_operation(make_args('feature'))) == 0
+    assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
     fake_success.assert_any_call("\nOkay! You are on the new branch with your code.")
     fake_warning.assert_any_call("Please open your code editor RIGHT NOW to fix the conflicts!")

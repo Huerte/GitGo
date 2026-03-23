@@ -19,7 +19,7 @@ def ensure_first_run_setup():
 
     is_initialized = get_config("initialized", fallback_value="false")
 
-    if not is_initialized:
+    if is_initialized == "false":
         info("\nInitializing GitGo network settings for the first time... please wait.")
         ensure_github_known_host()
 

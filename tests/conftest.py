@@ -1,5 +1,19 @@
-import sys
+from argparse import Namespace
 from pathlib import Path
+import pytest
+import sys
+
 
 src_dir = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_dir))
+
+
+def make_args(branch):
+    return Namespace(branch=branch)
+
+def capture_system_exit_code(function):
+    try:
+        function()
+        return None
+    except SystemExit as e:
+        return e.code
