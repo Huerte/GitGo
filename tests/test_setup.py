@@ -1,5 +1,5 @@
 from pygitgo.utils.setup import check_git_installed, ensure_first_run_setup
-from conftest import make_args, capture_system_exit_code
+from conftest import capture_system_exit_code
 import pytest
 
 

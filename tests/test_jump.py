@@ -1,8 +1,12 @@
 from pygitgo.commands.jump import undo_jump_operation, jump_operation
-from conftest import make_args, capture_system_exit_code
+from conftest import capture_system_exit_code
+from argparse import Namespace
 import subprocess
 import pytest
 
+
+def make_args(branch):
+    return Namespace(branch=branch)
 
 def test_undo_jump_operation_no_stash(mocker):
     fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value="")
