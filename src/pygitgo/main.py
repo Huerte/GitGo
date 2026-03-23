@@ -4,19 +4,20 @@ from pygitgo.commands.git_operations import (
     confirm_remote_link, create_main_branch, check_and_sync_branch,
     git_push, handle_rebase, get_current_branch, is_branch_exist
 )
+from pygitgo.utils.colors import info, success, warning, error, highlight
 from pygitgo.commands.state import state_operations
+from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
-from pygitgo.auth.account import get_user
-from pygitgo.utils.colors import info, success, warning, error, highlight
 from pygitgo.exceptions import GitGoError
+from pygitgo.auth.account import get_user
 import subprocess
 import shutil
 import sys
 import re
 
 
-GITGO_OPERATIONS = ["push", "link", "state", "user"]
+GITGO_OPERATIONS = ["push", "link", "state", "user", "jump"]
 HELP_COMMANDS = ["help", "--help", "-h"]
 DEFAULT_COMMIT_MSG = "New Project Update"
 DEFAULT_MAIN_BRANCH = "main"
@@ -251,6 +252,9 @@ def display_help():
     success("  link")
     print("      gitgo link <url> [message]          Init, commit, and link to repo\n")
     
+    success("  jump")
+    print("      gitgo jump <branch>                 Safely switch branches with try-and-revert\n")
+    
     warning("STATE MANAGEMENT:")
     success("  state")
     print("      gitgo state list | -l               List all saved states (stashes)")
@@ -297,14 +301,16 @@ def main():
     ensure_github_known_host()
 
     try:
-        if type_of_operation == "push":
+        if type_of_operation == GITGO_OPERATIONS[0]:
             push_operation(arguments)
-        elif type_of_operation == "link":
+        elif type_of_operation == GITGO_OPERATIONS[1]:
             link_operation(arguments)
-        elif type_of_operation == "state":
+        elif type_of_operation == GITGO_OPERATIONS[2]:
             state_operations(arguments[1:])
-        elif type_of_operation == "user":
+        elif type_of_operation == GITGO_OPERATIONS[3]:
             user_management(arguments[1:])
+        elif type_of_operation == GITGO_OPERATIONS[4]:
+            jump_operation(arguments[1:])
         else:
             error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
             sys.exit(1)

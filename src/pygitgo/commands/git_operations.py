@@ -15,6 +15,13 @@ def get_current_branch():
 
     return branch
 
+def get_main_branch():
+    main_branch = run_command(['git', 'remote', 'show', 'origin'], allow_fail=True)
+    if isinstance(main_branch, subprocess.CalledProcessError):
+        return DEFAULT_MAIN_BRANCH
+    
+    return main_branch.split("HEAD branch:")[-1].strip() if "HEAD branch:" in main_branch else DEFAULT_MAIN_BRANCH
+
 def is_branch_exist(branch):
     return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
 
