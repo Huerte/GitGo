@@ -52,3 +52,5 @@ def config_operation(args):
             info(f"\n{key} is currently set to: '{current_value}'\n")
         else:
             warning(f"\n{key} is not currently set.\n")
+
+            
