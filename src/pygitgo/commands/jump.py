@@ -8,20 +8,20 @@ import subprocess
 import sys
 
 def jump_operations_help():
-    warning("\nJump Operations Help:\n")
-    info("Usage: gitgo jump [branch]\n")
-    info("Arguments:")
-    info("  branch   The name of the branch to jump to.\n")
+    warning("\nUsage: gitgo jump <branch>\n")
+    warning("branch: The name of the branch to jump to.\n")
 
-def undo_jump_operation(original_branch, has_changes):
-    if not has_changes.strip():
+def undo_jump_operation(original_branch, stashed_code, created_branch=None):
+    if created_branch:
+        run_command(["git", "checkout", original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
+        run_command(["git", "branch", "-D", created_branch], allow_fail=True, loading_msg=f"Removing the empty branch '{created_branch}'...")
+    else:
+        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Canceling... Putting your files back exactly how they were...")
         run_command(['git', 'checkout', original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
-        success(f"\nOkay! You are back to the original branch '{original_branch}'.")
-        sys.exit(0)
 
-    run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Canceling... Putting your files back exactly how they were...")
-    run_command(['git', 'checkout', original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
-    run_command(["git", "stash", "pop"], loading_msg="Restoring your unsaved changes...")
+    if stashed_code:
+        run_command(["git", "stash", "pop"], loading_msg="Restoring your unsaved changes...")
+
     success(f"\nCanceled safely!")
     success(f"You are back on your original branch '{original_branch}', and your code is totally safe.\n")
 
@@ -38,7 +38,7 @@ def jump_operation(arguments):
         warning(f"\nYou are already on branch '{target_branch}'.\n")
         sys.exit(0)
 
-    has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True)
+    has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
     if isinstance(has_changes, subprocess.CalledProcessError):
         warning("\nUnable to check for uncommitted changes. Please ensure you're in a valid git repository.")
         sys.exit(1)
@@ -48,15 +48,17 @@ def jump_operation(arguments):
         info("\nYou have unsaved changes here.")
         user_input = input("Do you want to move these changes to your new branch? (y/n): ").strip().lower()
         if user_input != 'y':
-            warning("\nOkay! Leaving your changes here. Jumping without them...\n")
+            warning("\nYou cannot switch branches with unsaved changes. Jump canceled.\n")
+            sys.exit(0)
         else:
-            stash_result = run_command(["git", "stash", "push", "-m", "GitGo Jump Auto-Stash"], allow_fail=True, loading_msg="Saving your changes before jumping...")
+            stash_result = run_command(["git", "stash", "push", "-u", "-m", "GitGo Jump Auto-Stash"], allow_fail=True, loading_msg="Saving your changes before jumping...")
             if isinstance(stash_result, subprocess.CalledProcessError):
                 warning("\nFailed to save your changes. Please resolve any issues and try again.")
                 sys.exit(1)
             info("\nYour changes have been saved. Jumping to the new branch...")
             stashed_code = True
             
+    created_branch = None
     if not is_branch_exist(target_branch):
         warning(f"\nBranch '{target_branch}' does not exist.\n")
         user_input = input("Do you want to create it and jump to it? (y/n): ").strip().lower()
@@ -68,6 +70,7 @@ def jump_operation(arguments):
             sys.exit(0)
         
         git_new_branch(target_branch)
+        created_branch = target_branch
     else:
         run_command(['git', 'checkout', target_branch], loading_msg=f"Moving you to branch '{target_branch}'...")
 
@@ -78,7 +81,7 @@ def jump_operation(arguments):
         warning(f"\nFailed to pull updates from '{main_branch}'. Make sure you have internet or the remote branch exists.")
         user_input = input("Do you want to stay on the new branch without the latest updates? (y/n): ").strip().lower()
         if user_input != 'y':
-            undo_jump_operation(original_branch, has_changes if stashed_code else "")
+            undo_jump_operation(original_branch, stashed_code, created_branch)
             sys.exit(1)
         else:
             success(f"\nOkay! You are on the new branch, but without the latest updates from '{main_branch}'.")
@@ -93,12 +96,12 @@ def jump_operation(arguments):
             conflict_choice = input("Do you want to fix it yourself? (y/n): ").strip().lower()
 
             if conflict_choice != 'y':
-                undo_jump_operation(original_branch, has_changes)
+                undo_jump_operation(original_branch, stashed_code, created_branch)
                 sys.exit(0)
             else:
                 success("\nOkay! You are on the new branch with your code.")
-                warning("Please open your code editor RIGHT NOW to fix the conflicts!\n")
-                run_command(["git", "stash", "drop"], allow_fail=True, loading_msg="Cleaning up the temporary stash...")
+                warning("Please open your code editor RIGHT NOW to fix the conflicts!")
+                info("Your stash backup is still saved. Run 'gitgo state list' to see it.\n")
                 sys.exit(0)
         else:
             run_command(["git", "stash", "drop"], allow_fail=True, loading_msg="Cleaning up the temporary stash...")
@@ -108,4 +111,3 @@ def jump_operation(arguments):
     else:
         success(f"\nSuccess! You are now on '{target_branch}'.\n")
         sys.exit(0)
-

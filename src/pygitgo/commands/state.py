@@ -91,10 +91,8 @@ def ask_state_id(save_states):
 def state_list(arguments):
     if len(arguments) > 1:
         if arguments[1] in ("-h", "--help", "help"):
-            print("\nDisplay all saved states.\n")
-            warning("\nUsage:\n")
-            print("  gitgo state list        # Show all saved states")
-            print("  gitgo state -l          # Alias\n")
+            warning("\nUsage: gitgo state list\n")
+            warning("list: Display all saved states (Alias: -l)\n")
             sys.exit(0)
         error("\nToo many arguments for list operation!\n")
         sys.exit(1)
