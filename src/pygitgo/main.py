@@ -203,11 +203,11 @@ def user_management(operation):
     if len(operation) > 1:
         if operation[1] in HELP_COMMANDS:
             if operation[0] == "login":
-                info("\nUsage: gitgo user login\n")
-                info("Sets up your Git user identity (name and email) for commits.\n")
+                warning("\nUsage: gitgo user login\n")
+                warning("login: Sets up your Git user identity (name and email) for commits.\n")
             elif operation[0] == "logout":
-                info("\nUsage: gitgo user logout\n")
-                info("Removes your Git user identity configuration.\n")
+                warning("\nUsage: gitgo user logout\n")
+                warning("logout: Removes your Git user identity configuration.\n")
             else:
                 warning("\nUsage: gitgo user <login | logout>\n")
                 warning("login: Configure your Git user identity.")

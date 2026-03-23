@@ -9,10 +9,9 @@ DEFAULT_MAIN_BRANCH = "main"
 
 
 def get_current_branch():
-    branch = run_command(["git", "branch", "--show-current"])
-    if branch.strip() == "":
-        branch = git_new_branch(DEFAULT_MAIN_BRANCH)
-
+    branch = run_command(["git", "branch", "--show-current"]).strip()
+    if not branch:
+        branch = run_command(["git", "rev-parse", "--short", "HEAD"]).strip()
     return branch
 
 def get_main_branch():
@@ -20,7 +19,7 @@ def get_main_branch():
     if isinstance(main_branch, subprocess.CalledProcessError):
         return DEFAULT_MAIN_BRANCH
     
-    return main_branch.split("HEAD branch:")[-1].strip() if "HEAD branch:" in main_branch else DEFAULT_MAIN_BRANCH
+    return main_branch.split("HEAD branch:")[-1].strip().splitlines()[0].strip() if "HEAD branch:" in main_branch else DEFAULT_MAIN_BRANCH
 
 def is_branch_exist(branch):
     return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
