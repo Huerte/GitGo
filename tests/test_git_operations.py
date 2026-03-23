@@ -55,6 +55,7 @@ def test_git_init_already_initialized(mocker):
 
 def test_git_init_success(mocker):
     mocker.patch('os.path.isdir', return_value=False)
+    mocker.patch('pygitgo.commands.git_operations.get_config', return_value='main')
     fake_success = mocker.patch('pygitgo.commands.git_operations.success')
     fake_run = mocker.patch('pygitgo.commands.git_operations.run_command', return_value='ok')
 
@@ -70,6 +71,7 @@ def test_git_init_success(mocker):
 
 def test_git_init_fallback(mocker):
     mocker.patch('os.path.isdir', return_value=False)
+    mocker.patch('pygitgo.commands.git_operations.get_config', return_value='main')
     fake_success = mocker.patch('pygitgo.commands.git_operations.success')
     
     fake_run = mocker.patch(

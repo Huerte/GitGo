@@ -179,8 +179,8 @@ def main():
         description="GitGo CLI - Your Fast Git Companion",
         epilog="Use 'gitgo <command> -h' for help on a specific command."
     )
-
-    parser.add_argument("-v", "--version", action="version", version=f"GitGo {get_version()}")
+    
+    parser.add_argument("-v", "-V", "--version", action="version", version=f"GitGo {get_version()}")
     parser.add_argument("-r", "--ready", action="store_true", help="Check tool readiness")
 
     subparsers = parser.add_subparsers(title="Commands", dest="command")
