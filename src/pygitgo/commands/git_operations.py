@@ -1,11 +1,10 @@
 from pygitgo.auth.ssh_utils import convert_https_to_ssh, is_ssh_url, check_connection
-from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.executor import run_command
+from pygitgo.utils.config import get_config
 import subprocess
 import sys
 import os
-
-DEFAULT_MAIN_BRANCH = "main"
 
 
 def get_current_branch():
@@ -16,10 +15,11 @@ def get_current_branch():
 
 def get_main_branch():
     main_branch = run_command(['git', 'remote', 'show', 'origin'], allow_fail=True)
+    default_main_branch = get_config("default-branch", "main")
     if isinstance(main_branch, subprocess.CalledProcessError):
-        return DEFAULT_MAIN_BRANCH
+        return default_main_branch
     
-    return main_branch.split("HEAD branch:")[-1].strip().splitlines()[0].strip() if "HEAD branch:" in main_branch else DEFAULT_MAIN_BRANCH
+    return main_branch.split("HEAD branch:")[-1].strip().splitlines()[0].strip() if "HEAD branch:" in main_branch else default_main_branch
 
 def is_branch_exist(branch):
     return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
@@ -50,10 +50,12 @@ def git_init():
         warning("Already a git repository! Skipping init...")
         return True
     
-    result = run_command(["git", "init", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True, loading_msg="Initializing git repository...")
+    default_main_branch = get_config("default-branch", "main")
+
+    result = run_command(["git", "init", "-b", default_main_branch], allow_fail=True, loading_msg="Initializing git repository...")
     if isinstance(result, subprocess.CalledProcessError):
         run_command(["git", "init"], loading_msg="Initializing git repository...")
-        run_command(["git", "checkout", "-b", DEFAULT_MAIN_BRANCH], allow_fail=True)
+        run_command(["git", "checkout", "-b", default_main_branch], allow_fail=True)
 
     success("Git repository initialized.")
     return True

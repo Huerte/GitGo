@@ -5,22 +5,21 @@ from pygitgo.commands.git_operations import (
     git_push, handle_rebase, get_current_branch, is_branch_exist
 )
 from pygitgo.utils.colors import info, success, warning, error, highlight
+from pygitgo.utils.config import get_config, config_operation
+from pygitgo.utils.setup import ensure_first_run_setup
 from pygitgo.commands.state import state_operations
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
-from pygitgo.exceptions import GitGoError
 from pygitgo.auth.account import get_user
+from pygitgo.exceptions import GitGoError
 import subprocess
-import shutil
+import argparse
 import sys
 import re
 
 
-GITGO_OPERATIONS = ["push", "link", "state", "user", "jump"]
-HELP_COMMANDS = ["help", "--help", "-h"]
-DEFAULT_COMMIT_MSG = "New Project Update"
-DEFAULT_MAIN_BRANCH = "main"
+
 
 
 def validate_repo_url(url):
@@ -32,28 +31,8 @@ def validate_repo_url(url):
     return any(re.match(p, url.strip()) for p in patterns)
 
 
-def check_git_installed():
-    """Verify that Git is installed and available on PATH."""
-    if not shutil.which("git"):
-        error("\nGit is not installed or not found on your PATH!")
-        info("Install Git from: https://git-scm.com/downloads")
-        info("After installing, restart your terminal and try again.\n")
-        sys.exit(1)
-
-
-def link_operation(arguments):
-    if len(arguments) < 2:
-        error("\nGitHub repository URL required!")
-        warning("Usage: gitgo link <github_repo_url> [commit_message]\n")
-        sys.exit(1)
-    
-    if arguments[1] in HELP_COMMANDS:
-        warning("\nUsage: gitgo link <github_repo_url> [commit_message]\n")
-        warning("github_repo_url: The GitHub repository URL to link")
-        warning("commit_message: Custom commit message (default: 'Initial commit')\n")
-        sys.exit(0)
-    
-    repo_url = arguments[1]
+def link_operation(args):
+    repo_url = args.url
 
     if not validate_repo_url(repo_url):
         error("\nInvalid repository URL!")
@@ -61,7 +40,7 @@ def link_operation(arguments):
         warning("             or: git@github.com:username/repo.git\n")
         sys.exit(1)
 
-    commit_message = arguments[2] if len(arguments) > 2 else "Initial commit"
+    commit_message = args.message
     
     info("\nINITIATING LINK OPERATION...")
     info(f"Target: {repo_url}\n")
@@ -83,26 +62,28 @@ def link_operation(arguments):
         return
     
     current_branch = get_current_branch()
-    if current_branch.strip() != DEFAULT_MAIN_BRANCH:
-        run_command(["git", "branch", "-m", DEFAULT_MAIN_BRANCH], loading_msg=f"Renaming branch '{current_branch.strip()}' to '{DEFAULT_MAIN_BRANCH}'...")
-        current_branch = DEFAULT_MAIN_BRANCH
+    main_branch = get_config("default-branch", "main")
     
-    remote_refs = run_command(["git", "ls-remote", "--heads", "origin", DEFAULT_MAIN_BRANCH], allow_fail=True, loading_msg="Checking remote branches...")
+    if current_branch.strip() != main_branch:
+        run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch.strip()}' to '{main_branch}'...")
+        current_branch = main_branch
+    
+    remote_refs = run_command(["git", "ls-remote", "--heads", "origin", main_branch], allow_fail=True, loading_msg="Checking remote branches...")
     if not isinstance(remote_refs, subprocess.CalledProcessError) and remote_refs.strip():
         pull_result = run_command(
-            ["git", "pull", "origin", DEFAULT_MAIN_BRANCH, "--allow-unrelated-histories", "--no-edit"],
+            ["git", "pull", "origin", main_branch, "--allow-unrelated-histories", "--no-edit"],
             allow_fail=True, loading_msg="Pulling and merging remote content..."
         )
         if isinstance(pull_result, subprocess.CalledProcessError):
             error("Failed to merge remote content. You may need to resolve conflicts manually.")
-            warning("Run: git pull origin main --allow-unrelated-histories")
-            warning("Then: gitgo push main 'your message'\n")
+            warning(f"Run: git pull origin {main_branch} --allow-unrelated-histories")
+            warning(f"Then: gitgo push {main_branch} 'your message'\n")
             return
         success("Remote content merged successfully.")
     
     print("\n" + ("=" * 90))
     success("LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
-    success(f"Ready to push with: gitgo push {DEFAULT_MAIN_BRANCH} 'your message'")
+    success(f"Ready to push with: gitgo push {main_branch} 'your message'")
     info("AWAITING FURTHER ORDERS...\n")
 
     user_choice = input(f"\nDo you want to push now? (y/n): ").lower()
@@ -115,45 +96,24 @@ def link_operation(arguments):
     success("MISSION COMPLETE — REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
     
 
-def push_operation(arguments):
-    if len(arguments) > 1 and arguments[1] in HELP_COMMANDS:
-        warning("\nUsage: gitgo push [branch] [commit_message]\n")
-        warning("branch: The branch to push to (default: main)")
-        warning("commit_message: The commit message (default: empty string)\n")
-        sys.exit(0)
-    
-    branch = None
-    message = None
+def push_operation(args):
+    branch = args.branch
+    message = args.message
 
-    if len(arguments) > 1 and arguments[1] in ["-n", "new"]:
-        if len(arguments) < 3:
-            error("\nBranch name required for new branch creation!\n")
+    if args.new:
+        if not branch:
+            error("\nBranch name required when using --new flag!\n")
             sys.exit(1)
-        elif len(arguments) < 4:
-            message = DEFAULT_COMMIT_MSG
-        elif len(arguments) > 4:
-            error("\nToo many arguments for new branch creation!\n")
-            sys.exit(1)
-
-        branch = arguments[2]
         git_new_branch(branch)
     else:
-        if len(arguments) < 2:
+        if branch and not message and not is_branch_exist(branch):
+            message = branch
             branch = get_current_branch()
-            message = DEFAULT_COMMIT_MSG
-        elif len(arguments) < 3:
-            if is_branch_exist(arguments[1]):
-                message = DEFAULT_COMMIT_MSG
-            else:
-                branch = get_current_branch()
-                message = arguments[1]
-        elif len(arguments) > 3:
-            error("\nToo many arguments!\n")
-            sys.exit(1)
+        elif not branch:
+            branch = get_current_branch()
 
-        branch = branch if branch else arguments[1]
-    
-    message = message if message else arguments[-1]
+    if not message:
+        message = get_config("default-message", "New Project Update")
 
     commit_made = git_commit(message)
     
@@ -178,12 +138,6 @@ def push_operation(arguments):
     success("MISSION COMPLETE — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
 
 
-def validate_operation(operation):
-    if operation not in GITGO_OPERATIONS:
-        error(f"\nInvalid operation '{operation}'!")
-        warning(f"Supported operations are: {', '.join(GITGO_OPERATIONS)}\n")
-        sys.exit(1)
-
 def display_current_user():
     username, email = get_user()
     if username and email:
@@ -196,38 +150,19 @@ def display_current_user():
         info("Run 'gitgo user login'\n")
 
 
-def user_management(operation):
-    if not operation:
-        display_current_user()
-        exit(0)
-    if len(operation) > 1:
-        if operation[1] in HELP_COMMANDS:
-            if operation[0] == "login":
-                warning("\nUsage: gitgo user login\n")
-                warning("login: Sets up your Git user identity (name and email) for commits.\n")
-            elif operation[0] == "logout":
-                warning("\nUsage: gitgo user logout\n")
-                warning("logout: Removes your Git user identity configuration.\n")
-            else:
-                warning("\nUsage: gitgo user <login | logout>\n")
-                warning("login: Configure your Git user identity.")
-                warning("logout: Remove your Git user identity configuration.\n")
-            sys.exit(0)
-        else:
-            error("\nToo many arguments for user management!\n")
-            sys.exit(1)
+def user_management(args):
+    action = args.action if hasattr(args, 'action') else None
 
-    if operation[0] == "login":
-        login()
-    elif operation[0] == "logout":
-        logout()
-    elif operation[0] in HELP_COMMANDS:
-        warning("\nUsage: gitgo user <login | logout>\n")
-        warning("login: Configure your Git user identity.")
-        warning("logout: Remove your Git user identity configuration.\n")
+    if not action:
+        display_current_user()
         sys.exit(0)
+    
+    if action == 'login':
+        login()
+    elif action == 'logout':
+        logout()
     else:
-        error(f"\nInvalid user operation '{operation[0]}'!\n")
+        error(f"\nInvalid user operation '{action}'!\n")
         sys.exit(1)
 
 
@@ -238,86 +173,113 @@ def get_version():
     except Exception:
         return "dev"
 
-def display_help():
-    print("")
-    highlight("       GitGo CLI - Your Fast Git Companion")
-    warning("=" * 60)
-    info("Usage: gitgo <command> [arguments]\n")
-    
-    warning("CORE COMMANDS:")
-    success("  push")
-    print("      gitgo push [branch] [message]       Push branch to remote")
-    print("      gitgo push -n <branch> [msg]        Create new branch & push\n")
-    
-    success("  link")
-    print("      gitgo link <url> [message]          Init, commit, and link to repo\n")
-    
-    success("  jump")
-    print("      gitgo jump <branch>                 Safely switch branches with try-and-revert\n")
-    
-    warning("STATE MANAGEMENT:")
-    success("  state")
-    print("      gitgo state list | -l               List all saved states (stashes)")
-    print("      gitgo state save | -s [name]        Save the current working state")
-    print("      gitgo state load | -o [id]          Load a previously saved state")
-    print("      gitgo state delete | -d [id] | -a   Delete a specific or all states\n")
-    
-    warning("USER CONFIGURATION:")
-    success("  user")
-    print("      gitgo user login                    Setup Git username and email")
-    print("      gitgo user logout                   Remove Git user configuration\n")
-    
-    
-    warning("GLOBAL FLAGS:")
-    print("  -h, --help, help                        Show this complete help manual")
-    print("  -v, version                             Show GitGo version")
-    print("  -r, ready                               Check tool readiness\n")
-    sys.exit(0)
-
 def main():
-    if len(sys.argv) < 2:
-        error("\nInvalid arguments!\n")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        prog='gitgo',
+        description="GitGo CLI - Your Fast Git Companion",
+        epilog="Use 'gitgo <command> -h' for help on a specific command."
+    )
+    
+    parser.add_argument("-v", "-V", "--version", action="version", version=f"GitGo {get_version()}")
+    parser.add_argument("-r", "--ready", action="store_true", help="Check tool readiness")
 
-    arguments = sys.argv[1:]
+    subparsers = parser.add_subparsers(title="Commands", dest="command")
+    subparsers.required = False
 
-    type_of_operation = arguments[0].lower()
+    jump_parser = subparsers.add_parser("jump", help="Safely switch branches with try-and-revert")
+    jump_parser.add_argument("branch", help="The name of the branch to jump to")
 
-    if type_of_operation in ["-r", "ready"]:
+    link_parser = subparsers.add_parser("link", help="Init, commit, and link to a remote repo")
+    link_parser.add_argument("url", help="The GitHub repository URL to link")
+    link_parser.add_argument("message", nargs="?", default="Initial commit", help="Custom commit message")
+
+    push_parser = subparsers.add_parser(
+        "push",
+        help="Commit and push branch to remote",
+        epilog=(
+            "Examples:\n"
+            "  gitgo push                        Push current branch with default message\n"
+            "  gitgo push main 'fix auth bug'    Push to main with a custom message\n"
+            "  gitgo push 'fix auth bug'         Push current branch with a custom message\n"
+            "  gitgo push -n feature/login 'add login'   Create new branch and push"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    push_parser.add_argument("-n", "--new", action="store_true", help="Create a new branch before pushing")
+    push_parser.add_argument("branch", nargs="?", default=None, help="Branch to push to (default: current branch)")
+    push_parser.add_argument("message", nargs="?", default=None, help="Commit message")
+
+    state_parser = subparsers.add_parser(
+        "state",
+        help="Manage saved working states (stashes)",
+        epilog=(
+            "Examples:\n"
+            "  gitgo state list                  Show all saved states\n"
+            "  gitgo state save 'halfway done'   Save current work with a name\n"
+            "  gitgo state load 1                Restore state by ID\n"
+            "  gitgo state delete 1              Delete a specific state\n"
+            "  gitgo state delete -a             Delete all saved states"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    state_parser.add_argument(
+        "action",
+        choices=["list", "save", "load", "delete", "-l", "-s", "-o", "-d"],
+        metavar="action",
+        help="list, save, load, delete  (aliases: -l, -s, -o, -d)"
+    )
+    state_parser.add_argument(
+        "identifier",
+        nargs="?",
+        default=None,
+        help="Optional name or ID"
+    )
+    
+    user_parser = subparsers.add_parser("user", help="Manage Git user identity")
+    user_parser.add_argument("action", nargs="?", choices=["login", "logout"], default=None, help="login or logout")
+
+    config_parser = subparsers.add_parser("config",
+        help="Manage GitGo default settings",
+        epilog=(
+            "Examples:\n"
+            "  gitgo config set default-branch master\n"
+            "  gitgo config set default-message 'WIP'\n"
+            "  gitgo config get default-branch"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    config_parser.add_argument("action", choices=["set", "get"], help="Action to perform")
+    config_parser.add_argument("key", choices=["default-branch", "default-message"], help="The setting to change")
+    config_parser.add_argument("value", nargs="?", help="The new value (required for 'set')")
+
+    args = parser.parse_args()
+
+    if args.ready:
         info("\nALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...\n")
         sys.exit(0)
 
-    if type_of_operation in ["-v", "version"]:
-        highlight(f"\nGitGo Version {get_version()}\n")
+    if not args.command:
+        parser.print_help()
         sys.exit(0)
 
-    if type_of_operation in HELP_COMMANDS:
-        display_help()
-
-    check_git_installed()
-
-    validate_operation(type_of_operation)
-
-    ensure_github_known_host()
+    ensure_first_run_setup()
 
     try:
-        if type_of_operation == GITGO_OPERATIONS[0]:
-            push_operation(arguments)
-        elif type_of_operation == GITGO_OPERATIONS[1]:
-            link_operation(arguments)
-        elif type_of_operation == GITGO_OPERATIONS[2]:
-            state_operations(arguments[1:])
-        elif type_of_operation == GITGO_OPERATIONS[3]:
-            user_management(arguments[1:])
-        elif type_of_operation == GITGO_OPERATIONS[4]:
-            jump_operation(arguments[1:])
-        else:
-            error(f"\nInsufficient arguments for {type_of_operation} operation!\n")
-            sys.exit(1)
+        if args.command == "jump":
+            jump_operation(args)
+        elif args.command == "link":
+            link_operation(args)
+        elif args.command == "push":
+            push_operation(args)
+        elif args.command == "state":
+            state_operations(args)
+        elif args.command == "user":
+            user_management(args)
+        elif args.command == "config":
+            config_operation(args)
     except GitGoError as e:
         error(f"\n{e}\n")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
