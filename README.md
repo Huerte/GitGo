@@ -53,6 +53,7 @@ gitgo link https://github.com/username/repo.git "init"
 GitGo provides a CLI environment designed for faster and simpler Git workflows. Built to be intuitive, fast, and frictionless.
 
 - **Simplified Git Operations:** Replaces chained commands with single intuitive commands for linking, pushing, and stashing.
+- **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
 - **SSH Auto-Setup:** Generates an SSH key, adds it to `ssh-agent`, and opens your GitHub settings automatically.
 - **HTTPS to SSH Conversion:** Silently converts the remote to SSH before pushing if your SSH is configured.
@@ -116,7 +117,13 @@ gitgo push main "Fix auth bug"
 gitgo push -n feature/login "Add login flow"
 ```
 
-### 4. Save Your Work-in-Progress
+### 4. Safely Switch Branches
+Jump to a different branch without worrying about your uncommitted changes. GitGo will safely stash them, hop to the new branch, sync with `main`, and carefully unpack them.
+```bash
+gitgo jump feature/new-login
+```
+
+### 5. Save Your Work-in-Progress
 ```bash
 gitgo state save "halfway through refactor"
 gitgo state list
@@ -148,6 +155,14 @@ Initializes a Git repository in the current directory, connects it to a remote, 
 
 ```bash
 gitgo link <github_repo_url> [commit_message]
+```
+
+### `gitgo jump`
+
+Safely switches branches without losing uncommitted progress. Auto-stashes, jumps, pulls from `main`, and unpacks. If applying the stash triggers a merge conflict, the built-in Try-and-Revert engine will offer to safely cancel the entire operation and instantly rewind your repository to exactly how it was before the command.
+
+```bash
+gitgo jump <branch>
 ```
 
 ### `gitgo state`
