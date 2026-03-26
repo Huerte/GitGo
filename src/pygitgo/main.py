@@ -1,12 +1,11 @@
-from pygitgo.auth.ssh_utils import ensure_github_known_host
 from pygitgo.commands.git_operations import (
     git_new_branch, git_commit, git_init, add_remote_origin,
-    confirm_remote_link, create_main_branch, check_and_sync_branch,
-    git_push, handle_rebase, get_current_branch, is_branch_exist
+    confirm_remote_link, git_push, get_current_branch, is_branch_exist
 )
-from pygitgo.utils.colors import info, success, warning, error, highlight
+from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.config import get_config, config_operation
 from pygitgo.utils.setup import ensure_first_run_setup
+from pygitgo.commands.commit import commit_operation
 from pygitgo.commands.state import state_operations
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
@@ -252,6 +251,16 @@ def main():
     config_parser.add_argument("key", choices=["default-branch", "default-message"], help="The setting to change")
     config_parser.add_argument("value", nargs="?", help="The new value (required for 'set')")
 
+    commit_parser = subparsers.add_parser(
+        "commit", 
+        help="Automatically commit changed files with generated messages",
+        epilog=(
+            "Example:\n"
+            "  gitgo commit    Automatically stage and commit all changes with generated messages based on file types and git status"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
     args = parser.parse_args()
 
     if args.ready:
@@ -277,6 +286,8 @@ def main():
             user_management(args)
         elif args.command == "config":
             config_operation(args)
+        elif args.command == "commit":
+            commit_operation()
     except GitGoError as e:
         error(f"\n{e}\n")
         sys.exit(1)
