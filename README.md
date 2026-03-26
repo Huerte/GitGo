@@ -126,7 +126,7 @@ gitgo jump feature/new-login
 ```
 
 ### 5. Auto-Commit Your Changes
-Let GitGo scan your changed files and automatically write perfect commit messages for each one.
+Let GitGo scan your changed files and automatically write placeholder commit messages for each one.
 ```bash
 gitgo commit
 ```
