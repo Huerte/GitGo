@@ -2,7 +2,6 @@ from pygitgo.utils.config import get_config, set_config, config_operation
 from conftest import capture_system_exit_code
 from argparse import Namespace
 import subprocess
-import pytest
 
 
 def test_get_config_fallback(mocker):

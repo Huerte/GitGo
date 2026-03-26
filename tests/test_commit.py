@@ -1,6 +1,7 @@
+from pygitgo.commands.commit import generate_messages, commit_operation, atomic_commit
 import subprocess
 import pytest
-from pygitgo.commands.commit import generate_messages, commit_operation, atomic_commit
+
 
 def check_pytest_system_exit(function):
     with pytest.raises(SystemExit) as exc_info:

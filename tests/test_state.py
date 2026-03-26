@@ -3,9 +3,8 @@ from pygitgo.commands.state import (
     all_save_state
 )
 from unittest.mock import call
-import subprocess
 import pytest
-import os
+
 
 @pytest.mark.parametrize('state_id',[
     '1', '3', '11', '00002', '7.0'

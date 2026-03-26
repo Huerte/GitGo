@@ -1,9 +1,8 @@
 from pygitgo.commands.git_operations import (
     is_branch_exist, get_current_branch, git_new_branch, get_main_branch
 )
-from pygitgo.utils.executor import run_command
-from pygitgo.commands.state import *
 from pygitgo.utils.colors import warning, info, success, error
+from pygitgo.utils.executor import run_command
 import subprocess
 import sys
 

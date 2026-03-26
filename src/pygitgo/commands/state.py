@@ -1,5 +1,5 @@
-from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import info, highlight, error, warning, success
+from pygitgo.utils.executor import run_command
 import sys
 
 

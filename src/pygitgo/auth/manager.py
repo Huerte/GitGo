@@ -1,5 +1,5 @@
-from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.executor import run_command
 from . import ssh_utils
 import os
 
