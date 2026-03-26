@@ -52,20 +52,23 @@ def generate_messages(status_code, file_path):
     if not commit_type:
         return None
     
-    file_name, file_ext = file_path.split('/')[-1].split('.')
+    path = Path(file_path)
+    file_name = path.name
+    file_ext = path.suffix
+
     action_description = ACTION_DESCRIPTION_MAP.get(commit_type, "chore")
 
     if file_ext in DOCS_EXTENSIONS:
         commit_type = "docs"
     
-    return f"{commit_type}: {action_description} {file_name}.{file_ext}"
+    return f"{commit_type}: {action_description} {file_name}"
 
 def atomic_commit(change_list):
     files = [str(file_path) for _, file_path, msg in change_list if msg]
     messages = [msg for _, _, msg in change_list if msg]
 
     if not files:
-        warning("No files to commit.")
+        warning("\nNo files to commit.\n")
         return
 
     final_msg = "\n".join(messages)
@@ -84,31 +87,46 @@ def commit_operation():
     
     status_content = get_status_content()
 
-    changes = [line.strip().split() for line in status_content.split('\n')]
+    if not status_content.strip():
+        warning("\nNo changes to commit.\n")
+        sys.exit(0)
+
+    changes = [line.strip().split(maxsplit=1) for line in status_content.split('\n') if line.strip()]
 
     for i, change in enumerate(changes):
-        placeholder_msg = generate_messages(change[0], change[1])
-        changes[i].append(placeholder_msg)
+        if len(change) == 2:
+            placeholder_msg = generate_messages(change[0], change[1])
+            changes[i].append(placeholder_msg)
 
     info("\nThe following changes will be committed:")
-    for _, _, msg in changes:
-        if msg:
-            code, description = msg.split(': ')
+    has_valid_commits = False
+    for change in changes:
+        if len(change) == 3 and change[2]:
+            msg = change[2]
+            code, description = msg.split(': ', 1)
             print(f"{COMMIT_TYPE_COLOR.get(code, RESET)}{code}{RESET}: {description}")
+            has_valid_commits = True
 
+    if not has_valid_commits:
+        warning("\nNo valid files to automatically commit.\n")
+        sys.exit(0)
 
     user_prompt = input("\nProceed with these commits? (y/n): ").lower().strip()
     if user_prompt != 'y':
-        warning("Commit operation cancelled.")
-        exit(0)
+        warning("\nCommit operation cancelled.\n")
+        sys.exit(0)
     
     atomic_commit(changes)
 
     user_prompt = input("\nPush changes to remote? (y/n): ").lower().strip()
     if user_prompt != 'y':
-        exit(0)
+        print("\n" + ("=" * 90))
+        success("MISSION COMPLETE — ALL COMMITS CREATED LOCALLY!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+        sys.exit(0)
     
     current_branch = get_current_branch()
     git_push(current_branch)
-    success("Changes pushed successfully.")
+    
+    print("\n" + ("=" * 90))
+    success("MISSION COMPLETE — ALL COMMITS CREATED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
 
