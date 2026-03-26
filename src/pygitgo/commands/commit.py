@@ -1,8 +1,8 @@
-from pygitgo.commands.git_operations import get_status_content, get_current_branch, git_push
 from pygitgo.utils.colors import (
-    info, success, warning, error,
+    info, success, warning,
     GREEN, YELLOW, CYAN, RED, BLUE, RESET
 )
+from pygitgo.commands.git_operations import get_status_content, get_current_branch, git_push
 from pygitgo.utils.executor import run_command
 from yaspin import yaspin
 from pathlib import Path

@@ -2,8 +2,8 @@ from pygitgo.utils.colors import error, info, success, warning
 from pygitgo.exceptions import GitCommandError
 from yaspin import yaspin
 import subprocess
-import sys
 import os
+
 
 def run_command(command, allow_fail=False, return_complete=False, loading_msg=None):
     """

@@ -1,6 +1,5 @@
 from pygitgo.utils.setup import check_git_installed, ensure_first_run_setup
 from conftest import capture_system_exit_code
-import pytest
 
 
 def test_check_git_installed_no_exist(mocker):

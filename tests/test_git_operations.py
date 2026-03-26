@@ -7,7 +7,7 @@ from pygitgo.commands.git_operations import (
 from unittest.mock import call
 import subprocess
 import pytest
-import os
+
 
 def test_git_branch_logic(mocker):
     fake_run = mocker.patch("pygitgo.commands.git_operations.run_command")

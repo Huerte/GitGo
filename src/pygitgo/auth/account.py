@@ -1,5 +1,5 @@
-from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import info, success, warning, error, BLUE, RESET
+from pygitgo.utils.executor import run_command
 import subprocess
 
 

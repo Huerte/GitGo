@@ -1,5 +1,5 @@
-from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.executor import run_command
 from pygitgo.utils import platform_utils
 from pathlib import Path
 import subprocess

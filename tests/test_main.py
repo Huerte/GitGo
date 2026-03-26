@@ -1,5 +1,6 @@
-import pytest
 from pygitgo.main import validate_repo_url
+import pytest
+
 
 @pytest.mark.parametrize("url", [
     "https://github.com/Huerte/GitGo.git",
