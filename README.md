@@ -53,6 +53,7 @@ gitgo link https://github.com/username/repo.git "init"
 GitGo provides a CLI environment designed for faster and simpler Git workflows. Built to be intuitive, fast, and frictionless.
 
 - **Simplified Git Operations:** Replaces chained commands with single intuitive commands for linking, pushing, and stashing.
+- **Smart Commits:** Automatically writes standard commit messages for you based on the files you changed.
 - **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
 - **Custom Defaults:** Save your preferred branch name and commit message locally so you never have to type them again.
@@ -124,7 +125,13 @@ Jump to a different branch without worrying about your uncommitted changes. GitG
 gitgo jump feature/new-login
 ```
 
-### 5. Save Your Work-in-Progress
+### 5. Auto-Commit Your Changes
+Let GitGo scan your changed files and automatically write perfect commit messages for each one.
+```bash
+gitgo commit
+```
+
+### 6. Save Your Work-in-Progress
 ```bash
 gitgo state save "halfway through refactor"
 gitgo state list
@@ -160,6 +167,14 @@ gitgo push -n [branch] [message]   # create new branch first
 | `-n`, `--new` | Create a new branch before pushing |
 
 If there are no new changes but unpushed commits exist, GitGo detects this and pushes without creating an empty commit.
+
+### `gitgo commit`
+
+Scans your modified files and automatically writes standard commit messages like `feat: add index.html` or `docs: update README.md`. You can review the messages and push to your branch in one step.
+
+```bash
+gitgo commit
+```
 
 ### `gitgo link`
 
