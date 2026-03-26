@@ -7,6 +7,12 @@ import sys
 import os
 
 
+def get_status_content():
+    status = run_command(["git", "status", "--porcelain"], allow_fail=True)
+    if isinstance(status, subprocess.CalledProcessError) or not status.strip():
+        sys.exit(1)
+    return status
+
 def get_current_branch():
     branch = run_command(["git", "branch", "--show-current"]).strip()
     if not branch:
