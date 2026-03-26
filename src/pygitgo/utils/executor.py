@@ -1,9 +1,9 @@
+from pygitgo.utils.colors import error, info, success, warning
+from pygitgo.exceptions import GitCommandError
+from yaspin import yaspin
 import subprocess
 import sys
 import os
-from pygitgo.utils.colors import error, info, success, warning
-from pygitgo.exceptions import GitCommandError
-
 
 def run_command(command, allow_fail=False, return_complete=False, loading_msg=None):
     """
@@ -15,7 +15,6 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
     :param loading_msg: if provided, show a yaspin spinner with this message
     :raises GitCommandError: when the command fails and allow_fail is False
     """
-    from yaspin import yaspin
 
     spinner = yaspin(text=loading_msg, color="cyan") if loading_msg else None
 

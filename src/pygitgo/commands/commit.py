@@ -4,6 +4,7 @@ from pygitgo.utils.colors import (
     GREEN, YELLOW, CYAN, RED, BLUE, RESET
 )
 from pygitgo.utils.executor import run_command
+from yaspin import yaspin
 from pathlib import Path
 import subprocess
 import sys
@@ -59,21 +60,25 @@ def generate_messages(status_code, file_path):
     
     return f"{commit_type}: {action_description} {file_name}.{file_ext}"
 
-def commit_changes(file_path, msg):
-    try:
-        file_path = Path(file_path)
-        run_command(['git', 'add', str(file_path)], loading_msg=f"Staging {file_path}...")
-        run_command(['git', 'commit', '-m', msg], loading_msg=f"Committing {file_path}...")
-    except subprocess.CalledProcessError as e:
-        error("Error occurred while staging file.")
-        sys.exit(1)
-
 def atomic_commit(change_list):
+    files = [str(file_path) for _, file_path, msg in change_list if msg]
+    messages = [msg for _, _, msg in change_list if msg]
+
+    if not files:
+        warning("No files to commit.")
+        return
+
+    final_msg = "\n".join(messages)
+
+    with yaspin(text=f"Committing {len(files)} files...", color="cyan") as spinner:
+        try:
+            run_command(['git', 'add', *files])
+            run_command(['git', 'commit', '-m', final_msg])
+            spinner.ok("✔ Commit created")
+        except subprocess.CalledProcessError:
+            spinner.fail("✖ Commit failed")
+            sys.exit(1)
     
-    print("Committing changes...")
-    for _, file_path, msg in change_list:
-        if msg:
-            commit_changes(file_path, msg)
 
 def commit_operation():
     
@@ -98,7 +103,6 @@ def commit_operation():
         exit(0)
     
     atomic_commit(changes)
-    success("Successfully committed changes.")
 
     user_prompt = input("\nPush changes to remote? (y/n): ").lower().strip()
     if user_prompt != 'y':
