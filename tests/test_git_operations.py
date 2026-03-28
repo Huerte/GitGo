@@ -21,6 +21,36 @@ def test_git_branch_logic(mocker):
         loading_msg="Creating branch 'hello-world'..."
     )
 
+def test_git_branch_exists_jump_yes(mocker):
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command", return_value=subprocess.CalledProcessError(1, 'git'))
+    mocker.patch("builtins.input", return_value="y")
+    fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
+    fake_error = mocker.patch("pygitgo.commands.git_operations.error")
+
+    branch_name = "existing-branch"
+    result = git_new_branch(branch_name)
+    
+    assert result == "existing-branch"
+    fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
+    
+    args = fake_jump.call_args[0][0]
+    assert args.branch == branch_name
+
+def test_git_branch_exists_jump_no(mocker):
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command", return_value=subprocess.CalledProcessError(1, 'git'))
+    mocker.patch("builtins.input", return_value="n")
+    fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
+    fake_error = mocker.patch("pygitgo.commands.git_operations.error")
+
+    branch_name = "existing-branch"
+    
+    with pytest.raises(SystemExit) as exc_info:
+        git_new_branch(branch_name)
+    
+    assert exc_info.value.code == 1
+    fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
+    fake_jump.assert_not_called()
+
 def test_git_commit(mocker):
     fake_run = mocker.patch("pygitgo.commands.git_operations.run_command")\
     

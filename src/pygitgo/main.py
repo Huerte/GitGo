@@ -11,6 +11,7 @@ from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
 from pygitgo.auth.account import get_user
 from pygitgo.exceptions import GitGoError
+from argparse import Namespace
 import subprocess
 import argparse
 import sys
@@ -107,6 +108,18 @@ def push_operation(args):
         if branch and not message and not is_branch_exist(branch):
             message = branch
             branch = get_current_branch()
+            info(f"No branch name provided. Using current branch: '{branch}'\n")
+            
+        elif branch and is_branch_exist(branch):
+            current_branch = get_current_branch()
+            if current_branch != branch:
+                warning(f"You are currently on branch '{current_branch}', not '{branch}'.")
+                user_choice = input(f"Do you want to switch to branch '{branch}'? (y/n): ").lower()
+                if user_choice != 'y':
+                    error("\nPush aborted to prevent committing to the wrong branch.\n")
+                    sys.exit(1)
+                jump_operation(Namespace(branch=branch))
+    
         elif not branch:
             branch = get_current_branch()
 
