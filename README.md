@@ -17,7 +17,7 @@
 
 ---
 
-GitGo wraps your most repetitive Git operations — init, add, commit, push, branch, stash — into short, memorable commands. It also handles the friction points most tools ignore: automatic SSH setup, HTTPS-to-SSH conversion, and a human-friendly stash interface called **state management**.
+GitGo wraps your most repetitive git commands into short ones you can actually remember. It covers init, add, commit, push, branch, and stash. It also handles the things most tools skip like automatic SSH setup, HTTPS to SSH conversion, and a simple stash interface called state management.
 
 ```bash
 # Instead of this:
