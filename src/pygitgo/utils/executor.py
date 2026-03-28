@@ -33,11 +33,18 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
             spinner.ok("✔")
 
         return result if return_complete else result.stdout.strip()
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         if spinner:
             spinner.fail("✖")
 
-        stderr = e.stderr.strip() if e.stderr else ""
+        stderr = ""
+        returncode = 1
+
+        if isinstance(e, subprocess.CalledProcessError):
+            stderr = e.stderr.strip() if e.stderr else ""
+            returncode = e.returncode
+        else:
+            stderr = f"Command not found or execution failed: {str(e)}"
         
         if "detected dubious ownership" in stderr:
             error(f"\nSECURITY ALERT: {stderr}")
@@ -67,4 +74,4 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
         if allow_fail:
             return e
         
-        raise GitCommandError(command, stderr=stderr, returncode=e.returncode)
+        raise GitCommandError(command, stderr=stderr, returncode=returncode)
