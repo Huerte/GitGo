@@ -2,6 +2,7 @@ from pygitgo.auth.ssh_utils import convert_https_to_ssh, is_ssh_url, check_conne
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.config import get_config
+from argparse import Namespace
 import subprocess
 import sys
 import os
@@ -32,8 +33,18 @@ def is_branch_exist(branch):
 
 
 def git_new_branch(branch):
-    run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
-    success(f"\nBranch '{branch}' created.\n")
+    result = run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
+    if isinstance(result, subprocess.CalledProcessError):
+        error(f"Failed to create branch '{branch}'! It may already exist.")
+        info("Would you like to jump to the existing branch instead? (y/n): ")
+        choice = input().strip().lower()
+        if choice == "y":
+            from pygitgo.commands.jump import jump_operation
+            jump_operation(Namespace(branch=branch))
+        else:
+            sys.exit(1)
+    else:
+        success(f"\nBranch '{branch}' created.\n")
 
     return branch
 
