@@ -4,13 +4,13 @@ from pygitgo.commands.git_operations import (
 )
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.config import get_config, config_operation
+from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.setup import ensure_first_run_setup
 from pygitgo.commands.state import state_operations
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
 from pygitgo.auth.account import get_user
-from pygitgo.exceptions import GitGoError
 from argparse import Namespace
 import subprocess
 import argparse
@@ -125,6 +125,7 @@ def push_operation(args):
 
     if not message:
         message = get_config("default-message", "New Project Update")
+        info(f"No commit message provided. Using default: '{message}'\n")
 
     commit_made = git_commit(message)
     
@@ -140,7 +141,7 @@ def push_operation(args):
                 info("\nWorking tree is clean and everything is up to date.")
                 warning("Make some changes first before using GitGo to commit and push.")
                 return
-        except:
+        except (GitCommandError, Exception):
             warning("\nNo changes to commit. Cannot verify remote status.")
             warning("Make some changes first or check your git remote configuration.")
             return

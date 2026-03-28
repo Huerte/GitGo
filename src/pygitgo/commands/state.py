@@ -59,20 +59,19 @@ def display_save_states():
 
 
 def is_number(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
+    val = str(value).strip()
+    if val.startswith('-'):
+        return val[1:].isdigit()
+    return val.isdigit()
     
 def validate_state_id(state_id, save_states):
     if not is_number(state_id):
         error("\nInvalid input. Please enter a valid state ID.\n")
         return False
-    elif (int(float(state_id)) - 1) < 0:
+    elif (int(state_id) - 1) < 0:
         error("\nState ID cannot be '0' or negative. Please enter a valid state ID.\n")
         return False
-    elif (int(float(state_id)) - 1) >= len(save_states):
+    elif (int(state_id) - 1) >= len(save_states):
         error("\nState ID out of range. Please enter a valid state ID.\n")
         return False
     return True
@@ -124,9 +123,13 @@ def save_state(state_name=None):
     if not state_name:
         state_name = "Auto-Save"
 
-    run_command(["git", "stash", "push", "-m", state_name])
-
-    success(f"\nState '{state_name}' saved successfully.\n")
+    output = run_command(["git", "stash", "push", "-m", state_name], allow_fail=True)
+    if isinstance(output, Exception):
+        error(f"\nFailed to save state '{state_name}'.\n")
+    elif "No local changes to save" in output:
+        warning("\nNo local changes to save.\n")
+    else:
+        success(f"\nState '{state_name}' saved successfully.\n")
 
 
 def delete_state(identifier=None):

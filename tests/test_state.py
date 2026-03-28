@@ -7,7 +7,7 @@ import pytest
 
 
 @pytest.mark.parametrize('state_id',[
-    '1', '3', '11', '00002', '7.0'
+    '1', '3', '11', '00002'
 ])
 def test_validate_state_id(state_id, mocker):
     fake_error = mocker.patch('pygitgo.commands.state.error')
@@ -19,7 +19,7 @@ def test_validate_state_id(state_id, mocker):
     fake_error.assert_not_called()
 
 @pytest.mark.parametrize('state_id',[
-    '-1', '-3', '-11', '-00002', '-7.0'
+    '-1', '-3', '-11', '-00002'
 ])
 def test_validate_state_id_negative(state_id, mocker):
 
@@ -32,7 +32,7 @@ def test_validate_state_id_negative(state_id, mocker):
     fake_error.assert_called_with("\nState ID cannot be '0' or negative. Please enter a valid state ID.\n")
 
 @pytest.mark.parametrize('state_id',[
-    '4', '10', '15', '0000020', '00007.00000'
+    '4', '10', '15', '0000020'
 ])
 def test_validate_state_id_out_scope(state_id, mocker):
 
@@ -155,21 +155,21 @@ def test_load_state_no_args(mocker):
 
 
 def test_save_state_no_args(mocker):
-    fake_run = mocker.patch("pygitgo.commands.state.run_command")
+    fake_run = mocker.patch("pygitgo.commands.state.run_command", return_value="Saved working directory")
     fake_success = mocker.patch("pygitgo.commands.state.success")
 
     save_state()
 
-    fake_run.assert_called_once_with(["git", "stash", "push", "-m", "Auto-Save"])
+    fake_run.assert_called_once_with(["git", "stash", "push", "-m", "Auto-Save"], allow_fail=True)
     fake_success.assert_called_once_with("\nState 'Auto-Save' saved successfully.\n")
 
 def test_save_state_with_name(mocker):
-    fake_run = mocker.patch("pygitgo.commands.state.run_command")
+    fake_run = mocker.patch("pygitgo.commands.state.run_command", return_value="Saved working directory")
     fake_success = mocker.patch("pygitgo.commands.state.success")
 
     save_state("My-State")
 
-    fake_run.assert_called_once_with(["git", "stash", "push", "-m", "My-State"])
+    fake_run.assert_called_once_with(["git", "stash", "push", "-m", "My-State"], allow_fail=True)
     fake_success.assert_called_once_with("\nState 'My-State' saved successfully.\n")
 
 

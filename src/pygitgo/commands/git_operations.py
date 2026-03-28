@@ -36,8 +36,7 @@ def git_new_branch(branch):
     result = run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
     if isinstance(result, subprocess.CalledProcessError):
         error(f"Failed to create branch '{branch}'! It may already exist.")
-        info("Would you like to jump to the existing branch instead? (y/n): ")
-        choice = input().strip().lower()
+        choice = input("\nWould you like to jump to the existing branch instead? (y/n): ").strip().lower()
         if choice == "y":
             from pygitgo.commands.jump import jump_operation
             jump_operation(Namespace(branch=branch))
@@ -153,8 +152,16 @@ def git_push(branch):
             if ssh_url:
                 run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...")
                 success(f"Remote updated to: {ssh_url}")
-    
-    run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
+
+    try:    
+        run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
+    except (subprocess.CalledProcessError, OSError) as e:
+        error("Failed to push to remote repository!")
+        warning("Please check your network connection, remote URL, and authentication.")
+        if "rebase in progress" in str(e):
+            handle_rebase()
+        else:
+            sys.exit(1)
 
 
 def handle_rebase():

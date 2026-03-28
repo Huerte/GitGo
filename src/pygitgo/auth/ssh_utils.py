@@ -35,11 +35,15 @@ def ensure_github_known_host():
 def check_connection():
     ensure_github_known_host()
     result = run_command(["ssh", "-T", "git@github.com"], allow_fail=True, return_complete=True)
+    if not hasattr(result, "stderr") or not result.stderr:
+        return False
     return "successfully authenticated" in result.stderr
 
 def get_github_username():
 
     result = run_command(["ssh", "-T", "git@github.com"], allow_fail=True, return_complete=True)
+    if not hasattr(result, "stderr") or not result.stderr:
+        return None
     output = result.stderr
     
     if "Hi " in output and "!" in output:
