@@ -7,6 +7,7 @@ from pygitgo.utils.config import get_config, config_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.setup import ensure_first_run_setup
 from pygitgo.commands.state import state_operations
+from pygitgo.commands.undo import undo_operations
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
@@ -185,6 +186,7 @@ def get_version():
     except Exception:
         return "dev"
 
+
 def main():
     parser = argparse.ArgumentParser(
         prog='gitgo',
@@ -264,6 +266,22 @@ def main():
     config_parser.add_argument("key", choices=["default-branch", "default-message"], help="The setting to change")
     config_parser.add_argument("value", nargs="?", help="The new value (required for 'set')")
 
+    undo_parser = subparsers.add_parser("undo", 
+        help="Safely undo mistakes", 
+        epilog=(
+            "Examples:\n"
+            "  gitgo undo commit       Undo your last commit (your files are safe)\n"
+            "  gitgo undo add          Undo 'git add' (files are no longer ready to commit)\n"
+            "  gitgo undo changes      DANGER: Throw away all new changes and start fresh"
+        ), 
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    undo_parser.add_argument(
+        "action", 
+        choices=["commit", "add", "changes"], 
+        help="What to undo: 'commit', 'add', or 'changes'"
+    )
+
     args = parser.parse_args()
 
     if args.ready:
@@ -289,6 +307,8 @@ def main():
             user_management(args)
         elif args.command == "config":
             config_operation(args)
+        elif args.command == "undo":
+            undo_operations(args)
     except GitGoError as e:
         error(f"\n{e}\n")
         sys.exit(1)
