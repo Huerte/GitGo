@@ -8,6 +8,7 @@ from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.setup import ensure_first_run_setup
 from pygitgo.commands.state import state_operations
 from pygitgo.commands.undo import undo_operations
+from pygitgo.commands.pull import pull_operation
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
@@ -282,6 +283,17 @@ def main():
         help="What to undo: 'commit', 'add', or 'changes'"
     )
 
+    pull_parser = subparsers.add_parser("pull", 
+        help="Safely pull the latest code without losing your changes",
+        epilog=(
+            "Examples:\n"
+            "  gitgo pull                Safely pull updates for your current branch\n"
+            "  gitgo pull main           Safely pull updates from the 'main' branch\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
+
     args = parser.parse_args()
 
     if args.ready:
@@ -309,6 +321,8 @@ def main():
             config_operation(args)
         elif args.command == "undo":
             undo_operations(args)
+        elif args.command == "pull":
+            pull_operation(args)
     except GitGoError as e:
         error(f"\n{e}\n")
         sys.exit(1)
