@@ -53,6 +53,7 @@ gitgo link https://github.com/username/repo.git "init"
 GitGo provides a CLI environment designed for faster and simpler Git workflows. Built to be intuitive, fast, and frictionless.
 
 - **Simplified Git Operations:** Replaces chained commands with single intuitive commands for linking, pushing, and stashing.
+- **Easy Undo Operations:** Safely undo commits, un-queue files, or wipe local changes without any complex Git jargon.
 - **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
 - **Custom Defaults:** Save your preferred branch name and commit message locally so you never have to type them again.
@@ -124,7 +125,15 @@ Jump to a different branch without worrying about your uncommitted changes. GitG
 gitgo jump feature/new-login
 ```
 
-### 5. Save Your Work-in-Progress
+### 5. Safely Undo Mistakes
+Easily fix common mistakes without losing work or needing to search for Git commands.
+```bash
+gitgo undo commit    # Undo the last commit (files stay safe)
+gitgo undo add       # Un-queue files (undo git add)
+gitgo undo changes   # DANGER: permanently wipe all unsaved edits
+```
+
+### 6. Save Your Work-in-Progress
 ```bash
 gitgo state save "halfway through refactor"
 gitgo state list
@@ -175,6 +184,16 @@ Safely switches branches without losing uncommitted progress. Auto-stashes, jump
 
 ```bash
 gitgo jump <branch>
+```
+
+### `gitgo undo`
+
+Safely undo recent actions and mistakes using simple, human-readable commands.
+
+```bash
+gitgo undo commit    # Undo your last commit without losing files
+gitgo undo add       # Un-queue files (remove them from being ready to commit)
+gitgo undo changes   # Permanently wipe all new files and local edits
 ```
 
 ### `gitgo state`
