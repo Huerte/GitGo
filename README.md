@@ -170,6 +170,15 @@ gitgo push -n [branch] [message]   # create new branch first
 
 If there are no new changes but unpushed commits exist, GitGo detects this and pushes without creating an empty commit.
 
+### `gitgo pull`
+
+Safely downloads updates from the remote server. It automatically stashes your messy code, pulls the updates cleanly underneath using a rebase, and then instantly puts your code back exactly how it was. 
+
+```bash
+gitgo pull             # Safely pull updates for your current branch
+gitgo pull <branch>    # Safely pull updates from a specific branch
+```
+
 ### `gitgo link`
 
 Initializes a Git repository in the current directory, connects it to a remote, and pushes. Handles already-initialized repos gracefully and pulls unrelated histories.
