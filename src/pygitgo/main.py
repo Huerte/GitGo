@@ -2,6 +2,7 @@ from pygitgo.commands.git_operations import (
     git_new_branch, git_commit, git_init, add_remote_origin,
     confirm_remote_link, git_push, get_current_branch, is_branch_exist
 )
+from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.config import get_config, config_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
@@ -100,6 +101,7 @@ def link_operation(args):
 def push_operation(args):
     branch = args.branch
     message = args.message
+    select = args.select if hasattr(args, 'select') else False
 
     if args.new:
         if not branch:
@@ -129,24 +131,52 @@ def push_operation(args):
         message = get_config("default-message", "New Project Update")
         info(f"No commit message provided. Using default: '{message}'\n")
 
-    commit_made = git_commit(message)
-    
-    if commit_made:
-        git_push(branch)
-    else:
-        try:
-            unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True, loading_msg="Checking for unpushed commits...")
-            if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
-                warning("\nNo changes to commit, but found unpushed commits. Pushing to remote...")
-                git_push(branch)
-            else:
-                info("\nWorking tree is clean and everything is up to date.")
-                warning("Make some changes first before using GitGo to commit and push.")
-                return
-        except (GitCommandError, Exception):
-            warning("\nNo changes to commit. Cannot verify remote status.")
-            warning("Make some changes first or check your git remote configuration.")
+    if select:
+        files = get_changed_files()
+        if not files:
+            info("\nWorking tree is clean. Nothing to select.")
+            warning("Make some changes first before using GitGo to commit and push.")
             return
+
+        selected = display_file_picker(files)
+        if not selected:
+            info("\nNo files selected. Push aborted.\n")
+            return
+
+        selective_stage(selected)
+        clean_message = message.strip('"\'')
+        run_command(["git", "commit", "-m", clean_message], loading_msg="Commiting changes...")
+        git_push(branch)
+
+        leftover_files = [f for f in files if f["path"] not in selected]
+        if leftover_files:
+            print()
+            warning(f"You have {len(leftover_files)} uncommitted file(s) left in your working directory:")
+            for f in leftover_files:
+                info(f"  - {f['path']}")
+            print()
+            save_choice = input("Would you like to save these leftovers to a GitGo State for later? (y/n): ").lower()
+            if save_choice == 'y':
+                state_operations(Namespace(action="save", identifier=f"Leftovers from: {clean_message}"))
+    else:
+        commit_made = git_commit(message)
+        
+        if commit_made:
+            git_push(branch)
+        else:
+            try:
+                unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True, loading_msg="Checking for unpushed commits...")
+                if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
+                    warning("\nNo changes to commit, but found unpushed commits. Pushing to remote...")
+                    git_push(branch)
+                else:
+                    info("\nWorking tree is clean and everything is up to date.")
+                    warning("Make some changes first before using GitGo to commit and push.")
+                    return
+            except (GitCommandError, Exception):
+                warning("\nNo changes to commit. Cannot verify remote status.")
+                warning("Make some changes first or check your git remote configuration.")
+                return
 
     print("\n" + ("=" * 90))
     success("MISSION COMPLETE — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
@@ -216,11 +246,13 @@ def main():
             "  gitgo push                        Push current branch with default message\n"
             "  gitgo push main 'fix auth bug'    Push to main with a custom message\n"
             "  gitgo push 'fix auth bug'         Push current branch with a custom message\n"
-            "  gitgo push -n feature/login 'add login'   Create new branch and push"
+            "  gitgo push -n feature/login 'add login'   Create new branch and push\n"
+            "  gitgo push -s main 'fix bug'      Pick which files to include before pushing"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     push_parser.add_argument("-n", "--new", action="store_true", help="Create a new branch before pushing")
+    push_parser.add_argument("-s", "--select", action="store_true", help="Interactively select which files to stage")
     push_parser.add_argument("branch", nargs="?", default=None, help="Branch to push to (default: current branch)")
     push_parser.add_argument("message", nargs="?", default=None, help="Commit message")
 
