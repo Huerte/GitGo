@@ -159,6 +159,7 @@ Stages all changes, commits, and pushes in one command.
 ```bash
 gitgo push [branch] [message]
 gitgo push -n [branch] [message]   # create new branch first
+gitgo push -s [branch] [message]   # interactively select files to stage
 ```
 
 > [!TIP]
@@ -167,6 +168,7 @@ gitgo push -n [branch] [message]   # create new branch first
 | Flag | Description |
 |------|-------------|
 | `-n`, `--new` | Create a new branch before pushing |
+| `-s`, `--select` | Interactively select which files you want to include in this push |
 
 If there are no new changes but unpushed commits exist, GitGo detects this and pushes without creating an empty commit.
 
