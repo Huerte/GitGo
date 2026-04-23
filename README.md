@@ -7,6 +7,7 @@
 [![PyPI Downloads](https://img.shields.io/pypi/dm/pygitgo?color=blue)](https://pypi.org/project/pygitgo)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/huerte)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
 
 **Stop typing the same five Git commands. Run one instead.**
@@ -283,6 +284,18 @@ Contributions are welcome and appreciated!
       <td align="center"><a href="https://github.com/Venomous-pie"><img src="https://github.com/Venomous-pie.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Venomous-pie"><b>Venomous-pie</b></a><br />Core Contributor</td>
     </tr>
   </table>
+</div>
+
+---
+
+## Support
+
+If GitGo saves you time, consider buying me a coffee. It helps keep the project going.
+
+<div align="center">
+  <a href="https://ko-fi.com/huerte">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" />
+  </a>
 </div>
 
 ---
