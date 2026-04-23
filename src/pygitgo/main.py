@@ -225,7 +225,7 @@ def main():
         epilog="Use 'gitgo <command> -h' for help on a specific command."
     )
     
-    parser.add_argument("-v", "-V", "--version", action="version", version=f"GitGo {get_version()}")
+    parser.add_argument("-v", "-V", "--version", action="version", version=f"GitGo {get_version()}\nSupport GitGo: https://ko-fi.com/huerte")
     parser.add_argument("-r", "--ready", action="store_true", help="Check tool readiness")
 
     subparsers = parser.add_subparsers(title="Commands", dest="command")
