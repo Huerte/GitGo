@@ -6,6 +6,7 @@ from pygitgo.commands.staging import get_changed_files, display_file_picker, sel
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.config import get_config, config_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.update_checker import check_for_updates_background
 from pygitgo.utils.setup import ensure_first_run_setup
 from pygitgo.commands.state import state_operations
 from pygitgo.commands.undo import undo_operations
@@ -337,6 +338,7 @@ def main():
         sys.exit(0)
 
     ensure_first_run_setup()
+    check_for_updates_background(get_version())
 
     try:
         if args.command == "jump":

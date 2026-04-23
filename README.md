@@ -58,6 +58,7 @@ GitGo provides a CLI environment designed for faster and simpler Git workflows. 
 - **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
 - **Custom Defaults:** Save your preferred branch name and commit message locally so you never have to type them again.
+- **Auto-Update Checker:** Silently checks for newer versions in the background and notifies you, without slowing down your commands.
 - **SSH Auto-Setup:** Generates an SSH key, adds it to `ssh-agent`, and opens your GitHub settings automatically.
 - **HTTPS to SSH Conversion:** Silently converts the remote to SSH before pushing if your SSH is configured.
 - **Termux Compatibility:** Works natively on Android natively handling common issues like dubious ownership errors.
@@ -258,6 +259,7 @@ gitgo -r        # verify GitGo is ready
 
 - **SSH Auto-Setup:** `gitgo user login` generates an `ed25519` SSH key, adds it to `ssh-agent`, prints the public key, and opens `github.com/settings/ssh/new`.
 - **HTTPS to SSH Conversion:** If your remote is set to HTTPS, GitGo converts the remote to SSH before pushing if SSH is configured. No `git remote set-url` is required.
+- **Auto-Update Checker:** Spawns a non-blocking background thread on startup to query PyPI for newer versions. Results are cached locally for 7 days to prevent unnecessary network requests.
 - **Termux Compatibility:** Detects Termux via environment variables, adjusts binary locations (`$PREFIX/bin`), uses `termux-open` for browser actions, and natively handles the `detected dubious ownership` Git error.
 - **State Management:** `gitgo state` wraps `git stash` with named saves, indexed listing, and confirmation prompts.
 
