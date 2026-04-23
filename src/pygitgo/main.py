@@ -226,7 +226,7 @@ def main():
         epilog="Use 'gitgo <command> -h' for help on a specific command."
     )
     
-    parser.add_argument("-v", "-V", "--version", action="version", version=f"GitGo {get_version()}\nSupport GitGo: https://ko-fi.com/huerte")
+    parser.add_argument("-v", "-V", "--version", action="store_true", help="show program's version number and exit")
     parser.add_argument("-r", "--ready", action="store_true", help="Check tool readiness")
 
     subparsers = parser.add_subparsers(title="Commands", dest="command")
@@ -328,6 +328,11 @@ def main():
     pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
 
     args = parser.parse_args()
+
+    if getattr(args, 'version', False):
+        print(f"GitGo {get_version()}")
+        print(f"Support GitGo: https://ko-fi.com/huerte")
+        sys.exit(0)
 
     if args.ready:
         info("\nALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...\n")
