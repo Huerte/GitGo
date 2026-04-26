@@ -76,9 +76,31 @@ GitGo provides a CLI environment designed for faster and simpler Git workflows. 
 
 ### Install from PyPI
 
+For Windows users or environments without global pip restrictions, you can install GitGo directly via pip:
+
 ```bash
 pip install pygitgo
 ```
+
+*(Alternatively, you can use `pipx install pygitgo` if you prefer isolated environments).*
+
+### Install via pipx (Cross-Platform)
+
+If you already have `pipx` installed, you can use it to safely install GitGo on any operating system:
+
+```bash
+pipx install pygitgo
+```
+
+### Quick Install (Linux & macOS)
+
+The easiest way to install GitGo on Unix systems without worrying about Python environments or PEP 668 restrictions is using our install script:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Huerte/GitGo/main/install.sh | bash
+```
+
+This will automatically create an isolated environment and place `gitgo` in your `~/.local/bin` folder.
 
 Verify the installation:
 
