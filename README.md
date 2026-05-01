@@ -14,6 +14,14 @@
 
 <a href="https://github.com/Huerte/GitGo/issues">Report Bug</a> · <a href="https://github.com/Huerte/GitGo/issues">Request Feature</a>
 
+<br />
+
+If GitGo saves you time, consider buying me a coffee. It helps keep the project going.
+
+<a href="https://ko-fi.com/huerte">
+  <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" />
+</a>
+
 </div>
 
 ---
@@ -39,6 +47,7 @@ gitgo link https://github.com/username/repo.git "init"
 - [Command Reference](#command-reference)
 - [How It Works](#how-it-works)
 - [Contributing](#contributing)
+- [Credits](#credits)
 - [License](#license)
 
 ---
@@ -51,9 +60,9 @@ gitgo link https://github.com/username/repo.git "init"
 
 ## Features
 
-GitGo provides a CLI environment designed for faster and simpler Git workflows. Built to be intuitive, fast, and frictionless.
+GitGo provides a CLI environment designed for faster and simpler Git workflows. Built to be fast and frictionless.
 
-- **Simplified Git Operations:** Replaces chained commands with single intuitive commands for linking, pushing, and stashing.
+- **Simplified Git Operations:** Replaces chained commands with single commands for linking, pushing, and stashing.
 - **Easy Undo Operations:** Safely undo commits, un-queue files, or wipe local changes without any complex Git jargon.
 - **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
@@ -70,8 +79,8 @@ GitGo provides a CLI environment designed for faster and simpler Git workflows. 
 ### Prerequisites
 
 - **Python 3.8+**
-- **Git 2.x+** — [git-scm.com](https://git-scm.com)
-- **OpenSSH** — required for `gitgo user login` (pre-installed on most systems)
+- **Git 2.x+**: [git-scm.com](https://git-scm.com)
+- **OpenSSH**: required for `gitgo user login` (pre-installed on most systems)
 - A **GitHub account**
 
 ### Install from PyPI
@@ -308,18 +317,6 @@ Contributions are welcome and appreciated!
       <td align="center"><a href="https://github.com/Venomous-pie"><img src="https://github.com/Venomous-pie.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Venomous-pie"><b>Venomous-pie</b></a><br />Core Contributor</td>
     </tr>
   </table>
-</div>
-
----
-
-## Support
-
-If GitGo saves you time, consider buying me a coffee. It helps keep the project going.
-
-<div align="center">
-  <a href="https://ko-fi.com/huerte">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" />
-  </a>
 </div>
 
 ---
