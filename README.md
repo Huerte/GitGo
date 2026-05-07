@@ -1,6 +1,8 @@
 <div align="center">
 
-# GitGo
+<p align="center">
+  <img width="904" height="300" alt="gitgo_banner" src="https://github.com/user-attachments/assets/f0ce3cc3-5e2c-49df-b017-baf8459e9dc6" />
+</p>
 
 [![Tests](https://github.com/Huerte/GitGo/actions/workflows/tests.yml/badge.svg)](https://github.com/Huerte/GitGo/actions)
 [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
