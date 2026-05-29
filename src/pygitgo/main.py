@@ -325,17 +325,6 @@ def main():
     )
     pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
 
-    clean_branch_parser = subparsers.add_parser("clean",
-        help="Clean local and remote git branches",
-        epilog=(
-            "Examples:\n"
-            "  gitgo clean                 Delete local branches already merged into main\n"
-            "  gitgo clean -a              Delete all local branches except main\n"
-            "  gitgo clean -k dev,feat/1   Keep dev and feat/1 branches from deletion\n"
-            "  gitgo clean -y              Skip confirmation prompts"
-        ),
-    )
-
     args = parser.parse_args()
 
     if getattr(args, 'version', False):
