@@ -14,7 +14,7 @@
 
 <!-- Describe what you changed and why. 2-3 sentences is enough. -->
 
-Fixes #
+Closes # <!-- Remove the line if this PR does not address an open Issue -->
 
 ## Changes
 
