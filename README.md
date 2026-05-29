@@ -1,8 +1,6 @@
 <div align="center">
 
-<p align="center">
-  <img width="904" height="300" alt="gitgo_banner" src="https://github.com/user-attachments/assets/f0ce3cc3-5e2c-49df-b017-baf8459e9dc6" />
-</p>
+![GitGo Banner](assets/banner.png)
 
 [![Tests](https://github.com/Huerte/GitGo/actions/workflows/tests.yml/badge.svg)](https://github.com/Huerte/GitGo/actions)
 [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
@@ -51,6 +49,8 @@ gitgo link https://github.com/username/repo.git "init"
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [License](#license)
+- [Changelog](CHANGELOG.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
@@ -62,17 +62,18 @@ gitgo link https://github.com/username/repo.git "init"
 
 ## Features
 
-GitGo provides a CLI environment designed for faster and simpler Git workflows. Built to be fast and frictionless.
+GitGo provides a CLI environment designed for faster and simpler Git workflows.
+No chained commands, no cryptic flags — just short commands you can actually remember.
 
 - **Simplified Git Operations:** Replaces chained commands with single commands for linking, pushing, and stashing.
-- **Easy Undo Operations:** Safely undo commits, un-queue files, or wipe local changes without any complex Git jargon.
-- **Smart Branch Hopping:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
+- **Undo Operations:** Safely undo commits, un-queue files, or wipe local changes without any complex Git jargon.
+- **Safe Branch Switching:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
 - **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
 - **Custom Defaults:** Save your preferred branch name and commit message locally so you never have to type them again.
 - **Auto-Update Checker:** Silently checks for newer versions in the background and notifies you, without slowing down your commands.
 - **SSH Auto-Setup:** Generates an SSH key, adds it to `ssh-agent`, and opens your GitHub settings automatically.
 - **HTTPS to SSH Conversion:** Silently converts the remote to SSH before pushing if your SSH is configured.
-- **Termux Compatibility:** Works natively on Android natively handling common issues like dubious ownership errors.
+- **Termux Compatibility:** Works on Android via Termux, handling common issues like dubious ownership errors out of the box.
 
 ---
 
@@ -151,13 +152,13 @@ gitgo link https://github.com/username/repo.git "Initial commit"
 gitgo push main "Fix auth bug"
 
 # Create a new branch and push
-gitgo push -n feature/login "Add login flow"
+gitgo push -n feat/login "Add login flow"
 ```
 
 ### 4. Safely Switch Branches
 Jump to a different branch without worrying about your uncommitted changes. GitGo will safely stash them, hop to the new branch, sync with `main`, and carefully unpack them.
 ```bash
-gitgo jump feature/new-login
+gitgo jump feat/new-login
 ```
 
 ### 5. Safely Undo Mistakes
@@ -234,7 +235,7 @@ gitgo jump <branch>
 
 ### `gitgo undo`
 
-Safely undo recent actions and mistakes using simple, human-readable commands.
+Safely undo recent actions and mistakes using plain commands that say exactly what they do.
 
 ```bash
 gitgo undo commit    # Undo your last commit without losing files
@@ -244,7 +245,7 @@ gitgo undo changes   # Permanently wipe all new files and local edits
 
 ### `gitgo state`
 
-A human-readable interface over `git stash`.
+A named interface over `git stash`.
 
 ```bash
 gitgo state list              # show all saved states
@@ -300,13 +301,9 @@ gitgo -r        # verify GitGo is ready
 
 ## Contributing
 
-Contributions are welcome and appreciated!
-
-1. Fork the Project
-2. Create a Feature Branch (`git checkout -b feature/your-feature`)
-3. Commit Changes
-4. Push to the Branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide,
+including project structure, test instructions, commit conventions, and a
+[Good First Issues](CONTRIBUTING.md#good-first-issues) table if you are not sure where to start.
 
 ---
 

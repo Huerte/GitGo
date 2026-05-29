@@ -56,7 +56,7 @@ def test_config_operation_not_valid_keys(mocker):
     value = "true"
     args = Namespace(key=key, action="set", value=value)
 
-    assert capture_system_exit_code(lambda: config_operation(args)) is None
+    assert capture_system_exit_code(lambda: config_operation(args)) == 0
 
     fake_error.assert_called_with(f"\nInvalid configuration key: '{key}'")
     fake_warning.assert_called_with(f"Valid keys are: {', '.join(VALID_KEYS)}\n")

@@ -1,3 +1,4 @@
+from pygitgo.exceptions import GitGoError
 from pygitgo.utils.colors import success, warning, error, info
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
@@ -17,7 +18,7 @@ def pull_operation(args):
         if isinstance(remote_refs, subprocess.CalledProcessError) or not remote_refs.strip():
             error(f"\nFailed! The branch '{branch}' does not exist on the remote server.")
             warning("You might need to push your local branch first.\n")
-            sys.exit(1)
+            raise GitGoError()
 
         run_command(
             ["git", "pull", "--rebase", "--autostash", "origin", branch], 
@@ -35,9 +36,10 @@ def pull_operation(args):
             info("2. Fix the red conflict lines in your files.")
             info("3. Save the files.")
             info("4. Run this command to finish:  git rebase --continue\n")
-            sys.exit(1)
+            raise GitGoError()
         else:
-            error("\nFailed to pull updates from the server!")
-            error("Please check your internet connection and try again.")
-            error(f"Details: {e}\n")
-            sys.exit(1)
+            raise GitGoError(
+                "\nFailed to pull updates from the server!"
+                "Please check your internet connection and try again."
+                f"Details: {e}\n"
+            )

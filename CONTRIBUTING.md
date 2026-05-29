@@ -1,0 +1,196 @@
+# Contributing to GitGo
+
+Thanks for considering a contribution. This guide covers everything you need to go from zero to a submitted pull request.
+
+---
+
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Running Tests](#running-tests)
+- [Making Changes](#making-changes)
+- [Submitting a Pull Request](#submitting-a-pull-request)
+- [Good First Issues](#good-first-issues)
+
+---
+
+## Code of Conduct
+
+Be direct, be respectful. No gatekeeping. This is a student project open to everyone, regardless of experience level. If someone is learning, help them, don't mock them.
+
+This applies to all project spaces: GitHub issues, pull requests, and any public discussion tied to this repository. It covers contributors and maintainers alike — including first-time contributors.
+
+To report a violation, contact the maintainer at [Report a Violation](mailto:huertejerald@gmail.com?subject=GitGo%20CoC%20Report).
+A short description of what happened is enough.
+
+Violations may result in a warning, removal of the offending content, or a block from the repository depending on severity.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- Git 2.x+
+
+### Fork and Clone
+
+```bash
+# 1. Fork the repo on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/GitGo.git
+cd GitGo
+
+# 2. Add the upstream remote so you can pull future changes
+git remote add upstream https://github.com/Huerte/GitGo.git
+```
+
+### Set Up the Dev Environment
+
+```bash
+# Install the package in editable mode with dev dependencies
+pip install -e ".[dev]"
+
+# Verify the install worked
+gitgo -r
+```
+
+That's it. No Docker, no virtual environment required
+
+---
+
+## Project Structure
+
+```
+src/pygitgo/
+├── main.py                # Entry point, argument parsing, command routing
+├── exceptions.py          # GitGoError hierarchy (GitCommandError, AuthError, ConfigError)
+├── commands/
+│   ├── git_operations.py  # Core git subprocess helpers (push, init, branch, etc.)
+│   ├── jump.py            # Safe branch switching with Try-and-Revert engine
+│   ├── pull.py            # Safe pull with auto-stash and rebase
+│   ├── staging.py         # Interactive file picker for selective commits
+│   ├── state.py           # Named stash wrapper (save/load/delete/list)
+│   └── undo.py            # Undo commit, undo add, wipe changes
+├── auth/
+│   ├── account.py         # Git identity (user.name / user.email)
+│   ├── manager.py         # Login/logout orchestration
+│   └── ssh_utils.py       # SSH key generation, known_hosts, HTTPS to SSH conversion
+└── utils/
+    ├── colors.py          # ANSI color helpers (info, success, warning, error)
+    ├── config.py          # GitGo config file management
+    ├── executor.py        # subprocess wrapper with spinner
+    ├── platform_utils.py  # OS/Termux detection, path resolution
+    ├── setup.py           # First-run setup wizard
+    └── update_checker.py  # Background PyPI version check
+```
+
+**Key rule:** Command logic lives in `commands/`. `main.py` only handles argument parsing and routes to the right function. Keep it that way.
+
+---
+
+## Running Tests
+
+```bash
+# Run the full test suite
+pytest tests/ -v
+
+# Run a single test file
+pytest tests/test_jump.py -v
+
+# Run with coverage report
+pytest tests/ --cov=pygitgo --cov-report=term-missing
+```
+
+Tests use `pytest` and `pytest-mock`. No real Git repos are created during tests. Mock `subprocess.run` and `run_command` where needed.
+
+### Writing Tests
+
+- Place new test files in `tests/` named `test_<module>.py`.
+- Use the `tmp_path` fixture for any tests that need a real filesystem.
+- Mock `subprocess.run` at `pygitgo.utils.executor.subprocess.run` for subprocess calls.
+- Every new command should have at least a happy-path and one failure-path test.
+
+---
+
+## Making Changes
+
+### Branch Naming
+
+```
+feat/short-description    # New features
+fix/short-description        # Bug fixes
+docs/short-description       # Documentation only
+chore/short-description      # Maintenance, refactoring, CI
+```
+
+### Commit Messages
+
+Use plain, direct English. Describe what changed and why if it's not obvious.
+
+```bash
+# Good
+git commit -m "fix: prevent sys.exit in jump_operation when called from push"
+git commit -m "feat: add gitgo log command with color-coded history"
+git commit -m "docs: add dev setup instructions to CONTRIBUTING"
+
+# Avoid
+git commit -m "fix stuff"
+git commit -m "update"
+```
+
+### Code Style
+
+- Follow existing patterns. If the surrounding code does something a certain way, match it.
+- No type annotations required, but don't make the code harder to read.
+- Keep functions under 40 lines. If a function is growing, split it.
+- Add a docstring if the function's purpose isn't immediately obvious from its name.
+
+### Error Handling
+
+- Raise `GitGoError` subclasses (`GitCommandError`, `AuthError`, `ConfigError`) instead of calling `sys.exit()` inside command modules.
+- Only `main.py` should call `sys.exit()`. Command functions should raise or return.
+- Never swallow exceptions silently with empty `except` blocks.
+
+---
+
+## Submitting a Pull Request
+
+1. Push your branch to your fork:
+   ```bash
+   git push origin feat/your-feature
+   ```
+
+2. Open a Pull Request against `Huerte/GitGo:main`.
+
+3. In the PR description, include:
+   - **What** the change does
+   - **Why** it's needed (link an issue if one exists)
+   - **How to test** it manually
+
+4. The CI pipeline will run `pytest` automatically. Make sure it passes before requesting a review.
+
+5. If your PR adds a new command, update `README.md` with the usage example and command reference entry.
+
+---
+
+## Good First Issues
+
+Not sure where to start? Pick something from the list below.
+
+| Task | Difficulty | Description |
+|------|------------|-------------|
+| `gitgo log` | ⭐ | Wrap `git log --oneline --color` and print it with GitGo's color helpers from `utils/colors.py`. |
+| `gitgo amend` | ⭐ | Wrap `git commit --amend -m "<message>"`. Add a confirmation prompt before rewriting. |
+| `pytest-cov` setup | ⭐ | Add `pytest-cov` to `dev` dependencies in `pyproject.toml` and verify coverage runs with `pytest --cov`. |
+| GitLab SSH support | ⭐⭐ | The regex in `auth/ssh_utils.py` only matches `github.com`. Extend it to handle `gitlab.com` and `bitbucket.org`. |
+| `gitgo status` | ⭐⭐ | Parse `git status --porcelain` and display staged, unstaged, and untracked files in labeled groups. Edge cases: renamed files, merge conflicts. |
+| Shell completions | ⭐⭐⭐ | Add tab-completion for Bash/Zsh/Fish via `argcomplete` or hand-written completion scripts. PowerShell optional. |
+
+Check the [open issues](https://github.com/Huerte/GitGo/issues) for the current list labeled `good first issue`.
+
+---
+
+If you have a question that isn't covered here, open an issue and ask. No question is too basic.

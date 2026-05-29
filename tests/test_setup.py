@@ -18,7 +18,7 @@ def test_check_git_installed_exist(mocker):
     fake_error = mocker.patch("pygitgo.utils.setup.error")
     fake_info = mocker.patch("pygitgo.utils.setup.info")
 
-    assert capture_system_exit_code(lambda: check_git_installed()) == None
+    assert capture_system_exit_code(lambda: check_git_installed()) == 0
 
     fake_error.assert_not_called()
     fake_info.assert_not_called()
