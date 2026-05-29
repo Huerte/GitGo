@@ -1,37 +1,22 @@
----
-name: Pull Request
-about: Submit a change to GitGo
----
+If you are unsure how to fill this out, see [CONTRIBUTING.md](https://github.com/Huerte/GitGo/blob/main/CONTRIBUTING.md).
 
-## What does this PR do?
+<!-- Note: You do not need to delete these hidden comments. GitHub will automatically hide them when you submit! -->
 
-<!-- A brief summary of the change. -->
+## Overview
+<!-- What does this PR do, and why does it exist? -->
 
-## Related Issue
-
-<!-- Link the issue this closes, if any. Use "Closes #123" to auto-close it on merge. -->
-
-Closes #
-
-## Type of Change
-
-- [ ] Bug fix
-- [ ] New feature / command
-- [ ] Documentation update
-- [ ] Refactor / code cleanup
-- [ ] CI / tooling
+## What was added
+<!-- What changed, and what can someone do now that they could not before? -->
+- **Label:** Description
 
 ## How to Test
-
-<!-- Step-by-step instructions to manually verify this works. -->
-
 1. `pip install -e ".[dev]"`
-2. Run `gitgo ...`
-3. Expected result: ...
+2. Run `gitgo commit -m "fix: correct branch detection"` *(replace with the actual command you tested)*
+3. Expected result: GitGo commits to the current branch without errors. *(replace with your actual expected result)*
 
 ## Checklist
-
+<!-- Put an 'x' in the boxes that apply: [x] -->
 - [ ] My changes pass `pytest tests/ -v` locally
 - [ ] I updated `README.md` if I added or changed a command
 - [ ] I added or updated tests for the change
-- [ ] I updated `CHANGELOG.md` under an `[Unreleased]` section
+- [ ] I updated `CHANGELOG.md` under the [`[Unreleased]`](https://github.com/Huerte/GitGo/blob/main/CHANGELOG.md) section

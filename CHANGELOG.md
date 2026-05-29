@@ -2,7 +2,6 @@
 
 All notable changes to GitGo are documented here.
 
-Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
@@ -14,6 +13,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - (nothing yet)
+
+---
+
+## [1.6.2] - 2026-05-29
+
+### Fixed
+- Fixed `gitgo push` stopping after a branch jump. It now completes the commit and push automatically.
 
 ---
 
@@ -29,7 +35,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.6.0] - 2026-04-20
 
 ### Added
-- **Auto-Update Checker:** On startup, GitGo silently spawns a background thread to query PyPI for newer versions. Results are cached locally for 7 days so it never slows down your commands.
+- **Auto-Update Checker:** Queries PyPI for newer versions using a background thread on startup. GitGo caches these results locally for 7 days.
 - Update notification displays a one-line prompt: `GitGo vX.X.X is available! Run: pip install --upgrade pygitgo`.
 
 ---
@@ -37,7 +43,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.5.0] - 2026-04-18
 
 ### Added
-- **`gitgo push -s` / `--select`:** Interactive file picker before committing. Select exactly which files to include in the push. Leftover unstaged files are offered to be saved as a named GitGo State automatically.
+- **`gitgo push -s` / `--select`:** Adds a file picker before you commit. You select the files you want to push. GitGo offers to save files you leave unstaged to a state.
 
 ---
 

@@ -6,22 +6,24 @@ labels: bug
 assignees: ''
 ---
 
+<!-- Note: You do not need to delete these hidden comments. GitHub will automatically hide them when you submit! -->
+
 ## What happened?
 
-<!-- A clear description of what went wrong. -->
+<!-- What were you trying to do when this happened? -->
 
 ## Steps to Reproduce
 
-1. Run `gitgo ...`
-2. ...
+1. Run `gitgo commit -m "fix: update config"` *(replace with the command you ran)*
+2. Run `gitgo push` *(add or remove steps as needed)*
 
 ## Expected Behavior
 
-<!-- What should have happened instead. -->
+<!-- What did you expect GitGo to do? -->
 
 ## Actual Behavior
 
-<!-- What actually happened. Paste the full error output if there is one. -->
+<!-- What did GitGo do instead? Paste the full error output in the block below. -->
 
 ```
 paste error output here
@@ -36,4 +38,4 @@ paste error output here
 
 ## Additional Context
 
-<!-- Anything else that might be useful: repo state, remote URL format, SSH vs HTTPS, etc. -->
+<!-- Is there anything about your setup or repo state that might be relevant? -->
