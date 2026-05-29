@@ -165,7 +165,7 @@ git commit -m "update"
 
 2. Open a Pull Request against `Huerte/GitGo:main`.
 
-3. Fill in the PR template. It has four sections: Overview, What was added, How to Test, and Checklist. If you are unsure how to fill it in, see the template itself for guidance or open an issue and ask.
+3. Fill in the PR template. It has six sections: Type, Overview, Changes, Breaking Changes, How to Test, and Checklist. If you are unsure how to fill it in, see the template itself for guidance or open an issue and ask.
 
 4. The CI pipeline will run `pytest` automatically. Make sure it passes before requesting a review.
 
@@ -177,12 +177,12 @@ git commit -m "update"
 
 Not sure where to start? The table below lists tasks sized for a first contribution. Each one is self-contained and has a clear scope.
 
-Before picking one, clone the repo and read through the project structure in [`CONTRIBUTING.md`](CONTRIBUTING.md) so you know where things live.
+Before picking one, clone the repo and read through the [Project Structure](#project-structure) section so you know where things live.
 
 | Task | Difficulty | Where to start | What to do |
 |------|------------|----------------|------------|
 | `gitgo log` | ⭐ | `utils/colors.py` | Wrap `git log --oneline --color` and format the output using the existing color helpers. |
-| `gitgo amend` | ⭐ | New command file | Wrap `git commit --amend -m "<message>"`. Add a confirmation prompt before it runs — amend rewrites history, so the user should opt in. |
+| `gitgo amend` | ⭐ | New command file | Wrap `git commit --amend -m "<message>"`. Add a confirmation prompt before it runs, because amend rewrites history, so the user should opt in. |
 | `gitgo diff` | ⭐ | New command file | Wrap `git diff` and `git diff --staged`. Add a `-s` / `--staged` flag to toggle between unstaged and staged output. |
 | GitLab & Bitbucket SSH | ⭐⭐ | `auth/ssh_utils.py` | The host regex only matches `github.com`. Extend it to cover `gitlab.com` and `bitbucket.org`. |
 | `gitgo status` | ⭐⭐ | New command file | Parse `git status --porcelain` and display staged, unstaged, and untracked files in labeled groups. Handle renamed files and merge conflict markers as edge cases. |

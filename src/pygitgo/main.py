@@ -97,7 +97,7 @@ def link_operation(args):
     git_push(current_branch)
     
     print("\n" + ("=" * 90))
-    success("MISSION COMPLETE — REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+    success("MISSION COMPLETE: REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
     
 
 def push_operation(args):
@@ -179,7 +179,7 @@ def push_operation(args):
                 return
 
     print("\n" + ("=" * 90))
-    success("MISSION COMPLETE — NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+    success("MISSION COMPLETE: NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
 
 
 def display_current_user():

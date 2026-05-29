@@ -26,7 +26,7 @@ If GitGo saves you time, consider buying me a coffee. It helps keep the project 
 
 ---
 
-GitGo wraps your most-typed git commands into shorter ones. It covers init, add, commit, push, branch, and stash — plus the stuff most wrappers leave out: SSH key setup, HTTPS-to-SSH conversion, and a named stash interface called state management.
+GitGo wraps your most-typed git commands into shorter ones. It covers init, add, commit, push, branch, and stash. It also includes features most wrappers leave out: SSH key setup, HTTPS-to-SSH conversion, and a named stash interface called state management.
 
 ```bash
 # Instead of this:

@@ -58,9 +58,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - **`gitgo undo`:** Three undo targets:
-  - `gitgo undo commit` — Soft-resets the last commit. Files stay untouched.
-  - `gitgo undo add` — Unstages all staged files (`git reset HEAD`).
-  - `gitgo undo changes` — Permanently wipes all uncommitted edits and untracked files. Prompts for confirmation before executing.
+  - `gitgo undo commit` : Soft-resets the last commit. Files stay untouched.
+  - `gitgo undo add` : Unstages all staged files (`git reset HEAD`).
+  - `gitgo undo changes` : Permanently wipes all uncommitted edits and untracked files. Prompts for confirmation before executing.
 
 ---
 
