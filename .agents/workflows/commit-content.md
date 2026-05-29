@@ -99,7 +99,7 @@ type/short-description-in-kebab-case
 ```
 
 ### Types
-- `feature/` — new command or user-facing behavior
+- `feat/` — new command or user-facing behavior
 - `fix/` — bug fix
 - `docs/` — documentation only
 - `chore/` — maintenance, CI, config
@@ -116,19 +116,19 @@ type/short-description-in-kebab-case
 
 ### Good examples
 ```
-feature/gitgo-pull-auto-stash
+feat/gitgo-pull-auto-stash
 fix/empty-commit-on-no-changes
 docs/add-changelog-dates
 chore/add-pytest-cov
-feature/gitlab-ssh-support
+feat/gitlab-ssh-support
 ```
 
 ### Bad examples
 ```
-feature/new-stuff              (too vague)
+feat/new-stuff              (too vague)
 sarge/pull-command             (personal identifier)
 fix/bug                        (no description)
-feature/gitgo-pull-command-with-auto-stash-and-rebase  (too long)
+feat/gitgo-pull-command-with-auto-stash-and-rebase  (too long)
 ```
 
 ---
@@ -173,7 +173,7 @@ v1.5.0 is now live with exciting new features...
 
 ### Format
 ```
-[title — plain text, same rules as commit message subject]
+[title: plain text, same rules as commit message subject]
 
 ## Overview
 [two to four sentences: what this PR does, why, what the user can do after merge]
@@ -181,6 +181,11 @@ v1.5.0 is now live with exciting new features...
 ## What was added
 - **Label:** [one to two sentences from the user's point of view]
 - **Label:** [one to two sentences from the user's point of view]
+
+## How to Test
+1. pip install -e ".[dev]"
+2. [command the reviewer should run]
+3. [expected result]
 ```
 
 ### Rules
@@ -188,9 +193,10 @@ v1.5.0 is now live with exciting new features...
   It can be slightly longer (up to 72 characters) since GitHub displays it with more space.
 - Overview does not describe code. It describes the change from the outside.
   If there is a linked issue, reference it as `#NUMBER` in the first or second sentence.
-- "What was added" section labels are bold noun phrases, not verbs.
+- "What was added" labels are bold noun phrases, not verbs.
   Wrong: **Added auto-stash before pull**
   Right: **Auto-stash on pull**
+- "How to Test" steps must be concrete and runnable. Include the exact command and the exact expected output.
 - If the PR is a one-line fix, the description can be three sentences total.
   Do not invent structure to fill space.
 - Do not list files changed. GitHub already shows the diff.

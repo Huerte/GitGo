@@ -6,23 +6,25 @@ labels: enhancement
 assignees: ''
 ---
 
+<!-- Note: You do not need to delete these hidden comments. GitHub will automatically hide them when you submit! -->
+
 ## What problem does this solve?
 
-<!-- Describe the workflow problem or friction point. What do you currently have to do manually? -->
+<!-- What do you currently have to do manually that this would handle? -->
 
 ## Proposed Solution
 
-<!-- What should the command or behavior look like? Include example usage if possible. -->
+<!-- What should the command or behavior look like? -->
 
 ```bash
-# Example
-gitgo <command> <args>
+# Stash uncommitted changes before pulling, then restore them after
+gitgo sync --stash
 ```
 
 ## Alternatives Considered
 
-<!-- Any other ways you thought about solving this. Why is your proposed approach better? -->
+<!-- Did you look at other ways to solve this? If so, what were they? -->
 
 ## Additional Context
 
-<!-- Mockups, links to similar tools, or anything else relevant. -->
+<!-- Is there anything else that would help explain or support this request? -->

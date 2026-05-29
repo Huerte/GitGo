@@ -20,7 +20,7 @@ Thanks for considering a contribution. This guide covers everything you need to 
 
 Be direct, be respectful. No gatekeeping. This is a student project open to everyone, regardless of experience level. If someone is learning, help them, don't mock them.
 
-This applies to all project spaces: GitHub issues, pull requests, and any public discussion tied to this repository. It covers contributors and maintainers alike — including first-time contributors.
+This applies to all project spaces: GitHub issues, pull requests, and any public discussion tied to this repository. It covers contributors and maintainers alike, including first-time contributors.
 
 To report a violation, contact the maintainer at [Report a Violation](mailto:huertejerald@gmail.com?subject=GitGo%20CoC%20Report).
 A short description of what happened is enough.
@@ -165,10 +165,7 @@ git commit -m "update"
 
 2. Open a Pull Request against `Huerte/GitGo:main`.
 
-3. In the PR description, include:
-   - **What** the change does
-   - **Why** it's needed (link an issue if one exists)
-   - **How to test** it manually
+3. Fill in the PR template. It has four sections: Overview, What was added, How to Test, and Checklist. If you are unsure how to fill it in, see the template itself for guidance or open an issue and ask.
 
 4. The CI pipeline will run `pytest` automatically. Make sure it passes before requesting a review.
 

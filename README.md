@@ -26,7 +26,7 @@ If GitGo saves you time, consider buying me a coffee. It helps keep the project 
 
 ---
 
-GitGo wraps your most repetitive git commands into short ones you can actually remember. It covers init, add, commit, push, branch, and stash. It also handles the things most tools skip like automatic SSH setup, HTTPS to SSH conversion, and a simple stash interface called state management.
+GitGo wraps your most-typed git commands into shorter ones. It covers init, add, commit, push, branch, and stash — plus the stuff most wrappers leave out: SSH key setup, HTTPS-to-SSH conversion, and a named stash interface called state management.
 
 ```bash
 # Instead of this:
@@ -62,18 +62,15 @@ gitgo link https://github.com/username/repo.git "init"
 
 ## Features
 
-GitGo provides a CLI environment designed for faster and simpler Git workflows.
-No chained commands, no cryptic flags — just short commands you can actually remember.
-
-- **Simplified Git Operations:** Replaces chained commands with single commands for linking, pushing, and stashing.
-- **Undo Operations:** Safely undo commits, un-queue files, or wipe local changes without any complex Git jargon.
-- **Safe Branch Switching:** Safely traverse branches with `jump`. Auto-stashes messy code and prevents merge conflict disasters with a Try-And-Revert safety engine.
-- **State Management:** A human-readable interface over `git stash`. States are named and listed by index so you never have to remember cryptic stash references.
-- **Custom Defaults:** Save your preferred branch name and commit message locally so you never have to type them again.
-- **Auto-Update Checker:** Silently checks for newer versions in the background and notifies you, without slowing down your commands.
-- **SSH Auto-Setup:** Generates an SSH key, adds it to `ssh-agent`, and opens your GitHub settings automatically.
-- **HTTPS to SSH Conversion:** Silently converts the remote to SSH before pushing if your SSH is configured.
-- **Termux Compatibility:** Works on Android via Termux, handling common issues like dubious ownership errors out of the box.
+- **Single commands for linking, pushing, and stashing.** No more chaining five commands together.
+- **Undo:** Roll back commits, unstage files, or discard local changes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`.
+- **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
+- **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
+- **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
+- **Auto-update checker:** Checks PyPI for newer versions in a background thread. Results are cached for 7 days so startup isn't delayed.
+- **SSH auto-setup:** Generates an `ed25519` key, loads it into `ssh-agent`, and opens your GitHub SSH settings page.
+- **HTTPS-to-SSH conversion:** Detects HTTPS remotes and rewrites them before pushing if SSH is configured. No manual `git remote set-url`.
+- **Termux support:** Detects the Termux environment, adjusts install paths, uses `termux-open` for browser actions, and patches the dubious ownership Git error.
 
 ---
 
@@ -88,17 +85,15 @@ No chained commands, no cryptic flags — just short commands you can actually r
 
 ### Install from PyPI
 
-For Windows users or environments without global pip restrictions, you can install GitGo directly via pip:
+For Windows users or environments without global pip restrictions:
 
 ```bash
 pip install pygitgo
 ```
 
-*(Alternatively, you can use `pipx install pygitgo` if you prefer isolated environments).*
+*(Alternatively, use `pipx install pygitgo` for an isolated environment.)*
 
 ### Install via pipx (Cross-Platform)
-
-If you already have `pipx` installed, you can use it to safely install GitGo on any operating system:
 
 ```bash
 pipx install pygitgo
@@ -106,13 +101,11 @@ pipx install pygitgo
 
 ### Quick Install (Linux & macOS)
 
-The easiest way to install GitGo on Unix systems without worrying about Python environments or PEP 668 restrictions is using our install script:
+The install script creates an isolated environment and places `gitgo` in `~/.local/bin`. Useful for PEP 668-enforced systems:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Huerte/GitGo/main/install.sh | bash
 ```
-
-This will automatically create an isolated environment and place `gitgo` in your `~/.local/bin` folder.
 
 Verify the installation:
 
@@ -135,18 +128,23 @@ pip install -e .
 ## Usage
 
 ### 1. Set Up Your Identity
-On first use, run the login wizard. GitGo generates an SSH key, prints the public key, and opens your GitHub SSH settings page automatically.
+
+Run this once on a new machine. GitGo generates an SSH key, adds it to `ssh-agent`, prints the public key, and opens your GitHub SSH settings page.
+
 ```bash
 gitgo user login
 ```
 
 ### 2. Link a New Project to GitHub
-Point GitGo at an existing empty GitHub repository. It will initialize Git, stage everything, make the first commit, and push — handling branch naming and merge conflicts automatically.
+
+Point GitGo at an existing empty GitHub repo. It initializes Git, stages everything, commits, and pushes — including pulling unrelated histories if the remote isn't empty.
+
 ```bash
 gitgo link https://github.com/username/repo.git "Initial commit"
 ```
 
 ### 3. Push Changes
+
 ```bash
 # Push to an existing branch
 gitgo push main "Fix auth bug"
@@ -155,29 +153,34 @@ gitgo push main "Fix auth bug"
 gitgo push -n feat/login "Add login flow"
 ```
 
-### 4. Safely Switch Branches
-Jump to a different branch without worrying about your uncommitted changes. GitGo will safely stash them, hop to the new branch, sync with `main`, and carefully unpack them.
+### 4. Switch Branches
+
+Switch branches with uncommitted work in progress. `jump` stashes your changes, moves to the target branch, syncs with main, and pops the stash. If the pop triggers a conflict, it offers to abort and restore the repo to its prior state.
+
 ```bash
 gitgo jump feat/new-login
 ```
 
-### 5. Safely Undo Mistakes
-Easily fix common mistakes without losing work or needing to search for Git commands.
+### 5. Undo Mistakes
+
+Undo recent mistakes with commands named for what they undo.
+
 ```bash
-gitgo undo commit    # Undo the last commit (files stay safe)
-gitgo undo add       # Un-queue files (undo git add)
-gitgo undo changes   # DANGER: permanently wipe all unsaved edits
+gitgo undo commit    # Undo the last commit (files stay staged)
+gitgo undo add       # Unstage files
+gitgo undo changes   # DANGER: permanently discard all uncommitted edits
 ```
 
 ### 6. Save Your Work-in-Progress
+
 ```bash
 gitgo state save "halfway through refactor"
 gitgo state list
 gitgo state load 1
 ```
 
-### 6. Custom Defaults
-Save your preferred settings so you don't have to provide them every time.
+### 7. Custom Defaults
+
 ```bash
 gitgo config set default-branch develop
 gitgo config set default-message "WIP: updates"
@@ -190,7 +193,7 @@ gitgo config get default-branch
 
 ### `gitgo push`
 
-Stages all changes, commits, and pushes in one command.
+Stage, commit, and push in one command.
 
 ```bash
 gitgo push [branch] [message]
@@ -204,22 +207,22 @@ gitgo push -s [branch] [message]   # interactively select files to stage
 | Flag | Description |
 |------|-------------|
 | `-n`, `--new` | Create a new branch before pushing |
-| `-s`, `--select` | Interactively select which files you want to include in this push |
+| `-s`, `--select` | Interactively select which files to include in the push |
 
 If there are no new changes but unpushed commits exist, GitGo detects this and pushes without creating an empty commit.
 
 ### `gitgo pull`
 
-Safely downloads updates from the remote server. It automatically stashes your messy code, pulls the updates cleanly underneath using a rebase, and then instantly puts your code back exactly how it was. 
+Pulls updates from the remote. Stashes any uncommitted work first, runs a rebase pull, then pops the stash.
 
 ```bash
-gitgo pull             # Safely pull updates for your current branch
-gitgo pull <branch>    # Safely pull updates from a specific branch
+gitgo pull             # Pull updates for the current branch
+gitgo pull <branch>    # Pull updates from a specific branch
 ```
 
 ### `gitgo link`
 
-Initializes a Git repository in the current directory, connects it to a remote, and pushes. Handles already-initialized repos gracefully and pulls unrelated histories.
+Initializes a Git repository, connects it to a remote, and pushes. Works on already-initialized repos and handles unrelated histories.
 
 ```bash
 gitgo link <github_repo_url> [commit_message]
@@ -227,7 +230,7 @@ gitgo link <github_repo_url> [commit_message]
 
 ### `gitgo jump`
 
-Safely switches branches without losing uncommitted progress. Auto-stashes, jumps, pulls from `main`, and unpacks. If applying the stash triggers a merge conflict, the built-in Try-and-Revert engine will offer to safely cancel the entire operation and instantly rewind your repository to exactly how it was before the command.
+Switches branches with uncommitted work in progress. Stashes changes, moves to the target branch, pulls from main, and pops the stash. If the pop triggers a merge conflict, the Try-and-Revert engine offers to abort the entire operation and restore the repo to the state it was in before the command ran.
 
 ```bash
 gitgo jump <branch>
@@ -235,17 +238,17 @@ gitgo jump <branch>
 
 ### `gitgo undo`
 
-Safely undo recent actions and mistakes using plain commands that say exactly what they do.
+Undo recent actions with subcommands named for what they undo.
 
 ```bash
-gitgo undo commit    # Undo your last commit without losing files
-gitgo undo add       # Un-queue files (remove them from being ready to commit)
-gitgo undo changes   # Permanently wipe all new files and local edits
+gitgo undo commit    # Undo the last commit without losing files
+gitgo undo add       # Unstage files
+gitgo undo changes   # Permanently discard all new files and uncommitted edits
 ```
 
 ### `gitgo state`
 
-A named interface over `git stash`.
+Named, indexed interface over `git stash`.
 
 ```bash
 gitgo state list              # show all saved states
@@ -254,6 +257,7 @@ gitgo state load [id]         # restore a state by index
 gitgo state delete [id]       # delete a state by index
 gitgo state delete -a         # delete all saved states
 ```
+
 *Short aliases:* `-l`, `-s`, `-o`, `-d`
 
 ### `gitgo user`
@@ -292,18 +296,16 @@ gitgo -r        # verify GitGo is ready
 ## How It Works
 
 - **SSH Auto-Setup:** `gitgo user login` generates an `ed25519` SSH key, adds it to `ssh-agent`, prints the public key, and opens `github.com/settings/ssh/new`.
-- **HTTPS to SSH Conversion:** If your remote is set to HTTPS, GitGo converts the remote to SSH before pushing if SSH is configured. No `git remote set-url` is required.
+- **HTTPS to SSH Conversion:** If your remote is set to HTTPS and SSH is configured, GitGo rewrites the remote before pushing. No `git remote set-url` required.
 - **Auto-Update Checker:** Spawns a non-blocking background thread on startup to query PyPI for newer versions. Results are cached locally for 7 days to prevent unnecessary network requests.
-- **Termux Compatibility:** Detects Termux via environment variables, adjusts binary locations (`$PREFIX/bin`), uses `termux-open` for browser actions, and natively handles the `detected dubious ownership` Git error.
+- **Termux Compatibility:** Detects Termux via environment variables, adjusts binary locations (`$PREFIX/bin`), uses `termux-open` for browser actions, and patches the `detected dubious ownership` Git error.
 - **State Management:** `gitgo state` wraps `git stash` with named saves, indexed listing, and confirmation prompts.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide,
-including project structure, test instructions, commit conventions, and a
-[Good First Issues](CONTRIBUTING.md#good-first-issues) table if you are not sure where to start.
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including project structure, test instructions, commit conventions, and a [Good First Issues](CONTRIBUTING.md#good-first-issues) table if you're not sure where to start.
 
 ---
 
@@ -313,7 +315,7 @@ including project structure, test instructions, commit conventions, and a
   <table>
     <tr>
       <td align="center"><a href="https://github.com/Huerte"><img src="https://github.com/Huerte.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Huerte"><b>Huerte</b></a><br />Creator</td>
-      <td align="center"><a href="https://github.com/Venomous-pie"><img src="https://github.com/Venomous-pie.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Venomous-pie"><b>Venomous-pie</b></a><br />Core Contributor</td>
+      <td align="center"><a href="https://github.com/Venomous-pie"><img src="https://github.com/Venomous-pie.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Venomous-pie"><b>Venomous-pie</b></a><br />Contributor</td>
     </tr>
   </table>
 </div>
@@ -325,7 +327,3 @@ including project structure, test instructions, commit conventions, and a
 Distributed under the **GPLv3** License. See [`LICENSE`](LICENSE) for details.
 
 ---
-
-<div align="center">
-<sub>Created by <a href="https://github.com/Huerte">Huerte</a> with core contributions from <a href="https://github.com/Venomous-pie">Venomous-pie</a></sub>
-</div>

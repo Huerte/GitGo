@@ -1,37 +1,58 @@
----
-name: Pull Request
-about: Submit a change to GitGo
----
+<!-- If you are unsure how to fill this out, see CONTRIBUTING.md: https://github.com/Huerte/GitGo/blob/main/CONTRIBUTING.md -->
 
-## What does this PR do?
+<!-- Note: These hidden comments guide you while typing. GitHub hides them automatically when you submit. -->
 
-<!-- A brief summary of the change. -->
+## Type
 
-## Related Issue
-
-<!-- Link the issue this closes, if any. Use "Closes #123" to auto-close it on merge. -->
-
-Closes #
-
-## Type of Change
+<!-- Check the one that fits. Put an 'x' inside the brackets: [x] -->
 
 - [ ] Bug fix
-- [ ] New feature / command
-- [ ] Documentation update
-- [ ] Refactor / code cleanup
-- [ ] CI / tooling
+- [ ] New feature
+- [ ] Documentation
+- [ ] Refactor / internal
+
+## Overview
+
+<!-- Describe what you changed and why. 2-3 sentences is enough. -->
+
+
+
+## Changes
+
+<!-- One bullet per change. Say what changed and what effect it has.
+     Examples:
+     - `gitgo push`: no longer stops mid-run after a branch jump. It now completes the commit and push automatically.
+     - `gitgo jump`: revert prompt now shows the target branch name before asking for confirmation.
+     - README: added missing flag description for `gitgo push -s`.
+-->
+
+-
+
+## Breaking Changes
+
+<!-- Does this change the behavior of an existing command, flag, or output in a way
+     that could break someone's workflow? If yes, describe what breaks and what they
+     should do instead. If no, write: None -->
+
+**Breaking changes:** None
 
 ## How to Test
 
-<!-- Step-by-step instructions to manually verify this works. -->
+<!-- Write the exact steps a reviewer should run to verify your change works.
+     Be specific — include the exact commands and what output to expect.
+     If this PR only updates documentation, you can skip this section.
+-->
 
 1. `pip install -e ".[dev]"`
-2. Run `gitgo ...`
-3. Expected result: ...
+2.
+3. Expected result:
 
 ## Checklist
 
-- [ ] My changes pass `pytest tests/ -v` locally
-- [ ] I updated `README.md` if I added or changed a command
-- [ ] I added or updated tests for the change
-- [ ] I updated `CHANGELOG.md` under an `[Unreleased]` section
+<!-- Put an 'x' inside the brackets to check a box: [x] -->
+
+- [ ] I tested my changes locally and they work
+- [ ] I updated `CHANGELOG.md` under the [`[Unreleased]`](https://github.com/Huerte/GitGo/blob/main/CHANGELOG.md) section
+- [ ] I updated `README.md` (if I added or changed a command)
+- [ ] I added or updated tests for my change (if applicable)
+- [ ] My change does not break any existing commands
