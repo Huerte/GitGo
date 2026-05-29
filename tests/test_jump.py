@@ -57,8 +57,6 @@ def test_jump_operation_not_valid_repo(mocker):
     
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 1
 
-    fake_warning.assert_called_with("\nUnable to check for uncommitted changes. Please ensure you're in a valid git repository.")
-
     fake_run.assert_any_call(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
 
 def test_jump_operation_has_changes_exit(mocker):

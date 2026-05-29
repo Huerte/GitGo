@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from pygitgo.commands.pull import pull_operation
-from pygitgo.exceptions import GitCommandError
+from pygitgo.exceptions import GitCommandError, GitGoError
 from argparse import Namespace
 import subprocess
 
@@ -44,22 +44,16 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
     )
     mock_success.assert_called_once()
 
-@patch("pygitgo.commands.pull.sys.exit")
-@patch("pygitgo.commands.pull.error")
 @patch("pygitgo.commands.pull.run_command")
-def test_pull_operation_branch_not_found(mock_run_command, mock_error, mock_exit):
+def test_pull_operation_branch_not_found(mock_run_command):
     mock_run_command.return_value = subprocess.CalledProcessError(128, ["git", "ls-remote"])
     
     args = Namespace(branch="does-not-exist")
-    pull_operation(args)
-    
-    mock_exit.assert_called_once_with(1)
-    mock_error.assert_called()
+    with pytest.raises(GitGoError):
+        pull_operation(args)
 
-@patch("pygitgo.commands.pull.sys.exit")
-@patch("pygitgo.commands.pull.error")
 @patch("pygitgo.commands.pull.run_command")
-def test_pull_operation_merge_conflict(mock_run_command, mock_error, mock_exit):
+def test_pull_operation_merge_conflict(mock_run_command):
     conflict_err = GitCommandError(["git", "pull"], stderr="merge conflict in file.py")
 
     def side_effect_fn(*args, **kwargs):
@@ -71,7 +65,5 @@ def test_pull_operation_merge_conflict(mock_run_command, mock_error, mock_exit):
     mock_run_command.side_effect = side_effect_fn
     
     args = Namespace(branch="main")
-    pull_operation(args)
-    
-    mock_exit.assert_called_once_with(1)
-    mock_error.assert_any_call("\nMERGE CONFLICT DETECTED!")
+    with pytest.raises(GitGoError):
+        pull_operation(args)

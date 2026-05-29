@@ -2,6 +2,7 @@ from pygitgo.auth.ssh_utils import convert_https_to_ssh, is_ssh_url, check_conne
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.config import get_config
+from pygitgo.exceptions import GitGoError
 from argparse import Namespace
 import subprocess
 import sys
@@ -11,7 +12,7 @@ import os
 def get_status_content():
     status = run_command(["git", "status", "--porcelain"], allow_fail=True)
     if isinstance(status, subprocess.CalledProcessError) or not status.strip():
-        sys.exit(1)
+        raise GitGoError("\nWorking tree is clean. Nothing to commit.\n")
     return status
 
 def get_current_branch():
@@ -41,7 +42,7 @@ def git_new_branch(branch):
             from pygitgo.commands.jump import jump_operation
             jump_operation(Namespace(branch=branch))
         else:
-            sys.exit(1)
+            raise GitGoError(f"\nOperation canceled. Branch '{branch}' already exists.\n")
     else:
         success(f"\nBranch '{branch}' created.\n")
 
@@ -161,7 +162,7 @@ def git_push(branch):
         if "rebase in progress" in str(e):
             handle_rebase()
         else:
-            sys.exit(1)
+            raise GitGoError()
 
 
 def handle_rebase():
@@ -175,6 +176,6 @@ def handle_rebase():
         info("    git add <files>")
         info("    git rebase --continue")
         warning("When finished, run 'gitgo push <branch> <message>' again.\n")
-        sys.exit(1)
+        raise GitGoError()
 
     return True

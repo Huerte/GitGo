@@ -1,3 +1,4 @@
+from pygitgo.exceptions import GitGoError
 from pygitgo.commands.git_operations import (
     is_branch_exist, get_current_branch, git_new_branch, get_main_branch
 )
@@ -30,12 +31,11 @@ def jump_operation(args):
     
     if original_branch == target_branch:
         warning(f"\nYou are already on branch '{target_branch}'.\n")
-        sys.exit(0)
+        return
 
     has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
     if isinstance(has_changes, subprocess.CalledProcessError):
-        warning("\nUnable to check for uncommitted changes. Please ensure you're in a valid git repository.")
-        sys.exit(1)
+        raise GitGoError("\nUnable to check for uncommitted changes. Please ensure you're in a valid git repository.\n")
     
     stashed_code = False
     if has_changes.strip():
@@ -43,12 +43,12 @@ def jump_operation(args):
         user_input = input("Do you want to move these changes to your new branch? (y/n): ").strip().lower()
         if user_input != 'y':
             warning("\nYou cannot switch branches with unsaved changes. Jump canceled.\n")
-            sys.exit(0)
+            return
         else:
             stash_result = run_command(["git", "stash", "push", "-u", "-m", "GitGo Jump Auto-Stash"], allow_fail=True, loading_msg="Saving your changes before jumping...")
             if isinstance(stash_result, subprocess.CalledProcessError):
                 warning("\nFailed to save your changes. Please resolve any issues and try again.")
-                sys.exit(1)
+                raise GitGoError()
             info("\nYour changes have been saved. Jumping to the new branch...")
             stashed_code = True
             
@@ -61,7 +61,7 @@ def jump_operation(args):
             info("Exiting without jumping...\n")
             if stashed_code:
                 run_command(["git", "stash", "pop"], loading_msg="Putting your unsaved changes back...")
-            sys.exit(0)
+            return
         
         git_new_branch(target_branch)
         created_branch = target_branch
@@ -76,7 +76,7 @@ def jump_operation(args):
         user_input = input("Do you want to stay on the new branch without the latest updates? (y/n): ").strip().lower()
         if user_input != 'y':
             undo_jump_operation(original_branch, stashed_code, created_branch)
-            sys.exit(1)
+            raise GitGoError()
         else:
             success(f"\nOkay! You are on the new branch, but without the latest updates from '{main_branch}'.")
 
@@ -91,17 +91,18 @@ def jump_operation(args):
 
             if conflict_choice != 'y':
                 undo_jump_operation(original_branch, stashed_code, created_branch)
-                sys.exit(0)
+                return
             else:
                 success("\nOkay! You are on the new branch with your code.")
                 warning("Please open your code editor RIGHT NOW to fix the conflicts!")
                 info("Your stash backup is still saved. Run 'gitgo state list' to see it.\n")
-                sys.exit(0)
+                return
         else:
             run_command(["git", "stash", "drop"], allow_fail=True, loading_msg="Cleaning up the temporary stash...")
             success(f"\nSuccess! You are now on '{target_branch}'.")
             success("Your unsaved code was moved here safely!\n")
-            sys.exit(0)
+            return
     else:
         success(f"\nSuccess! You are now on '{target_branch}'.\n")
-        sys.exit(0)
+        return
+        

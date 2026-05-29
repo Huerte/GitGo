@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pygitgo"
-version = "1.6.1"
+version = "1.6.2"
 description = "GitGo CLI - Your Fast Git Companion. Simplifies git push, link, stash, and user management."
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
@@ -29,6 +29,7 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-mock>=3.10",
+    "pytest-cov>=4.0"
 ]
 
 [project.urls]
@@ -40,3 +41,7 @@ gitgo = "pygitgo.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=pygitgo --cov-report=term-missing"

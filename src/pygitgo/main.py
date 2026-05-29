@@ -38,10 +38,11 @@ def link_operation(args):
     repo_url = args.url
 
     if not validate_repo_url(repo_url):
-        error("\nInvalid repository URL!")
-        warning("Expected format: https://github.com/username/repo.git")
-        warning("             or: git@github.com:username/repo.git\n")
-        sys.exit(1)
+        raise GitGoError(
+            "\nInvalid repository URL!\n"
+            "Expected format: https://github.com/username/repo.git"
+            "             or: git@github.com:username/repo.git\n"
+        )
 
     commit_message = args.message
     
@@ -106,8 +107,7 @@ def push_operation(args):
 
     if args.new:
         if not branch:
-            error("\nBranch name required when using --new flag!\n")
-            sys.exit(1)
+            raise GitGoError("\nBranch name required when using --new flag!\n")
         git_new_branch(branch)
     else:
         if branch and not message and not is_branch_exist(branch):
@@ -121,8 +121,7 @@ def push_operation(args):
                 warning(f"You are currently on branch '{current_branch}', not '{branch}'.")
                 user_choice = input(f"Do you want to switch to branch '{branch}'? (y/n): ").lower()
                 if user_choice != 'y':
-                    error("\nPush aborted to prevent committing to the wrong branch.\n")
-                    sys.exit(1)
+                    raise GitGoError("\nPush aborted to prevent committing to the wrong branch.\n")
                 jump_operation(Namespace(branch=branch))
     
         elif not branch:
@@ -200,15 +199,14 @@ def user_management(args):
 
     if not action:
         display_current_user()
-        sys.exit(0)
+        return
     
     if action == 'login':
         login()
     elif action == 'logout':
         logout()
     else:
-        error(f"\nInvalid user operation '{action}'!\n")
-        sys.exit(1)
+        raise GitGoError(f"\nInvalid user operation '{action}'!\n")
 
 
 def get_version():
@@ -332,15 +330,15 @@ def main():
     if getattr(args, 'version', False):
         print(f"GitGo {get_version()}")
         print(f"Support GitGo: https://ko-fi.com/huerte")
-        sys.exit(0)
+        return
 
     if args.ready:
         info("\nALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...\n")
-        sys.exit(0)
+        return
 
     if not args.command:
         parser.print_help()
-        sys.exit(0)
+        return
 
     ensure_first_run_setup()
     check_for_updates_background(get_version())
@@ -363,7 +361,7 @@ def main():
         elif args.command == "pull":
             pull_operation(args)
     except GitGoError as e:
-        error(f"\n{e}\n")
+        error(f"{e}")
         sys.exit(1)
 
 if __name__ == "__main__":

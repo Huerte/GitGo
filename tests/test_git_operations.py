@@ -44,10 +44,9 @@ def test_git_branch_exists_jump_no(mocker):
 
     branch_name = "existing-branch"
     
-    with pytest.raises(SystemExit) as exc_info:
+    from pygitgo.exceptions import GitGoError
+    with pytest.raises(GitGoError):
         git_new_branch(branch_name)
-    
-    assert exc_info.value.code == 1
     fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
     fake_jump.assert_not_called()
 
@@ -199,10 +198,9 @@ def test_handle_rebase_conflict(mocker):
         return_value='rebase'
     )
 
-    with pytest.raises(SystemExit) as exc_info:
+    from pygitgo.exceptions import GitGoError
+    with pytest.raises(GitGoError):
         handle_rebase()
-    
-    assert exc_info.value.code == 1
 
     fake_run.assert_called_with(
         ["git", "status"], allow_fail=True

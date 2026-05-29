@@ -1,3 +1,4 @@
+from pygitgo.exceptions import GitGoError
 from pygitgo.utils.colors import info, highlight, error, warning, success
 from pygitgo.utils.executor import run_command
 import sys
@@ -19,7 +20,7 @@ def all_save_state():
 
     if not output:
         info("\nNo saved states found.\n")
-        sys.exit(0)
+        return
 
     save_states = []
 
@@ -88,7 +89,7 @@ def ask_state_id(save_states):
         state_id = input(">> ").strip().lower()
         if state_id == 'q':
             warning("\nLoad operation cancelled by user.\n")
-            sys.exit(0)
+            return
         proceed = validate_state_id(state_id, save_states)
     
     return state_id
@@ -106,10 +107,9 @@ def load_state(state_id=None):
         if state_id.isdigit():
             proceed = validate_state_id(state_id, save_states)
             if not proceed:
-                sys.exit(1)
+                raise GitGoError()
         else:
-            error(f"\nInvalid argument '{state_id}' for load operation. Expected a state ID.\n")
-            sys.exit(1)
+            raise GitGoError(f"\nInvalid argument '{state_id}' for load operation. Expected a state ID.\n")
     
     if not proceed:
         state_id = ask_state_id(save_states)
@@ -141,18 +141,17 @@ def delete_state(identifier=None):
             if confirm.lower() == 'y':
                 run_command(["git", "stash", "clear"])
                 success("\nAll saved states deleted successfully.\n")
-                sys.exit(0)
+                return
             else:
                 warning("\nDelete operation cancelled by user.\n")
-                sys.exit(0)
+                return
         
         elif not identifier.isdigit():
-            error("\nInvalid input. Please enter a valid state ID.\n")
-            sys.exit(1)
+            raise GitGoError("\nInvalid input. Please enter a valid state ID.\n")
 
         state_id = identifier
         if not validate_state_id(state_id, all_save_state()):
-            sys.exit(1)
+            raise GitGoError()
     
     run_command(["git", "stash", "drop", str(int(state_id) - 1)])
     success(f"\nState with ID '{state_id}' deleted successfully.\n")
@@ -173,5 +172,4 @@ def state_operations(args):
     elif action == "delete":
         delete_state(identifier)
     else:
-        error(f"\nUnknown state operation: {action}\n")
-        sys.exit(1)
+        raise GitGoError(f"\nUnknown state operation: {action}\n")
