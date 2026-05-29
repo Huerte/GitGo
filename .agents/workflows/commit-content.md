@@ -99,7 +99,7 @@ type/short-description-in-kebab-case
 ```
 
 ### Types
-- `feature/` — new command or user-facing behavior
+- `feat/` — new command or user-facing behavior
 - `fix/` — bug fix
 - `docs/` — documentation only
 - `chore/` — maintenance, CI, config
@@ -116,19 +116,19 @@ type/short-description-in-kebab-case
 
 ### Good examples
 ```
-feature/gitgo-pull-auto-stash
+feat/gitgo-pull-auto-stash
 fix/empty-commit-on-no-changes
 docs/add-changelog-dates
 chore/add-pytest-cov
-feature/gitlab-ssh-support
+feat/gitlab-ssh-support
 ```
 
 ### Bad examples
 ```
-feature/new-stuff              (too vague)
+feat/new-stuff              (too vague)
 sarge/pull-command             (personal identifier)
 fix/bug                        (no description)
-feature/gitgo-pull-command-with-auto-stash-and-rebase  (too long)
+feat/gitgo-pull-command-with-auto-stash-and-rebase  (too long)
 ```
 
 ---
