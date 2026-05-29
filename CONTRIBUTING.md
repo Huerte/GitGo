@@ -175,18 +175,21 @@ git commit -m "update"
 
 ## Good First Issues
 
-Not sure where to start? Pick something from the list below.
+Not sure where to start? The table below lists tasks sized for a first contribution. Each one is self-contained and has a clear scope.
 
-| Task | Difficulty | Description |
-|------|------------|-------------|
-| `gitgo log` | ⭐ | Wrap `git log --oneline --color` and print it with GitGo's color helpers from `utils/colors.py`. |
-| `gitgo amend` | ⭐ | Wrap `git commit --amend -m "<message>"`. Add a confirmation prompt before rewriting. |
-| `pytest-cov` setup | ⭐ | Add `pytest-cov` to `dev` dependencies in `pyproject.toml` and verify coverage runs with `pytest --cov`. |
-| GitLab SSH support | ⭐⭐ | The regex in `auth/ssh_utils.py` only matches `github.com`. Extend it to handle `gitlab.com` and `bitbucket.org`. |
-| `gitgo status` | ⭐⭐ | Parse `git status --porcelain` and display staged, unstaged, and untracked files in labeled groups. Edge cases: renamed files, merge conflicts. |
-| Shell completions | ⭐⭐⭐ | Add tab-completion for Bash/Zsh/Fish via `argcomplete` or hand-written completion scripts. PowerShell optional. |
+Before picking one, clone the repo and read through the project structure in [`CONTRIBUTING.md`](CONTRIBUTING.md) so you know where things live.
 
-Check the [open issues](https://github.com/Huerte/GitGo/issues) for the current list labeled `good first issue`.
+| Task | Difficulty | Where to start | What to do |
+|------|------------|----------------|------------|
+| `gitgo log` | ⭐ | `utils/colors.py` | Wrap `git log --oneline --color` and format the output using the existing color helpers. |
+| `gitgo amend` | ⭐ | New command file | Wrap `git commit --amend -m "<message>"`. Add a confirmation prompt before it runs — amend rewrites history, so the user should opt in. |
+| `gitgo diff` | ⭐ | New command file | Wrap `git diff` and `git diff --staged`. Add a `-s` / `--staged` flag to toggle between unstaged and staged output. |
+| GitLab & Bitbucket SSH | ⭐⭐ | `auth/ssh_utils.py` | The host regex only matches `github.com`. Extend it to cover `gitlab.com` and `bitbucket.org`. |
+| `gitgo status` | ⭐⭐ | New command file | Parse `git status --porcelain` and display staged, unstaged, and untracked files in labeled groups. Handle renamed files and merge conflict markers as edge cases. |
+| `gitgo branch` | ⭐⭐ | New command file | Parse `git branch -a` and list all branches with the current one highlighted. Separate local and remote branches into labeled groups. |
+| Shell completions | ⭐⭐⭐ | New file | Add tab-completion for Bash, Zsh, and Fish using `argcomplete` or hand-written scripts. PowerShell is optional. |
+
+If nothing here fits, check the [open issues](https://github.com/Huerte/GitGo/issues) for anything tagged `good first issue`. If you have an idea that isn't listed, open an issue first before writing code.
 
 ---
 
