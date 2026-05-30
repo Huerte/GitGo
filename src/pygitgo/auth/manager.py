@@ -33,18 +33,16 @@ def login():
         
         info("Copy the key above (between the lines).")
 
-        input(
-            "\nPress Enter to open your GitHub SSH key settings page in the browser...\n"
-            "Make sure you are logged in so you can add your new key. "
-            "After adding, return here to continue."
-        )
         ssh_utils.open_github_settings()
+
+        input(
+            "After pasting your key on GitHub and clicking 'Add SSH Key',\n"
+            "come back here and press Enter to verify the connection..."
+        )
 
     else:
         error("Failed to read the generated public key.")
         return False
-    
-    input("\nPress Enter after adding the key to GitHub...")
 
     if ssh_utils.check_connection():
         from .account import ensure_user_configure
@@ -56,7 +54,11 @@ def login():
         success("\nLogin Successful! You are connected.\n")
         return True
     
-    error("Login Failed. Please try again.")
+    error("Login Failed. The SSH key may not have been added to GitHub correctly.")
+    info("Possible causes:")
+    info("  1. The key was not pasted on GitHub")
+    info("  2. SSH agent is not running (try: eval $(ssh-agent) && ssh-add)")
+    info("  3. Network or firewall is blocking SSH connections")
     return False
     
 def logout():
