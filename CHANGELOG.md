@@ -12,7 +12,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - (nothing yet)
 
 ### Fixed
-- (nothing yet)
+- Fixed GitGo hanging indefinitely during login if an SSH passphrase prompt was triggered invisibly.
+- Fixed the browser failing to open in some environments by always printing the GitHub URL as a fallback.
+- Improved login failure messaging to suggest concrete fixes (like checking the SSH agent).
 
 ---
 

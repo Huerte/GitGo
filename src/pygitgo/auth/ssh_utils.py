@@ -6,6 +6,8 @@ import subprocess
 import sys
 import os
 
+SSH_TIMEOUT_SECONDS = 10
+
 
 
 def ensure_github_known_host():
@@ -34,24 +36,37 @@ def ensure_github_known_host():
 
 def check_connection():
     ensure_github_known_host()
-    result = run_command(["ssh", "-T", "git@github.com"], allow_fail=True, return_complete=True)
-    if not hasattr(result, "stderr") or not result.stderr:
+    try:
+        result = subprocess.run(
+            ["ssh", "-T", "-o", "BatchMode=yes", "git@github.com"],
+            capture_output=True,
+            text=True,
+            timeout=SSH_TIMEOUT_SECONDS,
+            stdin=subprocess.DEVNULL,
+        )
+        output = (result.stderr or "") + (result.stdout or "")
+        return "successfully authenticated" in output
+    except (subprocess.TimeoutExpired, OSError):
         return False
-    return "successfully authenticated" in result.stderr
 
 def get_github_username():
+    try:
+        result = subprocess.run(
+            ["ssh", "-T", "-o", "BatchMode=yes", "git@github.com"],
+            capture_output=True,
+            text=True,
+            timeout=SSH_TIMEOUT_SECONDS,
+            stdin=subprocess.DEVNULL,
+        )
+        output = (result.stderr or "") + (result.stdout or "")
 
-    result = run_command(["ssh", "-T", "git@github.com"], allow_fail=True, return_complete=True)
-    if not hasattr(result, "stderr") or not result.stderr:
-        return None
-    output = result.stderr
-    
-    if "Hi " in output and "!" in output:
-        try:
-            username = output.split("Hi ")[1].split("!")[0]
-            return username
-        except:
-            return None
+        if "Hi " in output and "!" in output:
+            try:
+                return output.split("Hi ")[1].split("!")[0]
+            except (IndexError, ValueError):
+                return None
+    except (subprocess.TimeoutExpired, OSError):
+        pass
     return None
 
 def get_ssh_key_path():
@@ -89,15 +104,30 @@ def generate_ssh_key(email):
 
 def open_github_settings():
     url = "https://github.com/settings/ssh/new"
-    if platform_utils.is_windows():
-        os.system(f"start {url}")
-    elif platform_utils.is_termux():
-        os.system(f"termux-open {url}")
-    elif platform_utils.is_linux() or platform_utils.is_macos():
-        os.system(f"xdg-open {url}")
-    else:
-        import webbrowser
-        webbrowser.open(url)
+    opened = False
+
+    try:
+        if platform_utils.is_windows():
+            os.system(f"start {url}")
+            opened = True
+        elif platform_utils.is_termux():
+            os.system(f"termux-open {url}")
+            opened = True
+        elif platform_utils.is_linux() or platform_utils.is_macos():
+            exit_code = os.system(f"xdg-open {url} 2>/dev/null")
+            opened = exit_code == 0
+        else:
+            import webbrowser
+            webbrowser.open(url)
+            opened = True
+    except Exception:
+        opened = False
+
+    if not opened:
+        warning("Could not open browser automatically.")
+
+    info(f"\nIf the browser did not open, visit this URL manually:")
+    print(f"\n  {url}\n")
 
 
 def convert_https_to_ssh(url):
