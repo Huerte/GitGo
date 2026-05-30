@@ -3,20 +3,19 @@ from pygitgo.commands.git_operations import (
     confirm_remote_link, git_push, get_current_branch, is_branch_exist
 )
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
+from pygitgo.utils.update_checker import check_for_updates_background
+from pygitgo.utils.executor import run_command, command_failed
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.config import get_config, config_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.update_checker import check_for_updates_background
 from pygitgo.utils.setup import ensure_first_run_setup
 from pygitgo.commands.state import state_operations
 from pygitgo.commands.undo import undo_operations
 from pygitgo.commands.pull import pull_operation
 from pygitgo.commands.jump import jump_operation
-from pygitgo.utils.executor import run_command
 from pygitgo.auth.manager import login, logout
 from pygitgo.auth.account import get_user
 from argparse import Namespace
-import subprocess
 import argparse
 import sys
 import re
@@ -52,11 +51,7 @@ def link_operation(args):
     if not git_init():
         return
     
-    run_command(["git", "add", "."], loading_msg="Staging files...")
-    success("Files staged for commit.")
-    
-    clean_message = commit_message.strip('"\'')
-    run_command(["git", "commit", "-m", clean_message], loading_msg="Creating initial commit...")
+    git_commit(commit_message, loading_msg="Creating initial commit...")
     success("Initial commit created.")
     
     add_remote_origin(repo_url)
@@ -68,17 +63,17 @@ def link_operation(args):
     current_branch = get_current_branch()
     main_branch = get_config("default-branch", "main")
     
-    if current_branch.strip() != main_branch:
-        run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch.strip()}' to '{main_branch}'...")
+    if current_branch != main_branch:
+        run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch}' to '{main_branch}'...")
         current_branch = main_branch
     
     remote_refs = run_command(["git", "ls-remote", "--heads", "origin", main_branch], allow_fail=True, loading_msg="Checking remote branches...")
-    if not isinstance(remote_refs, subprocess.CalledProcessError) and remote_refs.strip():
+    if not command_failed(remote_refs) and remote_refs.strip():
         pull_result = run_command(
             ["git", "pull", "origin", main_branch, "--allow-unrelated-histories", "--no-edit"],
             allow_fail=True, loading_msg="Pulling and merging remote content..."
         )
-        if isinstance(pull_result, subprocess.CalledProcessError):
+        if command_failed(pull_result):
             error("Failed to merge remote content. You may need to resolve conflicts manually.")
             warning(f"Run: git pull origin {main_branch} --allow-unrelated-histories")
             warning(f"Then: gitgo push {main_branch} 'your message'\n")
@@ -144,20 +139,9 @@ def push_operation(args):
             return
 
         selective_stage(selected)
-        clean_message = message.strip('"\'')
-        run_command(["git", "commit", "-m", clean_message], loading_msg="Commiting changes...")
+        git_commit(message, loading_msg="Commiting selected files...")
+        
         git_push(branch)
-
-        leftover_files = [f for f in files if f["path"] not in selected]
-        if leftover_files:
-            print()
-            warning(f"You have {len(leftover_files)} uncommitted file(s) left in your working directory:")
-            for f in leftover_files:
-                info(f"  - {f['path']}")
-            print()
-            save_choice = input("Would you like to save these leftovers to a GitGo State for later? (y/n): ").lower()
-            if save_choice == 'y':
-                state_operations(Namespace(action="save", identifier=f"Leftovers from: {clean_message}"))
     else:
         commit_made = git_commit(message)
         
@@ -166,7 +150,7 @@ def push_operation(args):
         else:
             try:
                 unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"], allow_fail=True, loading_msg="Checking for unpushed commits...")
-                if not isinstance(unpushed, subprocess.CalledProcessError) and unpushed.strip():
+                if not command_failed(unpushed) and unpushed.strip():
                     warning("\nNo changes to commit, but found unpushed commits. Pushing to remote...")
                     git_push(branch)
                 else:

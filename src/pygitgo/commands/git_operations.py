@@ -1,17 +1,16 @@
-from pygitgo.auth.ssh_utils import convert_https_to_ssh, is_ssh_url, check_connection
+from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection
 from pygitgo.utils.colors import info, success, warning, error
-from pygitgo.utils.executor import run_command
+from pygitgo.utils.executor import run_command, command_failed
 from pygitgo.utils.config import get_config
-from pygitgo.exceptions import GitGoError
+from pygitgo.exceptions import GitGoError, GitCommandError
 from argparse import Namespace
-import subprocess
-import sys
+from pathlib import Path
 import os
 
 
 def get_status_content():
     status = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if isinstance(status, subprocess.CalledProcessError) or not status.strip():
+    if command_failed(status) or not status.strip():
         raise GitGoError("\nWorking tree is clean. Nothing to commit.\n")
     return status
 
@@ -24,7 +23,7 @@ def get_current_branch():
 def get_main_branch():
     main_branch = run_command(['git', 'remote', 'show', 'origin'], allow_fail=True)
     default_main_branch = get_config("default-branch", "main")
-    if isinstance(main_branch, subprocess.CalledProcessError):
+    if command_failed(main_branch):
         return default_main_branch
     
     return main_branch.split("HEAD branch:")[-1].strip().splitlines()[0].strip() if "HEAD branch:" in main_branch else default_main_branch
@@ -35,7 +34,7 @@ def is_branch_exist(branch):
 
 def git_new_branch(branch):
     result = run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
-    if isinstance(result, subprocess.CalledProcessError):
+    if command_failed(result):
         error(f"Failed to create branch '{branch}'! It may already exist.")
         choice = input("\nWould you like to jump to the existing branch instead? (y/n): ").strip().lower()
         if choice == "y":
@@ -49,15 +48,26 @@ def git_new_branch(branch):
     return branch
 
 
-def git_commit(commit_message):
+def _get_signing_flags():
+    key_path = get_ssh_key_path()
+    if not key_path.exists():
+        return []
+    return [
+        "-c", "gpg.format=ssh",
+        "-c", f"user.signingkey={key_path}",
+    ]
+
+def git_commit(commit_message, loading_msg="Commiting changes..."):
     status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if isinstance(status_result, subprocess.CalledProcessError) or not status_result.strip():
+    if command_failed(status_result) or not status_result.strip():
         return False
 
     run_command(["git", "add", "."], loading_msg="Staging files...")
     clean_message = commit_message.strip('"\'')
-    
-    run_command(["git", "commit", "-m", clean_message], loading_msg="Commiting changes...")
+
+    signing_flags = _get_signing_flags()
+    commit_command = ["git"] + signing_flags + ["commit", "-S", "-m", clean_message]
+    run_command(commit_command, loading_msg=loading_msg)
 
     return True
 
@@ -70,7 +80,7 @@ def git_init():
     default_main_branch = get_config("default-branch", "main")
 
     result = run_command(["git", "init", "-b", default_main_branch], allow_fail=True, loading_msg="Initializing git repository...")
-    if isinstance(result, subprocess.CalledProcessError):
+    if command_failed(result):
         run_command(["git", "init"], loading_msg="Initializing git repository...")
         run_command(["git", "checkout", "-b", default_main_branch], allow_fail=True)
 
@@ -82,7 +92,7 @@ def add_remote_origin(repo_url):
     clean_url = repo_url.strip('"\'')
     
     existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
-    if not isinstance(existing_remote, subprocess.CalledProcessError):
+    if not command_failed(existing_remote):
         warning(f"Remote origin already exists: {existing_remote}")
         run_command(["git", "remote", "set-url", "origin", clean_url], loading_msg="Updating remote URL...")
     else:
@@ -94,7 +104,7 @@ def add_remote_origin(repo_url):
 def confirm_remote_link():
     test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True, loading_msg="Testing connection to remote...")
     
-    if isinstance(test_result, subprocess.CalledProcessError):
+    if command_failed(test_result):
         error("Failed to connect to remote repository!")
         warning("Please check your repository URL and network connection.")
         return False
@@ -106,7 +116,7 @@ def confirm_remote_link():
 def create_main_branch():
     current_branch = run_command(["git", "branch", "--show-current"], allow_fail=True)
     
-    if isinstance(current_branch, subprocess.CalledProcessError) or not current_branch.strip():
+    if command_failed(current_branch) or not current_branch.strip():
         run_command(["git", "checkout", "-b", "main"], loading_msg="Setting default branch to 'main'...")
     elif current_branch.strip() != "main":
         run_command(["git", "branch", "-m", "main"], loading_msg=f"Renaming branch '{current_branch.strip()}' to 'main'...")
@@ -136,16 +146,16 @@ def check_and_sync_branch(branch):
                     success("Branch is up to date or ahead of remote.")
             else:
                 success("Branch is already up to date.")
-        except (subprocess.CalledProcessError, ValueError):
+        except (GitCommandError, ValueError):
             warning("Remote branch doesn't exist yet. First push will create it.")
-    except (subprocess.CalledProcessError, OSError):
+    except (GitCommandError, OSError):
         warning("Could not fetch from remote. Proceeding with push...")
 
 
 def git_push(branch):
     remote_url = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
     
-    if not isinstance(remote_url, subprocess.CalledProcessError) and remote_url:
+    if not command_failed(remote_url) and remote_url:
         remote_url = remote_url.strip()
         
         if not is_ssh_url(remote_url) and check_connection():
@@ -156,7 +166,7 @@ def git_push(branch):
 
     try:    
         run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
-    except (subprocess.CalledProcessError, OSError) as e:
+    except (GitCommandError, OSError) as e:
         error("Failed to push to remote repository!")
         warning("Please check your network connection, remote URL, and authentication.")
         if "rebase in progress" in str(e):
@@ -167,7 +177,7 @@ def git_push(branch):
 
 def handle_rebase():
     status = run_command(["git", "status"], allow_fail=True)
-    if isinstance(status, subprocess.CalledProcessError):
+    if command_failed(status):
         return False
 
     if "rebase in progress" in status or "rebase" in status.lower():

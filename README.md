@@ -68,7 +68,7 @@ gitgo link https://github.com/username/repo.git "init"
 - **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
 - **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
 - **Auto-update checker:** Checks PyPI for newer versions in a background thread. Results are cached for 7 days so startup isn't delayed.
-- **SSH auto-setup:** Generates an `ed25519` key, loads it into `ssh-agent`, and opens your GitHub SSH settings page.
+- **SSH auto-setup & signing:** Generates an `ed25519` key, loads it into `ssh-agent`, opens your GitHub SSH settings page, and automatically signs all future commits for the verified badge.
 - **HTTPS-to-SSH conversion:** Detects HTTPS remotes and rewrites them before pushing if SSH is configured. No manual `git remote set-url`.
 - **Termux support:** Detects the Termux environment, adjusts install paths, uses `termux-open` for browser actions, and patches the dubious ownership Git error.
 
@@ -129,7 +129,7 @@ pip install -e .
 
 ### 1. Set Up Your Identity
 
-Run this once on a new machine. GitGo generates an SSH key, adds it to `ssh-agent`, prints the public key, and opens your GitHub SSH settings page.
+Run this once on a new machine. GitGo generates an SSH key, adds it to `ssh-agent`, prints the public key, and opens your GitHub SSH settings page so you can add it for both authentication and commit signing.
 
 ```bash
 gitgo user login
@@ -295,7 +295,7 @@ gitgo -r        # verify GitGo is ready
 
 ## How It Works
 
-- **SSH Auto-Setup:** `gitgo user login` generates an `ed25519` SSH key, adds it to `ssh-agent`, prints the public key, and opens `github.com/settings/ssh/new`.
+- **SSH Auto-Setup & Signing:** `gitgo user login` generates an `ed25519` SSH key and prompts you to add it to GitHub twice (for authentication and signing). GitGo then injects temporary `-c` flags into every commit to automatically sign them with this key, without touching your global git config.
 - **HTTPS to SSH Conversion:** If your remote is set to HTTPS and SSH is configured, GitGo rewrites the remote before pushing. No `git remote set-url` required.
 - **Auto-Update Checker:** Spawns a non-blocking background thread on startup to query PyPI for newer versions. Results are cached locally for 7 days to prevent unnecessary network requests.
 - **Termux Compatibility:** Detects Termux via environment variables, adjusts binary locations (`$PREFIX/bin`), uses `termux-open` for browser actions, and patches the `detected dubious ownership` Git error.

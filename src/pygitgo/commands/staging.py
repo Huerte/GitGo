@@ -1,8 +1,6 @@
 from pygitgo.utils.colors import success, warning, error
-from pygitgo.utils.executor import run_command
+from pygitgo.utils.executor import run_command, command_failed
 from pick import pick
-import subprocess
-import sys
 
 
 STATUS_LABELS = {
@@ -16,7 +14,7 @@ STATUS_LABELS = {
 
 def get_changed_files():
     status = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if isinstance(status, subprocess.CalledProcessError) or not status.strip():
+    if command_failed(status) or not status.strip():
         return []
 
     files = []

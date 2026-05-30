@@ -51,13 +51,14 @@ def test_git_branch_exists_jump_no(mocker):
     fake_jump.assert_not_called()
 
 def test_git_commit(mocker):
-    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command")\
+    mocker.patch("pygitgo.commands.git_operations._get_signing_flags", return_value=[])
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command")
     
     result = git_commit("Testing the commit feature")
     assert result == True
 
-    fake_run.assert_called_with(
-        ['git', 'commit', '-m', 'Testing the commit feature'],
+    fake_run.assert_any_call(
+        ['git', 'commit', '-S', '-m', 'Testing the commit feature'],
         loading_msg="Commiting changes..."
     )
 
@@ -432,9 +433,10 @@ def test_check_and_sync_branch_need_sync(mocker):
     ]
 
 def test_check_and_sync_branch_no_remote(mocker):
+    from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command',
-        side_effect=subprocess.CalledProcessError(1, 'git')
+        side_effect=GitCommandError(['git', 'fetch'], stderr='error', returncode=1)
     )
 
     fake_warning = mocker.patch('pygitgo.commands.git_operations.warning')
@@ -449,9 +451,10 @@ def test_check_and_sync_branch_no_remote(mocker):
     )
 
 def test_check_and_sync_branch_remote_not_exist(mocker):
+    from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command',
-        side_effect=[None,subprocess.CalledProcessError(1, 'git')]
+        side_effect=[None, GitCommandError(['git', 'rev-parse'], stderr='error', returncode=1)]
     )
 
     fake_warning = mocker.patch('pygitgo.commands.git_operations.warning')

@@ -1,8 +1,6 @@
-from pygitgo.exceptions import GitGoError
-from pygitgo.utils.colors import success, warning, error, info
-from pygitgo.exceptions import GitCommandError
+from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.colors import success, warning, info
 from pygitgo.utils.executor import run_command
-import sys
 
 
 def undo_commit():
