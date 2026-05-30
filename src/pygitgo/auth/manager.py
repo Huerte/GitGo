@@ -32,11 +32,15 @@ def login():
         print("=" * len(pub_key) + "\n")
         
         info("Copy the key above (between the lines).")
+        info("You need to add this key TWICE on GitHub:")
+        info("  1. Once as 'Authentication Key'  (so you can push and pull)")
+        info("  2. Once as 'Signing Key'          (so your commits show as Verified)")
+        info("Both entries use the exact same key text.")
 
         ssh_utils.open_github_settings()
-
+        
         input(
-            "After pasting your key on GitHub and clicking 'Add SSH Key',\n"
+            "After adding both keys on GitHub,\n"
             "come back here and press Enter to verify the connection..."
         )
 

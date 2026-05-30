@@ -1,10 +1,14 @@
-from pygitgo.utils.colors import info, success, warning, error
-from pygitgo.utils.executor import run_command
 from pygitgo.utils import platform_utils
+from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.executor import run_command, command_failed
+from pygitgo.exceptions import GitCommandError
 from pathlib import Path
+import webbrowser
 import subprocess
-import sys
+import shutil
 import os
+import re
+
 
 SSH_TIMEOUT_SECONDS = 10
 
@@ -25,7 +29,7 @@ def ensure_github_known_host():
     info("Adding GitHub to known_hosts...")
     result = run_command(["ssh-keyscan", "-H", "github.com"], allow_fail=True, return_complete=True)
     
-    if not isinstance(result, Exception) and result.stdout and "github.com" in result.stdout:
+    if not command_failed(result) and result.stdout and "github.com" in result.stdout:
         with open(known_hosts, "a") as f:
             f.write(result.stdout)
             if not result.stdout.endswith("\n"):
@@ -34,39 +38,29 @@ def ensure_github_known_host():
     else:
         warning("Could not automatically add GitHub to known_hosts. You might be prompted.")
 
+def _get_github_ssh_response():
+    try:
+        result = subprocess.run(
+            ["ssh", "-T", "-o", "BatchMode=yes", "git@github.com"],
+            capture_output=True, text=True,
+            timeout=SSH_TIMEOUT_SECONDS, stdin=subprocess.DEVNULL,
+        )
+        return (result.stderr or "") + (result.stdout or "")
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
 def check_connection():
     ensure_github_known_host()
-    try:
-        result = subprocess.run(
-            ["ssh", "-T", "-o", "BatchMode=yes", "git@github.com"],
-            capture_output=True,
-            text=True,
-            timeout=SSH_TIMEOUT_SECONDS,
-            stdin=subprocess.DEVNULL,
-        )
-        output = (result.stderr or "") + (result.stdout or "")
-        return "successfully authenticated" in output
-    except (subprocess.TimeoutExpired, OSError):
-        return False
+    output = _get_github_ssh_response()
+    return output is not None and "successfully authenticated" in output
 
 def get_github_username():
-    try:
-        result = subprocess.run(
-            ["ssh", "-T", "-o", "BatchMode=yes", "git@github.com"],
-            capture_output=True,
-            text=True,
-            timeout=SSH_TIMEOUT_SECONDS,
-            stdin=subprocess.DEVNULL,
-        )
-        output = (result.stderr or "") + (result.stdout or "")
-
-        if "Hi " in output and "!" in output:
-            try:
-                return output.split("Hi ")[1].split("!")[0]
-            except (IndexError, ValueError):
-                return None
-    except (subprocess.TimeoutExpired, OSError):
-        pass
+    output = _get_github_ssh_response()
+    if output and "Hi " in output and "!" in output:
+        try:
+            return output.split("Hi ")[1].split("!")[0]
+        except (IndexError, ValueError):
+            pass
     return None
 
 def get_ssh_key_path():
@@ -97,7 +91,7 @@ def generate_ssh_key(email):
 
     try:
         run_command(["ssh-add", str(key_path)], allow_fail=True)
-    except (subprocess.CalledProcessError, OSError):
+    except (GitCommandError, OSError):
         pass 
     
     return key_path
@@ -107,33 +101,23 @@ def open_github_settings():
     opened = False
 
     try:
-        if platform_utils.is_windows():
-            os.system(f"start {url}")
-            opened = True
-        elif platform_utils.is_termux():
-            os.system(f"termux-open {url}")
-            opened = True
-        elif platform_utils.is_linux() or platform_utils.is_macos():
-            exit_code = os.system(f"xdg-open {url} 2>/dev/null")
-            opened = exit_code == 0
+        if platform_utils.is_termux():
+            if shutil.which("termux-open"):
+                subprocess.run(["termux-open", url], check=False)
+                opened = True
         else:
-            import webbrowser
-            webbrowser.open(url)
-            opened = True
+            opened = webbrowser.open(url)
     except Exception:
         opened = False
 
     if not opened:
         warning("Could not open browser automatically.")
 
-    info(f"\nIf the browser did not open, visit this URL manually:")
+    info("\nIf the browser did not open, visit this URL manually:")
     print(f"\n  {url}\n")
 
 
-def convert_https_to_ssh(url):
-
-    import re
-    
+def convert_https_to_ssh(url):    
     pattern = r'^https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$'
     match = re.match(pattern, url.strip())
     

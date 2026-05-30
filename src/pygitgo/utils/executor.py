@@ -3,6 +3,7 @@ from pygitgo.exceptions import GitCommandError
 from yaspin import yaspin
 import subprocess
 import os
+import re
 
 
 def run_command(command, allow_fail=False, return_complete=False, loading_msg=None):
@@ -51,7 +52,6 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
             warning("\nThis is a known Git security feature in shared environments (like Termux).")
             info("GitGo can fix this for you by adding this directory to your safe list.")
             
-            import re
             path_match = re.search(r"repository at '(.+)'", stderr)
             repo_path = path_match.group(1) if path_match else os.getcwd()
 
@@ -75,3 +75,7 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
             return e
         
         raise GitCommandError(command, stderr=stderr, returncode=returncode)
+
+def command_failed(result):
+    # Returns True if run_command had error
+    return isinstance(result, Exception)

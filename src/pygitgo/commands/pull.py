@@ -1,10 +1,8 @@
-from pygitgo.exceptions import GitGoError
-from pygitgo.utils.colors import success, warning, error, info
-from pygitgo.utils.executor import run_command
-from pygitgo.exceptions import GitCommandError
 from pygitgo.commands.git_operations import get_current_branch
-import subprocess
-import sys
+from pygitgo.utils.colors import success, warning, error, info
+from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.executor import run_command, command_failed
+
 
 def pull_operation(args):
     branch = args.branch
@@ -15,7 +13,7 @@ def pull_operation(args):
 
     try:
         remote_refs = run_command(["git", "ls-remote", "--heads", "origin", branch], allow_fail=True)
-        if isinstance(remote_refs, subprocess.CalledProcessError) or not remote_refs.strip():
+        if command_failed(remote_refs) or not remote_refs.strip():
             error(f"\nFailed! The branch '{branch}' does not exist on the remote server.")
             warning("You might need to push your local branch first.\n")
             raise GitGoError()

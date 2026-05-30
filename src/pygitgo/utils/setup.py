@@ -3,7 +3,6 @@ from pygitgo.auth.ssh_utils import ensure_github_known_host
 from pygitgo.utils.config import get_config, set_config
 from pygitgo.utils.colors import error, info
 import shutil
-import sys
 
 
 def check_git_installed():

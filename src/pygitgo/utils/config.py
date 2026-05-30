@@ -1,6 +1,5 @@
-from pygitgo.utils.executor import run_command
-from pygitgo.utils.colors import *
-import subprocess
+from pygitgo.utils.executor import command_failed, run_command
+from pygitgo.utils.colors import error, warning, success, info
 
 
 def get_config(key, fallback_value):
@@ -9,7 +8,7 @@ def get_config(key, fallback_value):
 
     result = run_command(['git', 'config', '--global', config_key], allow_fail=True)                                                                                                                     
 
-    if not result or isinstance(result, subprocess.CalledProcessError):
+    if not result or command_failed(result):
         return fallback_value
 
     return result.strip()
@@ -21,7 +20,7 @@ def set_config(key, value):
 
     result = run_command(['git', 'config', '--global', config_key, value], allow_fail=True)
     
-    if isinstance(result, subprocess.CalledProcessError):
+    if command_failed(result):
         error(f"\nFailed to save configuration for '{key}'.")
         return False 
 

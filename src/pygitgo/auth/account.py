@@ -1,6 +1,5 @@
 from pygitgo.utils.colors import info, success, warning, error, BLUE, RESET
-from pygitgo.utils.executor import run_command
-import subprocess
+from pygitgo.utils.executor import run_command, command_failed
 
 
 def get_user():
@@ -8,12 +7,12 @@ def get_user():
         name = run_command(["git", "config", "--global", "user.name"], allow_fail=True)
         email = run_command(["git", "config", "--global", "user.email"], allow_fail=True)
 
-        if not name or isinstance(name, subprocess.CalledProcessError):
+        if not name or command_failed(name):
             name = None
-        if not email or isinstance(email, subprocess.CalledProcessError):
+        if not email or command_failed(email):
             email = None
         return name, email
-    except:
+    except Exception:
         return None, None
     
 def set_user(name, email):
