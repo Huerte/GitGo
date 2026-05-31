@@ -1,4 +1,4 @@
-from pygitgo.utils.colors import info, highlight, error, warning, success
+from pygitgo.utils.colors import info, success, warning, error, highlight
 from pygitgo.commands.stash_operation import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
@@ -24,8 +24,8 @@ def all_save_state():
             stash_index = total - 1 - i
 
             save_states.append({
-                "id": i + 1,   
-                "ref": f"stash@{{{stash_index}}}",  
+                "id": i + 1,
+                "ref": f"stash@{{{stash_index}}}",
                 "date": date,
                 "message": message,
                 "stash_index": stash_index
@@ -41,7 +41,7 @@ def display_save_states(save_state=None):
     save_states = save_state if save_state is not None else all_save_state()
 
     if not save_states:
-        info("\nNo saved states found.\n")
+        info("No saved states found.")
         return
 
     print("\nID | Date                | Saved State")
@@ -52,7 +52,8 @@ def display_save_states(save_state=None):
             f"{state['id']:>2} | {state['date']} | {state['message']}"
         )
 
-    print("-" * 60 + "\n")
+    print("-" * 60)
+    print()
 
 
 def is_number(value):
@@ -60,16 +61,17 @@ def is_number(value):
     if val.startswith('-'):
         return val[1:].isdigit()
     return val.isdigit()
-    
+
+
 def validate_state_id(state_id, save_states):
     if not is_number(state_id):
-        error("\nInvalid input. Please enter a valid state ID.\n")
+        error(f"Invalid ID. Expected a number between 1 and {len(save_states)}.")
         return False
     elif (int(state_id) - 1) < 0:
-        error("\nState ID cannot be '0' or negative. Please enter a valid state ID.\n")
+        error(f"Invalid ID. Range is 1 to {len(save_states)}.")
         return False
     elif (int(state_id) - 1) >= len(save_states):
-        error("\nState ID out of range. Please enter a valid state ID.\n")
+        error(f"ID out of range. Range is 1 to {len(save_states)}.")
         return False
     return True
 
@@ -79,15 +81,15 @@ def ask_state_id(save_states):
     state_id = None
 
     display_save_states(save_states)
-    info("\nEnter the ID (or 'q' to cancel): ")
+    print("Enter the ID (or 'q' to cancel):")
 
     while not proceed:
         state_id = input(">> ").strip().lower()
         if state_id == 'q':
-            warning("\nLoad operation cancelled by user.\n")
+            info("Load canceled.")
             return
         proceed = validate_state_id(state_id, save_states)
-    
+
     return state_id
 
 
@@ -97,9 +99,9 @@ def state_list():
 
 def load_state(state_id=None):
     save_states = all_save_state()
-    
+
     if not save_states:
-        warning("\nNo saved states to load.\n")
+        info("No saved states to load.")
         return
 
     proceed = False
@@ -108,44 +110,44 @@ def load_state(state_id=None):
         if state_id.isdigit():
             proceed = validate_state_id(state_id, save_states)
             if not proceed:
-                raise GitGoError()
+                raise GitGoError("Load aborted — invalid state ID.")
         else:
-            raise GitGoError(f"\nInvalid argument '{state_id}' for load operation. Expected a state ID.\n")
-    
+            raise GitGoError(f"Invalid argument '{state_id}' for load. Expected a state ID number.")
+
     if not proceed:
         state_id = ask_state_id(save_states)
         if not state_id:
             return
-        
+
     selected_state = save_states[int(state_id) - 1]
-        
+
     apply_result = git_stash_apply(stash_id=str(selected_state["stash_index"]))
     if not apply_result:
-        error(f"\nFailed to load state. There may be a conflict with your current changes.\n")
-        raise GitGoError()
-    success(f"\nState '{selected_state['message']}' loaded successfully.\n")
+        error(f"Failed to load state. There may be a conflict with your current changes.")
+        raise GitGoError("Load failed — resolve conflicts first.")
+    success(f"State '{selected_state['message']}' restored.")
 
 
 def save_state(state_name=None):
     if not state_name:
         state_name = "Auto-Save"
-        
+
     has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True)
     if not command_failed(has_changes) and not has_changes.strip():
-        warning("\nNo local changes to save.\n")
+        info("No local changes to save.")
         return
-        
+
     output = git_stash_push(label=state_name)
     if not output:
-        error(f"\nFailed to save state '{state_name}'.\n")
+        error(f"Failed to save state '{state_name}'.")
     else:
-        success(f"\nState '{state_name}' saved successfully.\n")
+        success(f"State '{state_name}' saved.")
 
 
 def delete_state(identifier=None):
     save_states = all_save_state()
     if not save_states:
-        warning("\nNo saved states to delete.\n")
+        info("No saved states to delete.")
         return
 
     if not identifier:
@@ -158,26 +160,26 @@ def delete_state(identifier=None):
             if confirm == 'y':
                 clear_result = git_stash_clear()
                 if not clear_result:
-                    error("\nFailed to delete all saved states.\n")
+                    error("Failed to delete all saved states.")
                 else:
-                    success("\nAll saved states deleted successfully.\n")
+                    success("All saved states deleted.")
             else:
-                warning("\nDelete operation cancelled by user.\n")
+                info("Delete canceled.")
             return
         elif not identifier.isdigit():
-            raise GitGoError("\nInvalid input. Please enter a valid state ID.\n")
+            raise GitGoError(f"Invalid input '{identifier}'. Expected a state ID number.")
 
         state_id = identifier
         if not validate_state_id(state_id, save_states):
-            raise GitGoError()
-    
+            raise GitGoError("Delete aborted — invalid state ID.")
+
     selected_state = save_states[int(state_id) - 1]
-    
+
     drop_result = git_stash_drop(stash_id=str(selected_state["stash_index"]))
     if not drop_result:
-        error(f"\nFailed to delete state with ID '{state_id}'.\n")
-        raise GitGoError()
-    success(f"\nState with ID '{state_id}' deleted successfully.\n")
+        error(f"Failed to delete state {state_id}.")
+        raise GitGoError("Delete failed — see above.")
+    success(f"State {state_id} deleted.")
 
 
 def state_operations(args):
@@ -186,21 +188,21 @@ def state_operations(args):
 
     if alias and positional and alias != positional:
         raise GitGoError(
-            f"\nConflicting actions: '{positional}' and '{alias}'. Use one or the other.\n"
+            f"Conflicting actions: '{positional}' and '{alias}'. Use one or the other."
         )
 
     action = alias or positional
     identifier = getattr(args, "identifier", None)
-    
+
     if getattr(args, "all", False):
         if action != "delete":
             raise GitGoError(
-                "\nThe -a/--all flag is only valid with the delete action.\n"
+                "The -a/--all flag is only valid with the delete action."
             )
         identifier = "-a"
-    
+
     if not action:
-        raise GitGoError("\nMissing action. Please specify an action (list, save, load, delete) or use a flag (-l, -s, -o, -d).\n")
+        raise GitGoError("Missing action. Use: list, save, load, delete (or -l, -s, -o, -d).")
 
     if action == "list":
         state_list()
@@ -211,5 +213,4 @@ def state_operations(args):
     elif action == "delete":
         delete_state(identifier)
     else:
-        raise GitGoError(f"\nUnknown state operation: {action}\n")
-    
+        raise GitGoError(f"Unknown state operation: {action}")

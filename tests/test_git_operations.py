@@ -399,7 +399,7 @@ def test_check_and_sync_branch_remote_ahead(mocker):
     remote_branch = 'master'
     check_and_sync_branch(branch)
 
-    fake_success.assert_called_once_with("Branch is up to date or ahead of remote.")
+    fake_success.assert_called_once_with("Branch is up to date.")
     
     fake_run.call_args_list == [
         call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
@@ -422,7 +422,7 @@ def test_check_and_sync_branch_need_sync(mocker):
     remote_branch = 'master'
     check_and_sync_branch(branch)
 
-    fake_success.assert_called_once_with("Successfully synced with remote!")
+    fake_success.assert_called_once_with("Synced with remote.")
     
     fake_run.call_args_list == [
         call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),

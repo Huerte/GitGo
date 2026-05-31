@@ -11,7 +11,7 @@ import os
 def get_status_content():
     status = run_command(["git", "status", "--porcelain"], allow_fail=True)
     if command_failed(status) or not status.strip():
-        raise GitGoError("\nWorking tree is clean. Nothing to commit.\n")
+        raise GitGoError("Working tree is clean. Nothing to commit.")
     return status
 
 def get_current_branch():
@@ -25,7 +25,7 @@ def get_main_branch():
     default_main_branch = get_config("default-branch", "main")
     if command_failed(main_branch):
         return default_main_branch
-    
+
     return main_branch.split("HEAD branch:")[-1].strip().splitlines()[0].strip() if "HEAD branch:" in main_branch else default_main_branch
 
 def is_branch_exist(branch):
@@ -41,9 +41,10 @@ def git_new_branch(branch):
             from pygitgo.commands.jump import jump_operation
             jump_operation(Namespace(branch=branch))
         else:
-            raise GitGoError(f"\nOperation canceled. Branch '{branch}' already exists.\n")
+            raise GitGoError(f"Operation canceled. Branch '{branch}' already exists.")
     else:
-        success(f"\nBranch '{branch}' created.\n")
+        print()
+        success(f"Branch '{branch}' created.")
 
     return branch
 
@@ -64,7 +65,7 @@ def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=
 
     if not skip_staging:
         run_command(["git", "add", "."], loading_msg="Staging files...")
-    
+
     clean_message = commit_message.strip('"\'')
 
     signing_flags = _get_signing_flags()
@@ -78,7 +79,7 @@ def git_init():
     if os.path.isdir(".git"):
         warning("Already a git repository! Skipping init...")
         return False
-    
+
     default_main_branch = get_config("default-branch", "main")
 
     result = run_command(["git", "init", "-b", default_main_branch], allow_fail=True, loading_msg="Initializing git repository...")
@@ -92,32 +93,32 @@ def git_init():
 
 def add_remote_origin(repo_url):
     clean_url = repo_url.strip('"\'')
-    
+
     existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
     if not command_failed(existing_remote):
         warning(f"Remote origin already exists: {existing_remote}")
         run_command(["git", "remote", "set-url", "origin", clean_url], loading_msg="Updating remote URL...")
     else:
         run_command(["git", "remote", "add", "origin", clean_url], loading_msg="Adding remote origin...")
-    
+
     success(f"Remote origin set to: {clean_url}")
 
 
 def confirm_remote_link():
     test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True, loading_msg="Testing connection to remote...")
-    
+
     if command_failed(test_result):
-        error("Failed to connect to remote repository!")
-        warning("Please check your repository URL and network connection.")
+        error("Connection failed — verify the URL and your SSH key.")
+        info("Run:  git remote -v   to inspect your current remote.")
         return False
-    
-    success("Successfully connected to remote repository.")
+
+    success("Remote is reachable.")
     return True
 
 
 def create_main_branch():
     current_branch = run_command(["git", "branch", "--show-current"], allow_fail=True)
-    
+
     if command_failed(current_branch) or not current_branch.strip():
         run_command(["git", "checkout", "-b", "main"], loading_msg="Setting default branch to 'main'...")
     elif current_branch.strip() != "main":
@@ -143,9 +144,9 @@ def check_and_sync_branch(branch):
                     output = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...")
                     if output:
                         print(output)
-                    success("Successfully synced with remote!")
+                    success("Synced with remote.")
                 else:
-                    success("Branch is up to date or ahead of remote.")
+                    success("Branch is up to date.")
             else:
                 success("Branch is already up to date.")
         except (GitCommandError, ValueError):
@@ -156,25 +157,25 @@ def check_and_sync_branch(branch):
 
 def git_push(branch):
     remote_url = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
-    
+
     if not command_failed(remote_url) and remote_url:
         remote_url = remote_url.strip()
-        
+
         if not is_ssh_url(remote_url) and check_connection():
             ssh_url = convert_https_to_ssh(remote_url)
             if ssh_url:
                 run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...")
                 success(f"Remote updated to: {ssh_url}")
 
-    try:    
+    try:
         run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
     except (GitCommandError, OSError) as e:
-        error("Failed to push to remote repository!")
-        warning("Please check your network connection, remote URL, and authentication.")
+        error("Push failed — verify your remote URL and SSH key, then try again.")
+        info("Run:  git remote -v   to inspect your current remote.")
         if "rebase in progress" in str(e):
             handle_rebase()
         else:
-            raise GitGoError()
+            raise GitGoError("Push failed — see above.")
 
 
 def handle_rebase():
@@ -183,11 +184,11 @@ def handle_rebase():
         return False
 
     if "rebase in progress" in status or "rebase" in status.lower():
-        warning("\nConflict detected!")
-        warning("Please resolve conflicts manually, then run:")
+        warning("Conflict detected during rebase.")
+        info("Resolve conflicts manually, then run:")
         info("    git add <files>")
         info("    git rebase --continue")
-        warning("When finished, run 'gitgo push <branch> <message>' again.\n")
-        raise GitGoError()
+        info("When finished, run 'gitgo push <branch> <message>' again.")
+        raise GitGoError("Push aborted — rebase conflict in progress.")
 
     return True

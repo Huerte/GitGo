@@ -1,35 +1,35 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.colors import success, warning, info
+from pygitgo.utils.colors import success, warning, info, error
 from pygitgo.utils.executor import run_command
 
 
 def undo_commit():
     try:
         run_command(["git", "reset", "--soft", "HEAD~"])
-        success("\nSuccess! Your last commit is undone. Your files are safe.\n")
+        success("Last commit undone. Files are untouched.")
     except GitCommandError as e:
         raise GitGoError(
-            "\nFailed! You might not have any previous commits to undo yet."
-            f"Details: {e}\n"
+            f"Undo failed — no previous commit to revert. Details: {e}"
         )
-    
+
 
 def undo_add():
     run_command(["git", "reset", "HEAD"])
-    success("\nSuccess! Files are no longer ready to commit.\n")
+    success("Staging cleared. Files are back to unstaged.")
 
 
 def undo_changes():
-    warning("\nDANGER: This will permanently delete all your new edits and new files!")
+    error("DANGER: This will permanently delete all your new edits and new files!")
+    warning("This action cannot be undone.")
     confirm = input("Are you sure you want to throw away all changes? (y/n): ")
     if confirm.lower() != "y":
-        info("\nCanceled. Your files are safe.\n")
+        info("Canceled. Your files are safe.")
         return
-    
+
     run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
     run_command(["git", "clean", "-fd"], loading_msg="Removing new files...")
-        
-    success("\nSuccess! All changes are completely gone. You have a clean start.\n")
+
+    success("Working tree reset. All changes discarded.")
 
 
 def undo_operations(args):
@@ -42,5 +42,4 @@ def undo_operations(args):
     elif action == "changes":
         undo_changes()
     else:
-        raise GitGoError(f"\nUnknown undo operation: {action}\n")
-        
+        raise GitGoError(f"Unknown undo operation: {action}")
