@@ -72,13 +72,19 @@ def logout():
         return False
     
     try:
+        
+        os.remove(key_path)
+
+        pub_key_path = str(key_path) + ".pub"
+        if os.path.exists(pub_key_path):
+            os.remove(pub_key_path)
+
         run_command(["git", "config", "--global", "--unset-all", "user.name"], allow_fail=True)
         run_command(["git", "config", "--global", "--unset-all", "user.email"], allow_fail=True)
         
-        os.remove(key_path)
-        os.remove(str(key_path) + '.pub')
         success("User successfully logout")
         return True
+    
     except Exception as e:
         error(f"Failed to remove SSH keys\nCAUSE OF ERROR: {e}")
         return False

@@ -48,16 +48,23 @@ def link_operation(args):
     info("\nINITIATING LINK OPERATION...")
     info(f"Target: {repo_url}\n")
     
-    if not git_init():
-        return
+    is_new_repo = git_init()
     
-    git_commit(commit_message, loading_msg="Creating initial commit...")
-    success("Initial commit created.")
+    if not is_new_repo:
+        add_remote_origin(repo_url)
+
+        if confirm_remote_link():
+            success("\nRemote linked to existing repository.")
+            success(f"Ready to push with: gitgo push <branch> 'your message'\n")
+        return
+
+    commit_made = git_commit(commit_message, loading_msg="Creating initial commit...")
+    if commit_made:
+        success("Initial commit created.")
     
     add_remote_origin(repo_url)
     
     if not confirm_remote_link():
-        error("Link operation failed! Check your repository URL.")
         return
     
     current_branch = get_current_branch()
@@ -139,9 +146,11 @@ def push_operation(args):
             return
 
         selective_stage(selected)
-        git_commit(message, loading_msg="Commiting selected files...")
+        commit_made = git_commit(message, loading_msg="Commiting selected files...", skip_staging=True)
         
-        git_push(branch)
+        if commit_made:
+            git_push(branch)
+        
     else:
         commit_made = git_commit(message)
         

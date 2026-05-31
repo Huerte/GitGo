@@ -74,17 +74,18 @@ def jump_operation(args):
     else:
         run_command(['git', 'checkout', target_branch], loading_msg=f"Moving you to branch '{target_branch}'...")
 
-    main_branch = get_main_branch()
-    get_origin_updates = run_command(['git', 'pull', 'origin', main_branch], allow_fail=True, loading_msg=f"Downloading the latest updates from '{main_branch}'...")
-    
-    if command_failed(get_origin_updates):
-        warning(f"\nFailed to pull updates from '{main_branch}'. Make sure you have internet or the remote branch exists.")
-        user_input = input("Do you want to stay on the new branch without the latest updates? (y/n): ").strip().lower()
-        if user_input != 'y':
-            undo_jump_operation(original_branch, stashed_code, created_branch)
-            raise GitGoError()
-        else:
-            success(f"\nOkay! You are on the new branch, but without the latest updates from '{main_branch}'.")
+        main_branch = get_main_branch()
+        get_origin_updates = run_command(['git', 'pull', 'origin', main_branch], allow_fail=True, loading_msg=f"Downloading the latest updates from '{main_branch}'...")
+        
+        if command_failed(get_origin_updates):
+            warning(f"\nFailed to pull updates from '{main_branch}'. Make sure you have internet or the remote branch exists.")
+            user_input = input("Do you want to stay on the new branch without the latest updates? (y/n): ").strip().lower()
+            if user_input != 'y':
+                undo_jump_operation(original_branch, stashed_code, created_branch)
+                raise GitGoError()
+            else:
+                success(f"\nOkay! You are on the new branch, but without the latest updates from '{main_branch}'.")
+
 
     if stashed_code:
         apply_result = git_stash_apply(loading_msg="Unpacking your unsaved changes...")

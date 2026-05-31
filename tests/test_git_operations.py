@@ -79,7 +79,7 @@ def test_git_init_already_initialized(mocker):
 
     result = git_init()
 
-    assert result == True
+    assert result == False
     fake_warning.assert_called_once() 
     fake_run.assert_not_called()
 
@@ -472,3 +472,22 @@ def test_check_and_sync_branch_remote_not_exist(mocker):
     fake_run.assert_any_call(
         ["git", "rev-parse", branch]
     )
+
+def test_git_commit_skip_staging_does_not_run_git_add(mocker):
+    mocker.patch("pygitgo.commands.git_operations._get_signing_flags", return_value=[])
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command")
+    
+    fake_run.side_effect = ["M file.py", None]
+    git_commit("my message", skip_staging=True)
+
+    for call in fake_run.call_args_list:
+        args = call[0][0]
+        assert args[:2] != ["git", "add"], "git add should not run when skip_staging=True"
+
+def test_git_commit_default_runs_git_add(mocker):
+    mocker.patch("pygitgo.commands.git_operations._get_signing_flags", return_value=[])
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command")
+    fake_run.side_effect = ["M file.py", None, None]
+    git_commit("my message")
+    add_call = fake_run.call_args_list[1][0][0]
+    assert add_call == ["git", "add", "."]

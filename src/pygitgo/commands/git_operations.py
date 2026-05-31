@@ -57,12 +57,14 @@ def _get_signing_flags():
         "-c", f"user.signingkey={key_path}",
     ]
 
-def git_commit(commit_message, loading_msg="Commiting changes..."):
+def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=False):
     status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
     if command_failed(status_result) or not status_result.strip():
         return False
 
-    run_command(["git", "add", "."], loading_msg="Staging files...")
+    if not skip_staging:
+        run_command(["git", "add", "."], loading_msg="Staging files...")
+    
     clean_message = commit_message.strip('"\'')
 
     signing_flags = _get_signing_flags()
@@ -75,7 +77,7 @@ def git_commit(commit_message, loading_msg="Commiting changes..."):
 def git_init():
     if os.path.isdir(".git"):
         warning("Already a git repository! Skipping init...")
-        return True
+        return False
     
     default_main_branch = get_config("default-branch", "main")
 

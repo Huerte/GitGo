@@ -24,6 +24,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Fixed `gitgo state load` attempting to run even when no states exist.
 - Fixed `gitgo state` silently accepting conflicting inputs (like `gitgo state list -s`).
 - Fixed `-a / --all` flag applying to all state actions; it is now strictly locked to `delete`.
+- Fixed `gitgo link` running `git add .` on existing repositories, which staged unwanted files.
+- Fixed `gitgo push --select` ignoring your selection and committing everything anyway.
+- Fixed `gitgo user login` crashing when an invalid email was provided or if `ssh-keygen` failed.
+- Fixed `gitgo user logout` wiping git config even if SSH key deletion failed.
+- Fixed `gitgo jump` running a slow network pull when creating a brand new local branch.
 
 ---
 
