@@ -18,7 +18,7 @@ def test_validate_state_id_negative(state_id, mocker):
     fake_error = mocker.patch('pygitgo.commands.state.error')
     result = validate_state_id(state_id, [1] * 12)
     assert result is False
-    fake_error.assert_called_with("\nState ID cannot be '0' or negative. Please enter a valid state ID.\n")
+    fake_error.assert_called_with("Invalid ID. Range is 1 to 12.")
 
 
 @pytest.mark.parametrize('state_id', ['4', '10', '15', '0000020'])
@@ -26,7 +26,7 @@ def test_validate_state_id_out_scope(state_id, mocker):
     fake_error = mocker.patch('pygitgo.commands.state.error')
     result = validate_state_id(state_id, [1] * 3)
     assert result is False
-    fake_error.assert_called_with("\nState ID out of range. Please enter a valid state ID.\n")
+    fake_error.assert_called_with("ID out of range. Range is 1 to 3.")
 
 
 def test_all_save_state_no_output(mocker):
@@ -82,7 +82,7 @@ def test_load_state_specific_id(mocker):
     load_state("1")
 
     fake_apply.assert_called_once_with(stash_id="0")
-    fake_success.assert_called_once_with("\nState 'msg' loaded successfully.\n")
+    fake_success.assert_called_once_with("State 'msg' restored.")
 
 
 def test_load_state_invalid_id(mocker):
@@ -117,7 +117,7 @@ def test_load_state_no_args(mocker):
     load_state()
 
     fake_apply.assert_called_once_with(stash_id="0")
-    fake_success.assert_called_once_with("\nState 'msg2' loaded successfully.\n")
+    fake_success.assert_called_once_with("State 'msg2' restored.")
 
 
 def test_save_state_no_args(mocker):
@@ -131,7 +131,7 @@ def test_save_state_no_args(mocker):
     save_state()
 
     fake_push.assert_called_once_with(label="Auto-Save")
-    fake_success.assert_called_once_with("\nState 'Auto-Save' saved successfully.\n")
+    fake_success.assert_called_once_with("State 'Auto-Save' saved.")
 
 
 def test_save_state_with_name(mocker):
@@ -145,7 +145,7 @@ def test_save_state_with_name(mocker):
     save_state("My-State")
 
     fake_push.assert_called_once_with(label="My-State")
-    fake_success.assert_called_once_with("\nState 'My-State' saved successfully.\n")
+    fake_success.assert_called_once_with("State 'My-State' saved.")
 
 
 def test_delete_state_all_confirm(mocker):
@@ -157,17 +157,17 @@ def test_delete_state_all_confirm(mocker):
     delete_state("-a")
 
     fake_clear.assert_called_once()
-    fake_success.assert_called_once_with("\nAll saved states deleted successfully.\n")
+    fake_success.assert_called_once_with("All saved states deleted.")
 
 
 def test_delete_state_all_cancel(mocker):
     mocker.patch("builtins.input", return_value="n")
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
-    fake_warning = mocker.patch("pygitgo.commands.state.warning")
+    fake_info = mocker.patch("pygitgo.commands.state.info")
 
     delete_state("-a")
 
-    fake_warning.assert_called_once_with("\nDelete operation cancelled by user.\n")
+    fake_info.assert_called_once_with("Delete canceled.")
 
 
 def test_delete_state_invalid_id(mocker):
@@ -188,7 +188,7 @@ def test_delete_state_specific_id(mocker):
     delete_state("1")
 
     fake_drop.assert_called_once_with(stash_id="0")
-    fake_success.assert_called_once_with("\nState with ID '1' deleted successfully.\n")
+    fake_success.assert_called_once_with("State 1 deleted.")
 
 
 def test_delete_state_no_args(mocker):
@@ -204,4 +204,4 @@ def test_delete_state_no_args(mocker):
     delete_state()
 
     fake_drop.assert_called_once_with(stash_id="0")
-    fake_success.assert_called_once_with("\nState with ID '2' deleted successfully.\n")
+    fake_success.assert_called_once_with("State 2 deleted.")

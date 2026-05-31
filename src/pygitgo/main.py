@@ -5,7 +5,7 @@ from pygitgo.commands.git_operations import (
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.utils.update_checker import check_for_updates_background
 from pygitgo.utils.executor import run_command, command_failed
-from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.colors import info, success, warning, error, highlight, print_banner
 from pygitgo.utils.config import get_config, config_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.setup import ensure_first_run_setup
@@ -45,8 +45,9 @@ def link_operation(args):
 
     commit_message = args.message
     
-    info("\nINITIATING LINK OPERATION...")
-    info(f"Target: {repo_url}\n")
+    highlight("INITIATING LINK OPERATION...")
+    highlight(f"Target: {repo_url}")
+    print()
     
     is_new_repo = git_init()
     
@@ -85,21 +86,17 @@ def link_operation(args):
             warning(f"Run: git pull origin {main_branch} --allow-unrelated-histories")
             warning(f"Then: gitgo push {main_branch} 'your message'\n")
             return
-        success("Remote content merged successfully.")
+        success("Remote content merged.")
     
-    print("\n" + ("=" * 90))
-    success("LINK OPERATION COMPLETE! REPOSITORY LOCKED AND LOADED!")
-    success(f"Ready to push with: gitgo push {main_branch} 'your message'")
-    info("AWAITING FURTHER ORDERS...\n")
+    print_banner("REPOSITORY INITIALIZED AND LINKED.")
 
-    user_choice = input(f"\nDo you want to push now? (y/n): ").lower()
+    user_choice = input(f"Do you want to push now? (y/n): ").lower()
     if user_choice != 'y':
         return
-    
+
     git_push(current_branch)
-    
-    print("\n" + ("=" * 90))
-    success("MISSION COMPLETE: REPOSITORY INITIALIZED AND PUSHED!\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+
+    print_banner("REPOSITORY INITIALIZED AND DEPLOYED.")
     
 
 def push_operation(args):
@@ -171,20 +168,23 @@ def push_operation(args):
                 warning("Make some changes first or check your git remote configuration.")
                 return
 
-    print("\n" + ("=" * 90))
-    success("MISSION COMPLETE: NO CASUALTIES. ALL TARGETS NEUTRALIZED.\nAWAITING FOR YOUR NEXT ORDERS.\n\n")
+    print_banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.")
 
 
 def display_current_user():
+    import shutil
     username, email = get_user()
     if username and email:
-        print("\n" + "="*40)
+        width = min(shutil.get_terminal_size().columns, 40)
+        print()
+        print("=" * width)
         info(f"Git User:  {username}")
         info(f"Git Email: {email}")
-        print("="*40 + "\n")
+        print("=" * width)
+        print()
     else:
-        warning("\nNo Git user identity configured.")
-        info("Run 'gitgo user login'\n")
+        warning("No Git user identity configured.")
+        info("Run 'gitgo user login'")
 
 
 def user_management(args):
@@ -339,7 +339,7 @@ def main():
         return
 
     if args.ready:
-        info("\nALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...\n")
+        info("ALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...")
         return
 
     if not args.command:

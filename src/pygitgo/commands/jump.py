@@ -21,54 +21,59 @@ def undo_jump_operation(original_branch, stashed_code, created_branch=None):
     if stashed_code:
         pop_result = git_stash_pop()
         if not pop_result:
-            warning("\nCould not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.\n")
+            warning("Could not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.")
 
-    success(f"\nCanceled safely!")
-    success(f"You are back on your original branch '{original_branch}', and your code is totally safe.\n")
+    print()
+    success(f"Canceled safely.")
+    success(f"Back on '{original_branch}'. Your code is safe.")
 
-def jump_operation(args):  
 
+def jump_operation(args):
 
     target_branch = args.branch
 
     original_branch = get_current_branch()
-    
+
     if original_branch == target_branch:
-        warning(f"\nYou are already on branch '{target_branch}'.\n")
+        warning(f"Already on branch '{target_branch}'.")
         return
 
     has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
     if command_failed(has_changes):
-        raise GitGoError("\nUnable to check for uncommitted changes. Please ensure you're in a valid git repository.\n")
-    
+        raise GitGoError("Unable to check for uncommitted changes — make sure you're in a valid git repository.")
+
     stashed_code = False
     if has_changes.strip():
-        info("\nYou have unsaved changes here.")
+        print()
+        info("You have unsaved changes here.")
         user_input = input("Do you want to move these changes to your new branch? (y/n): ").strip().lower()
         if user_input != 'y':
-            warning("\nYou cannot switch branches with unsaved changes. Jump canceled.\n")
+            print()
+            warning("You cannot switch branches with unsaved changes. Jump canceled.")
             return
         else:
             stash_result = git_stash_push(label="GitGo Jump Auto-Stash", loading_msg="Saving your changes before jumping...")
             if not stash_result:
-                warning("\nFailed to save your changes. Please resolve any issues and try again.")
-                raise GitGoError()
-            info("\nYour changes have been saved. Jumping to the new branch...")
+                warning("Stash failed. Your working tree may have untracked files.")
+                info("Run:  git status   to see what's blocking the stash.")
+                raise GitGoError("Jump aborted — could not save working changes.")
+            info("Changes saved. Jumping to the new branch...")
             stashed_code = True
-            
+
     created_branch = None
     if not is_branch_exist(target_branch):
-        warning(f"\nBranch '{target_branch}' does not exist.\n")
+        print()
+        warning(f"Branch '{target_branch}' does not exist.")
         user_input = input("Do you want to create it and jump to it? (y/n): ").strip().lower()
 
         if user_input != 'y':
-            info("Exiting without jumping...\n")
+            info("Exiting without jumping...")
             if stashed_code:
                 pop_result = git_stash_pop(loading_msg="Putting your unsaved changes back...")
                 if not pop_result:
-                    warning("\nCould not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.")
+                    warning("Could not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.")
             return
-        
+
         git_new_branch(target_branch)
         created_branch = target_branch
     else:
@@ -76,42 +81,44 @@ def jump_operation(args):
 
         main_branch = get_main_branch()
         get_origin_updates = run_command(['git', 'pull', 'origin', main_branch], allow_fail=True, loading_msg=f"Downloading the latest updates from '{main_branch}'...")
-        
+
         if command_failed(get_origin_updates):
-            warning(f"\nFailed to pull updates from '{main_branch}'. Make sure you have internet or the remote branch exists.")
-            user_input = input("Do you want to stay on the new branch without the latest updates? (y/n): ").strip().lower()
+            warning(f"Failed to pull updates from '{main_branch}'. No internet, or the remote branch doesn't exist yet.")
+            user_input = input("Stay on the new branch without the latest updates? (y/n): ").strip().lower()
             if user_input != 'y':
                 undo_jump_operation(original_branch, stashed_code, created_branch)
-                raise GitGoError()
+                raise GitGoError("Jump aborted — could not sync with remote.")
             else:
-                success(f"\nOkay! You are on the new branch, but without the latest updates from '{main_branch}'.")
-
+                info(f"On '{target_branch}', but without the latest updates from '{main_branch}'.")
 
     if stashed_code:
         apply_result = git_stash_apply(loading_msg="Unpacking your unsaved changes...")
         if not apply_result:
-            error("\nSTOP! There is a 'Merge Conflict'.")
-            warning("Your unsaved code clashes with the new code from 'main'.\n")
-            info("Option [Y]: Stay here and fix the red conflict lines yourself.")
-            info("Option [N]: Cancel everything and go back to normal.\n")
+            print()
+            error("MERGE CONFLICT — your changes clash with the target branch.")
+            print()
+            info("Option [Y]: Stay here and fix the conflict lines yourself.")
+            info("Option [N]: Cancel everything and go back to where you started.")
+            print()
             conflict_choice = input("Do you want to fix it yourself? (y/n): ").strip().lower()
 
             if conflict_choice != 'y':
                 undo_jump_operation(original_branch, stashed_code, created_branch)
                 return
             else:
-                success("\nOkay! You are on the new branch with your code.")
-                warning("Please open your code editor RIGHT NOW to fix the conflicts!")
-                info("Your stash backup is still saved. Run 'gitgo state list' to see it.\n")
+                print()
+                success(f"On '{target_branch}'. Conflict markers are in your files.")
+                warning("Open your editor and fix the conflict lines.")
+                info("Your stash backup is still saved. Run 'gitgo state list' to see it.")
                 return
         else:
             drop_result = git_stash_drop(loading_msg="Cleaning up the temporary stash...")
             if not drop_result:
-                warning("\nCould not clean up the temporary stash. Run 'gitgo state list' to remove it manually.")
-            success(f"\nSuccess! You are now on '{target_branch}'.")
-            success("Your unsaved code was moved here safely!\n")
+                warning("Could not clean up the temporary stash. Run 'gitgo state list' to remove it manually.")
+            print()
+            success(f"On '{target_branch}'. Your changes came with you.")
             return
     else:
-        success(f"\nSuccess! You are now on '{target_branch}'.\n")
+        print()
+        success(f"On '{target_branch}'.")
         return
-        

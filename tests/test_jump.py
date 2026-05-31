@@ -65,7 +65,7 @@ def test_jump_operation_same_branch(mocker):
     fake_warning = mocker.patch('pygitgo.commands.jump.warning')
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 0
-    fake_warning.assert_called_with("\nYou are already on branch 'main'.\n")
+    fake_warning.assert_called_with("Already on branch 'main'.")
 
 
 def test_jump_operation_not_valid_repo(mocker):
@@ -86,7 +86,7 @@ def test_jump_operation_has_changes_exit(mocker):
     mocker.patch('pygitgo.commands.jump.run_command', return_value='M file.txt')
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 0
-    fake_warning.assert_any_call("\nYou cannot switch branches with unsaved changes. Jump canceled.\n")
+    fake_warning.assert_any_call("You cannot switch branches with unsaved changes. Jump canceled.")
 
 
 def test_jump_operation_no_changes(mocker):
@@ -98,7 +98,7 @@ def test_jump_operation_no_changes(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
-    fake_success.assert_called_with("\nSuccess! You are now on 'feature'.\n")
+    fake_success.assert_called_with("On 'feature'.")
 
 
 def test_jump_operation_save_changes_error(mocker):
@@ -113,9 +113,7 @@ def test_jump_operation_save_changes_error(mocker):
     )
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 1
-    fake_warning.assert_called_with(
-        "\nFailed to save your changes. Please resolve any issues and try again."
-    )
+    fake_warning.assert_called_with("Stash failed. Your working tree may have untracked files.")
 
 
 
@@ -132,8 +130,8 @@ def test_jump_operation_branch_not_exist_cancel_operation(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
-    fake_info.assert_any_call('\nYour changes have been saved. Jumping to the new branch...')
-    fake_info.assert_any_call("Exiting without jumping...\n")
+    fake_info.assert_any_call('Changes saved. Jumping to the new branch...')
+    fake_info.assert_any_call("Exiting without jumping...")
     fake_pop.assert_called_once()
 
 
@@ -157,9 +155,8 @@ def test_jump_operation_branch_not_exist_create_branch(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
-    fake_info.assert_called_with('\nYour changes have been saved. Jumping to the new branch...')
-    fake_success.assert_any_call("\nSuccess! You are now on 'feature'.")
-    fake_success.assert_any_call("Your unsaved code was moved here safely!\n")
+    fake_info.assert_called_with('Changes saved. Jumping to the new branch...')
+    fake_success.assert_any_call("On 'feature'. Your changes came with you.")
     fake_apply.assert_called_once()
     fake_drop.assert_called_once()
 
@@ -185,7 +182,7 @@ def test_jump_operation_sync_fail_cancel(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 1
     fake_warning.assert_any_call(
-        "\nFailed to pull updates from 'main'. Make sure you have internet or the remote branch exists."
+        "Failed to pull updates from 'main'. No internet, or the remote branch doesn't exist yet."
     )
 
 
@@ -195,7 +192,7 @@ def test_jump_operation_sync_fail_stay(mocker):
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
     mocker.patch('builtins.input', side_effect=['y'])   # "stay?" → yes
 
-    fake_success = mocker.patch('pygitgo.commands.jump.success')
+    fake_info = mocker.patch('pygitgo.commands.jump.info')
 
     def _run(*args, **kwargs):
         cmd = args[0]
@@ -208,8 +205,8 @@ def test_jump_operation_sync_fail_stay(mocker):
     mocker.patch('pygitgo.commands.jump.run_command', side_effect=_run)
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
-    fake_success.assert_any_call(
-        "\nOkay! You are on the new branch, but without the latest updates from 'main'."
+    fake_info.assert_any_call(
+        "On 'feature', but without the latest updates from 'main'."
     )
 
 
@@ -234,7 +231,7 @@ def test_jump_operation_merge_conflict_cancel(mocker):
     )
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
-    fake_error.assert_any_call("\nSTOP! There is a 'Merge Conflict'.")
+    fake_error.assert_any_call("MERGE CONFLICT — your changes clash with the target branch.")
 
 
 def test_jump_operation_merge_conflict_stay(mocker):
@@ -260,7 +257,7 @@ def test_jump_operation_merge_conflict_stay(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
-    fake_success.assert_any_call("\nOkay! You are on the new branch with your code.")
-    fake_warning.assert_any_call("Please open your code editor RIGHT NOW to fix the conflicts!")
-    fake_info.assert_any_call("Your stash backup is still saved. Run 'gitgo state list' to see it.\n")
+    fake_success.assert_any_call("On 'feature'. Conflict markers are in your files.")
+    fake_warning.assert_any_call("Open your editor and fix the conflict lines.")
+    fake_info.assert_any_call("Your stash backup is still saved. Run 'gitgo state list' to see it.")
     fake_drop.assert_not_called()

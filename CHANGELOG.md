@@ -12,6 +12,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Auto SSH Commit Signing:** GitGo now uses the SSH key generated during `gitgo user login` to automatically sign all commits using temporary `-c` flags, giving you the Verified badge on GitHub without modifying global git configs.
 
 ### Changed
+- Refactored CLI messaging to use a consistent tone, removing robotic phrases and filler words.
+- Standardized terminal output spacing and colors across all commands.
+- Updated success banners to a concise, military-style format for major operations.
+- Improved error messages to provide actionable next steps instead of generic advice.
 - Refactored codebase to standardize internal API returns, remove redundant checks, and optimize stash operations.
 
 ### Fixed
