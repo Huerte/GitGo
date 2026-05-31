@@ -1,7 +1,7 @@
 from pygitgo.utils import platform_utils
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.executor import run_command, command_failed
-from pygitgo.exceptions import GitCommandError
+from pygitgo.exceptions import GitCommandError, GitGoError
 from pathlib import Path
 import webbrowser
 import subprocess
@@ -11,7 +11,6 @@ import re
 
 
 SSH_TIMEOUT_SECONDS = 10
-
 
 
 def ensure_github_known_host():
@@ -68,8 +67,7 @@ def get_ssh_key_path():
 
 def generate_ssh_key(email):
     if not email or "@" not in email or "." not in email:
-        error("Invalid email address provided for SSH key generation.")
-        return 
+        raise GitGoError("Invalid email address provided for SSH key generation.")
     
     key_path = get_ssh_key_path()
     if not key_path.parent.exists():
@@ -87,14 +85,21 @@ def generate_ssh_key(email):
         "-f", str(key_path),
         "-N", ""
     ]
-    run_command(command=command)
 
+    try:
+        run_command(command=command)
+    except GitCommandError as e:
+        raise GitGoError(
+            "\nFailed to generate SSH key. Is 'ssh-keygen' installed on your system?\n"
+            f"Details: {e}"
+        )
     try:
         run_command(["ssh-add", str(key_path)], allow_fail=True)
     except (GitCommandError, OSError):
         pass 
     
     return key_path
+
 
 def open_github_settings():
     url = "https://github.com/settings/ssh/new"

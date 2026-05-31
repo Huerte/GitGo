@@ -42,8 +42,8 @@ def git_stash_list(loading_msg="Fetching stash list..."):
         "git", "stash", "list",
         "--date=format:%Y-%m-%d %H:%M:%S",
         "--pretty=%gd||%cd||%s"
-    ], allow_fail=True)
+    ], allow_fail=True, loading_msg=loading_msg)
 
 def git_stash_clear(loading_msg="Clearing all stashes..."):
-    result = run_command(["git", "stash", "clear"], allow_fail=True)
+    result = run_command(["git", "stash", "clear"], allow_fail=True, loading_msg=loading_msg)
     return not command_failed(result)
