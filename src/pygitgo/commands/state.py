@@ -7,12 +7,6 @@ from pygitgo.utils.executor import run_command, command_failed
 from pygitgo.exceptions import GitGoError
 
 
-ALIASES = {
-    "-l": "list",
-    "-s": "save",
-    "-o": "load",
-    "-d": "delete"
-}
 
 def all_save_state():
     output = git_stash_list()
@@ -21,20 +15,20 @@ def all_save_state():
         return []
 
     save_states = []
+    lines = output.splitlines()
+    total = len(lines)
 
-    for line in output.splitlines():
+    for i, line in enumerate(reversed(lines)):
         try:
             stash_ref, date, message = line.split("||", 2)
-
-            index = int(
-                stash_ref.replace("stash@{", "").replace("}", "")
-            )
+            stash_index = total - 1 - i
 
             save_states.append({
-                "id": index + 1,   
-                "ref": stash_ref,  
+                "id": i + 1,   
+                "ref": f"stash@{{{stash_index}}}",  
                 "date": date,
-                "message": message
+                "message": message,
+                "stash_index": stash_index
             })
 
         except ValueError:
@@ -103,6 +97,11 @@ def state_list():
 
 def load_state(state_id=None):
     save_states = all_save_state()
+    
+    if not save_states:
+        warning("\nNo saved states to load.\n")
+        return
+
     proceed = False
 
     if state_id:
@@ -118,11 +117,13 @@ def load_state(state_id=None):
         if not state_id:
             return
         
-    apply_result = git_stash_apply(stash_id=str(int(state_id) - 1))
+    selected_state = save_states[int(state_id) - 1]
+        
+    apply_result = git_stash_apply(stash_id=str(selected_state["stash_index"]))
     if not apply_result:
         error(f"\nFailed to load state. There may be a conflict with your current changes.\n")
         raise GitGoError()
-    success(f"\nState '{save_states[int(state_id) - 1]['message']}' loaded successfully.\n")
+    success(f"\nState '{selected_state['message']}' loaded successfully.\n")
 
 
 def save_state(state_name=None):
@@ -170,7 +171,9 @@ def delete_state(identifier=None):
         if not validate_state_id(state_id, save_states):
             raise GitGoError()
     
-    drop_result = git_stash_drop(stash_id=str(int(state_id) - 1))
+    selected_state = save_states[int(state_id) - 1]
+    
+    drop_result = git_stash_drop(stash_id=str(selected_state["stash_index"]))
     if not drop_result:
         error(f"\nFailed to delete state with ID '{state_id}'.\n")
         raise GitGoError()
@@ -178,8 +181,26 @@ def delete_state(identifier=None):
 
 
 def state_operations(args):
-    action = ALIASES.get(args.action, args.action)
+    alias = getattr(args, "action_alias", None)
+    positional = getattr(args, "action", None)
+
+    if alias and positional and alias != positional:
+        raise GitGoError(
+            f"\nConflicting actions: '{positional}' and '{alias}'. Use one or the other.\n"
+        )
+
+    action = alias or positional
     identifier = getattr(args, "identifier", None)
+    
+    if getattr(args, "all", False):
+        if action != "delete":
+            raise GitGoError(
+                "\nThe -a/--all flag is only valid with the delete action.\n"
+            )
+        identifier = "-a"
+    
+    if not action:
+        raise GitGoError("\nMissing action. Please specify an action (list, save, load, delete) or use a flag (-l, -s, -o, -d).\n")
 
     if action == "list":
         state_list()

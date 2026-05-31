@@ -18,6 +18,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Fixed GitGo hanging indefinitely during login if an SSH passphrase prompt was triggered invisibly.
 - Fixed the browser failing to open in some environments by always printing the GitHub URL as a fallback.
 - Improved login failure messaging to suggest concrete fixes (like checking the SSH agent).
+- Fixed `gitgo state` not parsing short-form aliases (`-l`, `-s`, `-o`, `-d`) correctly.
+- Fixed chronological ordering in `gitgo state list` (now displays old to new, numbered 1, 2, 3) and accurately maps IDs to Git's internal stash index.
+- Fixed `gitgo state` crashing when parsing stashes that output dates instead of indices.
+- Fixed `gitgo state load` attempting to run even when no states exist.
+- Fixed `gitgo state` silently accepting conflicting inputs (like `gitgo state list -s`).
+- Fixed `-a / --all` flag applying to all state actions; it is now strictly locked to `delete`.
 
 ---
 

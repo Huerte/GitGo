@@ -57,12 +57,14 @@ def test_all_save_state_with_output(mocker):
 
     assert len(result) == 2
     assert result[0] == {
-        "id": 1, "ref": "stash@{0}",
-        "date": "2023-10-27 10:00:00", "message": "Test stash"
+        "id": 1, "ref": "stash@{1}",
+        "date": "2023-10-27 10:05:00", "message": "Another stash",
+        "stash_index": 1
     }
     assert result[1] == {
-        "id": 2, "ref": "stash@{1}",
-        "date": "2023-10-27 10:05:00", "message": "Another stash"
+        "id": 2, "ref": "stash@{0}",
+        "date": "2023-10-27 10:00:00", "message": "Test stash",
+        "stash_index": 0
     }
 
 
@@ -83,7 +85,7 @@ def test_all_save_state_malformed_line(mocker):
 # ---------------------------------------------------------------------------
 
 def test_load_state_specific_id(mocker):
-    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg"}]
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
     mocker.patch("pygitgo.commands.state.validate_state_id", return_value=True)
     fake_apply = mocker.patch("pygitgo.commands.state.git_stash_apply", return_value=True)
@@ -96,7 +98,7 @@ def test_load_state_specific_id(mocker):
 
 
 def test_load_state_invalid_id(mocker):
-    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg"}]
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
     mocker.patch("pygitgo.commands.state.validate_state_id", return_value=False)
 
@@ -106,7 +108,7 @@ def test_load_state_invalid_id(mocker):
 
 
 def test_load_state_invalid_argument(mocker):
-    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg"}]
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
 
     from pygitgo.exceptions import GitGoError
@@ -116,8 +118,8 @@ def test_load_state_invalid_argument(mocker):
 
 def test_load_state_no_args(mocker):
     save_states = [
-        {"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg"},
-        {"id": 2, "ref": "stash@{1}", "date": "date2", "message": "msg2"},
+        {"id": 1, "ref": "stash@{1}", "date": "date", "message": "msg", "stash_index": 1},
+        {"id": 2, "ref": "stash@{0}", "date": "date2", "message": "msg2", "stash_index": 0},
     ]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
     mocker.patch("pygitgo.commands.state.ask_state_id", return_value="2")
@@ -126,7 +128,7 @@ def test_load_state_no_args(mocker):
 
     load_state()
 
-    fake_apply.assert_called_once_with(stash_id="1")
+    fake_apply.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("\nState 'msg2' loaded successfully.\n")
 
 
@@ -197,7 +199,7 @@ def test_delete_state_invalid_id(mocker):
 
 
 def test_delete_state_specific_id(mocker):
-    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg"}]
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.validate_state_id", return_value=True)
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
     fake_drop = mocker.patch("pygitgo.commands.state.git_stash_drop", return_value=True)
@@ -211,8 +213,8 @@ def test_delete_state_specific_id(mocker):
 
 def test_delete_state_no_args(mocker):
     save_states = [
-        {"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg"},
-        {"id": 2, "ref": "stash@{1}", "date": "date2", "message": "msg2"},
+        {"id": 1, "ref": "stash@{1}", "date": "date", "message": "msg", "stash_index": 1},
+        {"id": 2, "ref": "stash@{0}", "date": "date2", "message": "msg2", "stash_index": 0},
     ]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
     mocker.patch("pygitgo.commands.state.ask_state_id", return_value="2")
@@ -221,5 +223,5 @@ def test_delete_state_no_args(mocker):
 
     delete_state()
 
-    fake_drop.assert_called_once_with(stash_id="1")
+    fake_drop.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("\nState with ID '2' deleted successfully.\n")

@@ -254,15 +254,28 @@ def main():
     )
     state_parser.add_argument(
         "action",
-        choices=["list", "save", "load", "delete", "-l", "-s", "-o", "-d"],
+        nargs="?",
+        choices=["list", "save", "load", "delete"],
         metavar="action",
-        help="list, save, load, delete  (aliases: -l, -s, -o, -d)"
+        default=None,
+        help="list, save, load, delete"
     )
     state_parser.add_argument(
         "identifier",
         nargs="?",
         default=None,
         help="Optional name or ID"
+    )
+    _alias_group = state_parser.add_mutually_exclusive_group()
+    _alias_group.add_argument("-l", dest="action_alias", action="store_const", const="list",   help="Alias for 'list'")
+    _alias_group.add_argument("-s", dest="action_alias", action="store_const", const="save",   help="Alias for 'save'")
+    _alias_group.add_argument("-o", dest="action_alias", action="store_const", const="load",   help="Alias for 'load'")
+    _alias_group.add_argument("-d", dest="action_alias", action="store_const", const="delete", help="Alias for 'delete'")
+
+    state_parser.add_argument(
+        "-a", "--all",
+        action="store_true",
+        help="Apply action to all states (e.g., delete all)"
     )
     
     user_parser = subparsers.add_parser("user", help="Manage Git user identity")
