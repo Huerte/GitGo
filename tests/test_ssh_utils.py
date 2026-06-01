@@ -98,3 +98,23 @@ def test_convert_https_to_ssh():
 def test_is_ssh_url():
     assert is_ssh_url("git@github.com:user/repo.git") is True
     assert is_ssh_url("https://github.com/user/repo") is False
+
+
+@pytest.mark.parametrize("url", [
+    "git@github.com:Huerte/GitGo.git",
+    "git@gitlab.com:Company/App.git"
+])
+def test_is_ssh_url_valid(url):
+    result = is_ssh_url(url)
+    assert result is True
+
+
+@pytest.mark.parametrize("url", [
+    "https://github.com/Huerte/GitGo",
+    "hello-world",
+    ""
+])
+def test_is_ssh_url_invalid(url):
+    result = is_ssh_url(url)
+    assert result is False
+

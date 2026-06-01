@@ -1,48 +1,18 @@
 from pygitgo.utils.update_checker import check_for_updates_background
 from pygitgo.utils.colors import info, warning, error
-from pygitgo.utils.config import config_operation
+from pygitgo.commands.config import config_operation
 from pygitgo.exceptions import GitGoError
-from pygitgo.utils.setup import ensure_first_run_setup
-from pygitgo.commands.state import state_operations
-from pygitgo.commands.undo import undo_operations
+from pygitgo.utils.bootstrap import ensure_first_run_setup
+from pygitgo.commands.state import state_operation
+from pygitgo.commands.undo import undo_operation
 from pygitgo.commands.pull import pull_operation
 from pygitgo.commands.jump import jump_operation
 from pygitgo.commands.link import link_operation
 from pygitgo.commands.push import push_operation
-from pygitgo.auth.manager import login, logout
-from pygitgo.auth.account import get_user
+from pygitgo.commands.user import user_operation
 import argparse
 import sys
 
-def display_current_user():
-    import shutil
-    username, email = get_user()
-    if username and email:
-        width = min(shutil.get_terminal_size().columns, 40)
-        print()
-        print("=" * width)
-        info(f"Git User:  {username}")
-        info(f"Git Email: {email}")
-        print("=" * width)
-        print()
-    else:
-        warning("No Git user identity configured.")
-        info("Run 'gitgo user login'")
-
-
-def user_management(args):
-    action = args.action if hasattr(args, 'action') else None
-
-    if not action:
-        display_current_user()
-        return
-    
-    if action == 'login':
-        login()
-    elif action == 'logout':
-        logout()
-    else:
-        raise GitGoError(f"\nInvalid user operation '{action}'!\n")
 
 
 def get_version():
@@ -200,13 +170,13 @@ def main():
         elif args.command == "push":
             push_operation(args)
         elif args.command == "state":
-            state_operations(args)
+            state_operation(args)
         elif args.command == "user":
-            user_management(args)
+            user_operation(args)
         elif args.command == "config":
             config_operation(args)
         elif args.command == "undo":
-            undo_operations(args)
+            undo_operation(args)
         elif args.command == "pull":
             pull_operation(args)
     except GitGoError as e:

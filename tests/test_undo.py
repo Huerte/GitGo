@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from pygitgo.commands.undo import undo_commit, undo_add, undo_changes, undo_operations
+from pygitgo.commands.undo import undo_commit, undo_add, undo_changes, undo_operation
 from pygitgo.exceptions import GitGoError, GitCommandError
 from argparse import Namespace
 
@@ -59,27 +59,27 @@ def test_undo_changes_abort(mock_input, mock_info, mock_run_command):
 
 
 @patch("pygitgo.commands.undo.undo_commit")
-def test_undo_operations_commit(mock_undo_commit):
+def test_undo_operation_commit(mock_undo_commit):
     args = Namespace(action="commit")
-    undo_operations(args)
+    undo_operation(args)
     mock_undo_commit.assert_called_once()
 
 
 @patch("pygitgo.commands.undo.undo_add")
-def test_undo_operations_add(mock_undo_add):
+def test_undo_operation_add(mock_undo_add):
     args = Namespace(action="add")
-    undo_operations(args)
+    undo_operation(args)
     mock_undo_add.assert_called_once()
 
 
 @patch("pygitgo.commands.undo.undo_changes")
-def test_undo_operations_changes(mock_undo_changes):
+def test_undo_operation_changes(mock_undo_changes):
     args = Namespace(action="changes")
-    undo_operations(args)
+    undo_operation(args)
     mock_undo_changes.assert_called_once()
 
 
-def test_undo_operations_invalid():
+def test_undo_operation_invalid():
     args = Namespace(action="invalid")
     with pytest.raises(GitGoError):
-        undo_operations(args)
+        undo_operation(args)

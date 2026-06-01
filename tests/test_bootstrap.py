@@ -1,11 +1,11 @@
-from pygitgo.utils.setup import check_git_installed, ensure_first_run_setup
+from pygitgo.utils.bootstrap import check_git_installed, ensure_first_run_setup
 from conftest import capture_system_exit_code
 
 
 def test_check_git_installed_no_exist(mocker):
     mocker.patch("shutil.which", return_value=None)
-    fake_error = mocker.patch("pygitgo.utils.setup.error")
-    fake_info = mocker.patch("pygitgo.utils.setup.info")
+    fake_error = mocker.patch("pygitgo.utils.bootstrap.error")
+    fake_info = mocker.patch("pygitgo.utils.bootstrap.info")
 
     assert capture_system_exit_code(lambda: check_git_installed()) == 1
 
@@ -15,8 +15,8 @@ def test_check_git_installed_no_exist(mocker):
 
 def test_check_git_installed_exist(mocker):
     mocker.patch("shutil.which", return_value="ok")
-    fake_error = mocker.patch("pygitgo.utils.setup.error")
-    fake_info = mocker.patch("pygitgo.utils.setup.info")
+    fake_error = mocker.patch("pygitgo.utils.bootstrap.error")
+    fake_info = mocker.patch("pygitgo.utils.bootstrap.info")
 
     assert capture_system_exit_code(lambda: check_git_installed()) == 0
 
@@ -24,11 +24,11 @@ def test_check_git_installed_exist(mocker):
     fake_info.assert_not_called()
 
 def test_ensure_first_run_setup_already_initialized(mocker):
-    mocker.patch('pygitgo.utils.setup.check_git_installed', return_value=None)
-    fake_get_config = mocker.patch('pygitgo.utils.setup.get_config', return_value="ok")
-    fake_github_function = mocker.patch('pygitgo.utils.setup.ensure_github_known_host', return_value=None)
-    fake_set_config = mocker.patch('pygitgo.utils.setup.set_config', return_value=True)
-    fake_info = mocker.patch("pygitgo.utils.setup.info")
+    mocker.patch('pygitgo.utils.bootstrap.check_git_installed', return_value=None)
+    fake_get_config = mocker.patch('pygitgo.utils.bootstrap.get_config', return_value="ok")
+    fake_github_function = mocker.patch('pygitgo.utils.bootstrap.ensure_github_known_host', return_value=None)
+    fake_set_config = mocker.patch('pygitgo.utils.bootstrap.set_config', return_value=True)
+    fake_info = mocker.patch("pygitgo.utils.bootstrap.info")
 
     ensure_first_run_setup()
 
@@ -39,11 +39,11 @@ def test_ensure_first_run_setup_already_initialized(mocker):
     fake_get_config.assert_called_with("initialized", fallback_value="false")
 
 def test_ensure_first_run_setup_not_initialized(mocker):
-    mocker.patch('pygitgo.utils.setup.check_git_installed', return_value=None)
-    fake_get_config = mocker.patch('pygitgo.utils.setup.get_config', return_value="false")
-    fake_github_function = mocker.patch('pygitgo.utils.setup.ensure_github_known_host', return_value=None)
-    fake_set_config = mocker.patch('pygitgo.utils.setup.set_config', return_value=True)
-    fake_info = mocker.patch("pygitgo.utils.setup.info")
+    mocker.patch('pygitgo.utils.bootstrap.check_git_installed', return_value=None)
+    fake_get_config = mocker.patch('pygitgo.utils.bootstrap.get_config', return_value="false")
+    fake_github_function = mocker.patch('pygitgo.utils.bootstrap.ensure_github_known_host', return_value=None)
+    fake_set_config = mocker.patch('pygitgo.utils.bootstrap.set_config', return_value=True)
+    fake_info = mocker.patch("pygitgo.utils.bootstrap.info")
 
     ensure_first_run_setup()
 
@@ -52,4 +52,3 @@ def test_ensure_first_run_setup_not_initialized(mocker):
     fake_set_config.assert_called_with("initialized", "true")
 
     fake_get_config.assert_called_with("initialized", fallback_value="false")
-

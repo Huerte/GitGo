@@ -1,6 +1,5 @@
-from pygitgo.commands.git_operations import (
-    git_new_branch, git_commit, git_push, get_current_branch, is_branch_exist
-)
+from pygitgo.commands.git_core import git_commit, git_push
+from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.config import get_config

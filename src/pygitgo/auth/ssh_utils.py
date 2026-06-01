@@ -1,7 +1,7 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.colors import info, success, warning
 from pygitgo.utils.executor import run_command
-from pygitgo.utils import platform_utils
+from pygitgo.utils import platform as platform_utils
 from pathlib import Path
 import webbrowser
 import subprocess
