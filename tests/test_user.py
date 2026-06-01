@@ -6,7 +6,8 @@ import pytest
 
 def test_display_current_user_configured(mocker):
     mocker.patch('pygitgo.commands.user.get_user', return_value=('Alice', 'alice@example.com'))
-    mocker.patch('shutil.get_terminal_size', return_value=Namespace(columns=80))
+    import os
+    mocker.patch('shutil.get_terminal_size', return_value=os.terminal_size((80, 24)))
     fake_info = mocker.patch('pygitgo.commands.user.info')
 
     display_current_user()
