@@ -21,7 +21,8 @@ def test_get_changed_files_with_changes(mock_run_command):
 
 @patch("pygitgo.commands.staging.run_command")
 def test_get_changed_files_no_changes(mock_run_command):
-    mock_run_command.return_value = subprocess.CalledProcessError(1, ["git", "status"])
+    from pygitgo.exceptions import GitCommandError
+    mock_run_command.side_effect = GitCommandError(["git", "status"])
 
     files = get_changed_files()
 

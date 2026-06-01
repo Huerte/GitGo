@@ -5,15 +5,18 @@ from pygitgo.commands.stash_operation import (
     git_stash_pop, git_stash_push, git_stash_apply, git_stash_drop
 )
 from pygitgo.utils.colors import warning, info, success, error
-from pygitgo.utils.executor import run_command, command_failed
-from pygitgo.exceptions import GitGoError
+from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.executor import run_command
 from json import load
 
 
 def undo_jump_operation(original_branch, stashed_code, created_branch=None):
     if created_branch:
         run_command(["git", "checkout", original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
-        run_command(["git", "branch", "-D", created_branch], allow_fail=True, loading_msg=f"Removing the empty branch '{created_branch}'...")
+        try:
+            run_command(["git", "branch", "-D", created_branch], loading_msg=f"Removing the empty branch '{created_branch}'...")
+        except GitCommandError:
+            warning(f"Could not delete branch '{created_branch}'. Remove it manually with: git branch -D {created_branch}")
     else:
         run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Canceling... Putting your files back exactly how they were...")
         run_command(['git', 'checkout', original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
@@ -38,8 +41,9 @@ def jump_operation(args):
         warning(f"Already on branch '{target_branch}'.")
         return
 
-    has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True, loading_msg="Checking for uncommitted changes...")
-    if command_failed(has_changes):
+    try:
+        has_changes = run_command(['git', 'status', '--porcelain'], loading_msg="Checking for uncommitted changes...")
+    except GitCommandError:
         raise GitGoError("Unable to check for uncommitted changes — make sure you're in a valid git repository.")
 
     stashed_code = False
@@ -80,9 +84,10 @@ def jump_operation(args):
         run_command(['git', 'checkout', target_branch], loading_msg=f"Moving you to branch '{target_branch}'...")
 
         main_branch = get_main_branch()
-        get_origin_updates = run_command(['git', 'pull', 'origin', main_branch], allow_fail=True, loading_msg=f"Downloading the latest updates from '{main_branch}'...")
 
-        if command_failed(get_origin_updates):
+        try:
+            run_command(['git', 'pull', 'origin', main_branch], loading_msg=f"Downloading the latest updates from '{main_branch}'...")
+        except GitCommandError:
             warning(f"Failed to pull updates from '{main_branch}'. No internet, or the remote branch doesn't exist yet.")
             user_input = input("Stay on the new branch without the latest updates? (y/n): ").strip().lower()
             if user_input != 'y':
@@ -122,3 +127,5 @@ def jump_operation(args):
         print()
         success(f"On '{target_branch}'.")
         return
+    
+

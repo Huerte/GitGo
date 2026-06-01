@@ -3,15 +3,17 @@ from pygitgo.commands.stash_operation import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
 )
-from pygitgo.utils.executor import run_command, command_failed
-from pygitgo.exceptions import GitGoError
+from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.executor import run_command
 
 
 
 def all_save_state():
-    output = git_stash_list()
-
-    if command_failed(output) or not output:
+    try:
+        output = git_stash_list()
+        if not output:
+            return []
+    except GitCommandError:
         return []
 
     save_states = []
@@ -132,8 +134,13 @@ def save_state(state_name=None):
     if not state_name:
         state_name = "Auto-Save"
 
-    has_changes = run_command(['git', 'status', '--porcelain'], allow_fail=True)
-    if not command_failed(has_changes) and not has_changes.strip():
+    try:
+        has_changes = run_command(['git', 'status', '--porcelain'])
+    except GitCommandError:
+        warning("Could not check for local changes - make sure you're in a valid git repository.")
+        return
+    
+    if not has_changes.strip():
         info("No local changes to save.")
         return
 

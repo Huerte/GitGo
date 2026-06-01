@@ -1,5 +1,5 @@
 from pygitgo.auth.ssh_utils import is_ssh_url
-from pygitgo.main import validate_repo_url
+from pygitgo.commands.link import validate_repo_url
 import pytest
 
 @pytest.mark.parametrize("url", [

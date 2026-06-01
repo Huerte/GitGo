@@ -18,7 +18,7 @@ def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_ru
     pull_operation(args)
     
     assert mock_run_command.call_count == 2
-    mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"], allow_fail=True)
+    mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"])
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "main"], 
         loading_msg="Downloading latest updates for 'main' (auto-saving your code)..."
@@ -37,7 +37,7 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
     pull_operation(args)
     
     assert mock_run_command.call_count == 2
-    mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "feature/test"], allow_fail=True)
+    mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "feature/test"])
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "feature/test"], 
         loading_msg="Downloading latest updates for 'feature/test' (auto-saving your code)..."
@@ -46,7 +46,7 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
 
 @patch("pygitgo.commands.pull.run_command")
 def test_pull_operation_branch_not_found(mock_run_command):
-    mock_run_command.return_value = subprocess.CalledProcessError(128, ["git", "ls-remote"])
+    mock_run_command.side_effect = GitCommandError(["git", "ls-remote"])
     
     args = Namespace(branch="does-not-exist")
     with pytest.raises(GitGoError):

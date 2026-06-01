@@ -1,5 +1,6 @@
 from pygitgo.utils.colors import success, warning, error
-from pygitgo.utils.executor import run_command, command_failed
+from pygitgo.utils.executor import run_command
+from pygitgo.exceptions import GitCommandError
 from pick import pick
 
 
@@ -13,10 +14,11 @@ STATUS_LABELS = {
 
 
 def get_changed_files():
-    status = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if command_failed(status) or not status.strip():
+    try:
+        status = run_command(["git", "status", "--porcelain"])
+    except GitCommandError:
         return []
-
+    
     files = []
     for line in status.strip().splitlines():
         if len(line) < 3:
@@ -27,7 +29,6 @@ def get_changed_files():
         files.append({"status": status_code, "label": label, "path": filepath})
 
     return files
-
 
 def display_file_picker(files):
     options = [f"({f['label']}) {f['path']}" for f in files]

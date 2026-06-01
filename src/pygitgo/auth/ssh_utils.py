@@ -1,7 +1,7 @@
-from pygitgo.utils import platform_utils
-from pygitgo.utils.colors import info, success, warning, error
-from pygitgo.utils.executor import run_command, command_failed
 from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.colors import info, success, warning
+from pygitgo.utils.executor import run_command
+from pygitgo.utils import platform_utils
 from pathlib import Path
 import webbrowser
 import subprocess
@@ -26,16 +26,18 @@ def ensure_github_known_host():
         pass
 
     info("Adding GitHub to known_hosts...")
-    result = run_command(["ssh-keyscan", "-H", "github.com"], allow_fail=True, return_complete=True)
+    try:
+        result = run_command(["ssh-keyscan", "-H", "github.com"], return_complete=True)
     
-    if not command_failed(result) and result.stdout and "github.com" in result.stdout:
-        with open(known_hosts, "a") as f:
-            f.write(result.stdout)
-            if not result.stdout.endswith("\n"):
-                f.write("\n")
-        success("GitHub added to known_hosts.")
-    else:
+        if result.stdout and "github.com" in result.stdout:
+            with open(known_hosts, "a") as f:
+                f.write(result.stdout)
+                if not result.stdout.endswith("\n"):
+                    f.write("\n")
+            success("GitHub added to known_hosts.")
+    except GitCommandError:
         warning("Could not automatically add GitHub to known_hosts. You might be prompted.")
+
 
 def _get_github_ssh_response():
     try:
@@ -94,7 +96,7 @@ def generate_ssh_key(email):
             f"Details: {e}"
         )
     try:
-        run_command(["ssh-add", str(key_path)], allow_fail=True)
+        run_command(["ssh-add", str(key_path)])
     except (GitCommandError, OSError):
         pass 
     
