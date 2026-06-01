@@ -1,18 +1,21 @@
 from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection
 from pygitgo.utils.colors import info, success, warning, error
-from pygitgo.utils.executor import run_command, command_failed
-from pygitgo.utils.config import get_config
 from pygitgo.exceptions import GitGoError, GitCommandError
+from pygitgo.utils.executor import run_command
+from pygitgo.utils.config import get_config
 from argparse import Namespace
-from pathlib import Path
 import os
 
 
 def get_status_content():
-    status = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if command_failed(status) or not status.strip():
+    try:
+        status = run_command(["git", "status", "--porcelain"])
+        if not status.strip():
+            raise GitGoError("Working tree is clean. Nothing to commit.")
+        return status
+    except GitCommandError:
         raise GitGoError("Working tree is clean. Nothing to commit.")
-    return status
+    
 
 def get_current_branch():
     branch = run_command(["git", "branch", "--show-current"]).strip()
@@ -21,31 +24,36 @@ def get_current_branch():
     return branch
 
 def get_main_branch():
-    main_branch = run_command(['git', 'remote', 'show', 'origin'], allow_fail=True)
     default_main_branch = get_config("default-branch", "main")
-    if command_failed(main_branch):
+
+    try:
+        output = run_command(['git', 'remote', 'show', 'origin'])
+    except GitCommandError:
         return default_main_branch
 
-    return main_branch.split("HEAD branch:")[-1].strip().splitlines()[0].strip() if "HEAD branch:" in main_branch else default_main_branch
+    if "HEAD branch:" not in output:
+        return default_main_branch
+
+    return output.split("HEAD branch:")[-1].strip().splitlines()[0].strip()
 
 def is_branch_exist(branch):
     return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
 
 
 def git_new_branch(branch):
-    result = run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
-    if command_failed(result):
+    try:
+        run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
+        print()
+        success(f"Branch '{branch}' created.")
+    except GitCommandError:
         error(f"Failed to create branch '{branch}'! It may already exist.")
         choice = input("\nWould you like to jump to the existing branch instead? (y/n): ").strip().lower()
         if choice == "y":
-            from pygitgo.commands.jump import jump_operation
+            from pygitgo.commands.jump import jump_operation 
             jump_operation(Namespace(branch=branch))
         else:
             raise GitGoError(f"Operation canceled. Branch '{branch}' already exists.")
-    else:
-        print()
-        success(f"Branch '{branch}' created.")
-
+        
     return branch
 
 
@@ -59,8 +67,11 @@ def _get_signing_flags():
     ]
 
 def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=False):
-    status_result = run_command(["git", "status", "--porcelain"], allow_fail=True)
-    if command_failed(status_result) or not status_result.strip():
+    try:
+        status_result = run_command(["git", "status", "--porcelain"])
+        if not status_result.strip():
+            return False
+    except GitCommandError:
         return False
 
     if not skip_staging:
@@ -82,10 +93,11 @@ def git_init():
 
     default_main_branch = get_config("default-branch", "main")
 
-    result = run_command(["git", "init", "-b", default_main_branch], allow_fail=True, loading_msg="Initializing git repository...")
-    if command_failed(result):
+    try:
+        run_command(["git", "init", "-b", default_main_branch], loading_msg="Initializing git repository...")
+    except GitCommandError:
         run_command(["git", "init"], loading_msg="Initializing git repository...")
-        run_command(["git", "checkout", "-b", default_main_branch], allow_fail=True)
+        run_command(["git", "checkout", "-b", default_main_branch])
 
     success("Git repository initialized.")
     return True
@@ -94,32 +106,34 @@ def git_init():
 def add_remote_origin(repo_url):
     clean_url = repo_url.strip('"\'')
 
-    existing_remote = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
-    if not command_failed(existing_remote):
+    try:
+        existing_remote = run_command(["git", "remote", "get-url", "origin"])
         warning(f"Remote origin already exists: {existing_remote}")
         run_command(["git", "remote", "set-url", "origin", clean_url], loading_msg="Updating remote URL...")
-    else:
+    except GitCommandError:
         run_command(["git", "remote", "add", "origin", clean_url], loading_msg="Adding remote origin...")
 
     success(f"Remote origin set to: {clean_url}")
 
 
 def confirm_remote_link():
-    test_result = run_command(["git", "ls-remote", "origin"], allow_fail=True, loading_msg="Testing connection to remote...")
-
-    if command_failed(test_result):
+    try:
+        run_command(["git", "ls-remote", "origin"], loading_msg="Testing connection to remote...")
+        success("Remote is reachable.")
+        return True
+    except GitCommandError:
         error("Connection failed — verify the URL and your SSH key.")
         info("Run:  git remote -v   to inspect your current remote.")
         return False
 
-    success("Remote is reachable.")
-    return True
-
 
 def create_main_branch():
-    current_branch = run_command(["git", "branch", "--show-current"], allow_fail=True)
+    try:
+        current_branch = run_command(["git", "branch", "--show-current"])
+    except GitCommandError:
+        current_branch = None
 
-    if command_failed(current_branch) or not current_branch.strip():
+    if not current_branch or not current_branch.strip():
         run_command(["git", "checkout", "-b", "main"], loading_msg="Setting default branch to 'main'...")
     elif current_branch.strip() != "main":
         run_command(["git", "branch", "-m", "main"], loading_msg=f"Renaming branch '{current_branch.strip()}' to 'main'...")
@@ -156,16 +170,16 @@ def check_and_sync_branch(branch):
 
 
 def git_push(branch):
-    remote_url = run_command(["git", "remote", "get-url", "origin"], allow_fail=True)
+    try:
+        remote_url = run_command(["git", "remote", "get-url", "origin"]).strip()
+    except GitCommandError:
+        remote_url = None
 
-    if not command_failed(remote_url) and remote_url:
-        remote_url = remote_url.strip()
-
-        if not is_ssh_url(remote_url) and check_connection():
-            ssh_url = convert_https_to_ssh(remote_url)
-            if ssh_url:
-                run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...")
-                success(f"Remote updated to: {ssh_url}")
+    if remote_url and not is_ssh_url(remote_url) and check_connection():
+        ssh_url = convert_https_to_ssh(remote_url)
+        if ssh_url:
+            run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...")
+            success(f"Remote updated to: {ssh_url}")
 
     try:
         run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
@@ -175,20 +189,15 @@ def git_push(branch):
         if "rebase in progress" in str(e):
             handle_rebase()
         else:
-            raise GitGoError("Push failed — see above.")
+            raise GitGoError("Push failed - see above.")
 
 
 def handle_rebase():
-    status = run_command(["git", "status"], allow_fail=True)
-    if command_failed(status):
-        return False
+    warning("Conflict detected during rebase.")
+    info("Resolve conflicts manually, then run:")
+    info("    git add <files>")
+    info("    git rebase --continue")
+    info("When finished, run 'gitgo push <branch> <message>' again.")
+    raise GitGoError("Push aborted — rebase conflict in progress.")
 
-    if "rebase in progress" in status or "rebase" in status.lower():
-        warning("Conflict detected during rebase.")
-        info("Resolve conflicts manually, then run:")
-        info("    git add <files>")
-        info("    git rebase --continue")
-        info("When finished, run 'gitgo push <branch> <message>' again.")
-        raise GitGoError("Push aborted — rebase conflict in progress.")
-
-    return True
+    

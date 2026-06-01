@@ -1,7 +1,9 @@
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.executor import run_command
+from pygitgo.exceptions import GitCommandError
 from . import ssh_utils
 import os
+
 
 def login():
     if ssh_utils.check_connection():
@@ -79,9 +81,16 @@ def logout():
         if os.path.exists(pub_key_path):
             os.remove(pub_key_path)
 
-        run_command(["git", "config", "--global", "--unset-all", "user.name"], allow_fail=True)
-        run_command(["git", "config", "--global", "--unset-all", "user.email"], allow_fail=True)
+        try:
+            run_command(["git", "config", "--global", "--unset-all", "user.name"])
+        except GitCommandError:
+            pass
         
+        try:
+            run_command(["git", "config", "--global", "--unset-all", "user.email"])
+        except GitCommandError:
+            pass
+
         success("User successfully logout")
         return True
     

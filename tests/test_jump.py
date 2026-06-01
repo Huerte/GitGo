@@ -54,7 +54,6 @@ def test_undo_jump_operation_deletes_ghost_branch(mocker):
     )
     fake_run.assert_any_call(
         ["git", "branch", "-D", "ghost-branch"],
-        allow_fail=True,
         loading_msg="Removing the empty branch 'ghost-branch'..."
     )
     fake_pop.assert_called_once()
@@ -175,7 +174,7 @@ def test_jump_operation_sync_fail_cancel(mocker):
         if cmd == ['git', 'status', '--porcelain']:
             return ''
         if cmd[1] == 'pull':
-            return GitCommandError(cmd, stderr='failed', returncode=1)
+            raise GitCommandError(cmd, stderr='failed', returncode=1)
         return 'ok'
 
     mocker.patch('pygitgo.commands.jump.run_command', side_effect=_run)
@@ -199,7 +198,7 @@ def test_jump_operation_sync_fail_stay(mocker):
         if cmd == ['git', 'status', '--porcelain']:
             return ''
         if cmd[1] == 'pull':
-            return GitCommandError(cmd, stderr='failed', returncode=1)
+            raise GitCommandError(cmd, stderr='failed', returncode=1)
         return 'ok'
 
     mocker.patch('pygitgo.commands.jump.run_command', side_effect=_run)

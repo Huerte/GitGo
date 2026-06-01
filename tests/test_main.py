@@ -1,4 +1,4 @@
-from pygitgo.main import validate_repo_url
+from pygitgo.commands.link import validate_repo_url
 import pytest
 
 

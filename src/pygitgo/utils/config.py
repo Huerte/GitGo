@@ -1,31 +1,30 @@
-from pygitgo.utils.executor import command_failed, run_command
+from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import error, warning, success, info
+from pygitgo.exceptions import GitCommandError
 
 
 def get_config(key, fallback_value):
 
     config_key = f"gitgo.{key}"
 
-    result = run_command(['git', 'config', '--global', config_key], allow_fail=True)                                                                                                                     
-
-    if not result or command_failed(result):
+    try:
+        result = run_command(['git', 'config', '--global', config_key])                                                                                                                     
+        return result.strip()
+    except GitCommandError:
         return fallback_value
-
-    return result.strip()
 
 
 def set_config(key, value):
 
     config_key = f"gitgo.{key}"
 
-    result = run_command(['git', 'config', '--global', config_key, value], allow_fail=True)
-    
-    if command_failed(result):
+    try:
+        result = run_command(['git', 'config', '--global', config_key, value])
+        success(f"\nConfiguration saved: {key} = '{value}'")
+        return True
+    except GitCommandError:
         error(f"\nFailed to save configuration for '{key}'.")
         return False 
-
-    success(f"\nConfiguration saved: {key} = '{value}'")
-    return True
 
 
 def config_operation(args):

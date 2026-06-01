@@ -22,7 +22,8 @@ def test_git_branch_logic(mocker):
     )
 
 def test_git_branch_exists_jump_yes(mocker):
-    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command", return_value=subprocess.CalledProcessError(1, 'git'))
+    from pygitgo.exceptions import GitCommandError
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command", side_effect=GitCommandError(["git", "checkout", "-b"]))
     mocker.patch("builtins.input", return_value="y")
     fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
     fake_error = mocker.patch("pygitgo.commands.git_operations.error")
@@ -37,14 +38,14 @@ def test_git_branch_exists_jump_yes(mocker):
     assert args.branch == branch_name
 
 def test_git_branch_exists_jump_no(mocker):
-    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command", return_value=subprocess.CalledProcessError(1, 'git'))
+    from pygitgo.exceptions import GitCommandError, GitGoError
+    fake_run = mocker.patch("pygitgo.commands.git_operations.run_command", side_effect=GitCommandError(["git", "checkout", "-b"]))
     mocker.patch("builtins.input", return_value="n")
     fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
     fake_error = mocker.patch("pygitgo.commands.git_operations.error")
 
     branch_name = "existing-branch"
     
-    from pygitgo.exceptions import GitGoError
     with pytest.raises(GitGoError):
         git_new_branch(branch_name)
     fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
@@ -95,30 +96,35 @@ def test_git_init_success(mocker):
     fake_success.assert_called_once()
     fake_run.assert_called_once_with(
         ["git", "init", "-b", 'main'], 
-        allow_fail=True, 
         loading_msg="Initializing git repository..."
     )
 
 def test_git_init_fallback(mocker):
+    from pygitgo.exceptions import GitCommandError
     mocker.patch('os.path.isdir', return_value=False)
     mocker.patch('pygitgo.commands.git_operations.get_config', return_value='main')
     fake_success = mocker.patch('pygitgo.commands.git_operations.success')
     
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command', 
-        return_value=subprocess.CalledProcessError(1, 'git')
+        side_effect=[
+            GitCommandError(["git", "init", "-b", "main"]),
+            "init_success",
+            "checkout_success"
+        ]
     )
 
     result = git_init()
 
     assert result == True
     fake_success.assert_called_once()
-    fake_run.call_count == 3
+    assert fake_run.call_count == 3
 
 def test_create_main_branch_no_branch(mocker):
+    from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command',
-        return_value=subprocess.CalledProcessError(1, 'git')
+        side_effect=[GitCommandError(["git", "branch"]), "ok"]
     )
 
     create_main_branch()
@@ -162,63 +168,36 @@ def test_confirm_remote_link_success(mocker):
     assert result == True
 
     fake_run.assert_called_once_with(
-        ["git", "ls-remote", "origin"], allow_fail=True, 
+        ["git", "ls-remote", "origin"], 
         loading_msg="Testing connection to remote..."
     )
 
 def test_confirm_remote_link_fallback(mocker):
+    from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command',
-        return_value=subprocess.CalledProcessError(1, 'git')
+        side_effect=GitCommandError(["git", "ls-remote"])
     )
 
     result = confirm_remote_link()
     assert result == False
 
     fake_run.assert_called_once_with(
-        ["git", "ls-remote", "origin"], allow_fail=True, 
+        ["git", "ls-remote", "origin"], 
         loading_msg="Testing connection to remote..."
     )
 
-def test_handle_rebase_no_conflict(mocker):
-    fake_run = mocker.patch(
-        'pygitgo.commands.git_operations.run_command',
-        return_value='ok'
-    )
-
-    result = handle_rebase()
-    assert result == True
-
-    fake_run.assert_called_with(
-        ["git", "status"], allow_fail=True
-    )
-
-def test_handle_rebase_conflict(mocker):
-    fake_run = mocker.patch(
-        'pygitgo.commands.git_operations.run_command',
-        return_value='rebase'
-    )
-
+def test_handle_rebase(mocker):
     from pygitgo.exceptions import GitGoError
-    with pytest.raises(GitGoError):
+    fake_warning = mocker.patch("pygitgo.commands.git_operations.warning")
+    fake_info = mocker.patch("pygitgo.commands.git_operations.info")
+
+    with pytest.raises(GitGoError) as exc_info:
         handle_rebase()
 
-    fake_run.assert_called_with(
-        ["git", "status"], allow_fail=True
-    )
-
-def test_handle_rebase_fallback(mocker):
-    fake_run = mocker.patch(
-        'pygitgo.commands.git_operations.run_command',
-        return_value=subprocess.CalledProcessError(1, 'git')
-    )
-
-    result = handle_rebase()
-    assert result == False
-
-    fake_run.assert_called_with(
-        ["git", "status"], allow_fail=True
-    )
+    assert "Push aborted — rebase conflict in progress." in str(exc_info.value)
+    fake_warning.assert_called_once_with("Conflict detected during rebase.")
+    assert fake_info.call_count == 4
 
 def test_is_branch_exist_true(mocker):
     fake_run = mocker.patch(
@@ -264,9 +243,13 @@ def test_add_remote_origin_switch_origin(mocker):
     )
 
 def test_add_remote_origin_add_origin(mocker):
+    from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command',
-        return_value=subprocess.CalledProcessError(1, 'git')
+        side_effect=[
+            GitCommandError(["git", "remote", "get-url"]),
+            "added"
+        ]
     )
     fake_success = mocker.patch('pygitgo.commands.git_operations.success')
 
@@ -297,9 +280,13 @@ def test_git_push_already_ssh(mocker):
     )
 
 def test_git_push_no_remote(mocker):
+    from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch(
         'pygitgo.commands.git_operations.run_command', 
-        return_value=subprocess.CalledProcessError(1, 'git')
+        side_effect=[
+            GitCommandError(["git", "remote", "get-url"]),
+            "pushed"
+        ]
     )
 
     branch = 'main'

@@ -1,19 +1,26 @@
 from pygitgo.utils.colors import info, success, warning, error, BLUE, RESET
-from pygitgo.utils.executor import run_command, command_failed
+from pygitgo.utils.executor import run_command
+from pygitgo.exceptions import GitCommandError
 
 
 def get_user():
     try:
-        name = run_command(["git", "config", "--global", "user.name"], allow_fail=True)
-        email = run_command(["git", "config", "--global", "user.email"], allow_fail=True)
+        name = run_command(["git", "config", "--global", "user.name"])
+    except GitCommandError:
+        name = None
+    
+    try:
+        email = run_command(["git", "config", "--global", "user.email"])
+    except GitCommandError:
+        email = None
+    
+    if not name:
+        name = None
+    if not email:
+        email = None
 
-        if not name or command_failed(name):
-            name = None
-        if not email or command_failed(email):
-            email = None
-        return name, email
-    except Exception:
-        return None, None
+    return name, email
+
     
 def set_user(name, email):
     run_command(["git", "config", "--global", "user.name", name])
@@ -58,3 +65,5 @@ def ensure_user_configure(default_email=None, default_username=None):
     
     error("Invalid configuration. Name and Email are required.")
     return False
+
+

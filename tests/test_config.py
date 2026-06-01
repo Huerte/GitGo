@@ -5,7 +5,8 @@ import subprocess
 
 
 def test_get_config_fallback(mocker):
-    fake_run = mocker.patch('pygitgo.utils.config.run_command', return_value="")
+    from pygitgo.exceptions import GitCommandError
+    fake_run = mocker.patch('pygitgo.utils.config.run_command', side_effect=GitCommandError(['git']))
 
     fallback_value = "false"
 
@@ -21,7 +22,8 @@ def test_get_config_ok(mocker):
     assert result != fallback_value
 
 def test_set_config_fallback(mocker):
-    fake_run = mocker.patch('pygitgo.utils.config.run_command', return_value=subprocess.CalledProcessError(1, 'git'))
+    from pygitgo.exceptions import GitCommandError
+    fake_run = mocker.patch('pygitgo.utils.config.run_command', side_effect=GitCommandError(['git']))
     fake_error = mocker.patch('pygitgo.utils.config.error')
 
     key = 'default-key'
@@ -67,7 +69,8 @@ def test_get_config_strip(mocker):
     assert result == "true"
 
 def test_get_config_error_handling(mocker):
-    fake_run = mocker.patch('pygitgo.utils.config.run_command', return_value=subprocess.CalledProcessError(1, 'git'))
+    from pygitgo.exceptions import GitCommandError
+    fake_run = mocker.patch('pygitgo.utils.config.run_command', side_effect=GitCommandError(['git']))
     result = get_config("default-key", "fallback")
     assert result == "fallback"
 

@@ -1,7 +1,7 @@
 from pygitgo.commands.git_operations import get_current_branch
 from pygitgo.utils.colors import success, warning, error, info
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.executor import run_command, command_failed
+from pygitgo.utils.executor import run_command
 
 
 def pull_operation(args):
@@ -12,8 +12,9 @@ def pull_operation(args):
         info(f"No branch provided. Pulling latest updates for '{branch}'...")
 
     try:
-        remote_refs = run_command(["git", "ls-remote", "--heads", "origin", branch], allow_fail=True)
-        if command_failed(remote_refs) or not remote_refs.strip():
+        try:
+            run_command(["git", "ls-remote", "--heads", "origin", branch])
+        except GitCommandError:
             error(f"Branch '{branch}' does not exist on the remote.")
             info("Push your local branch first, or verify the branch name.")
             raise GitGoError("Pull aborted — branch not found on remote.")

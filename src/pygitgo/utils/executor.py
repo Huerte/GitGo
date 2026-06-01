@@ -6,16 +6,7 @@ import os
 import re
 
 
-def run_command(command, allow_fail=False, return_complete=False, loading_msg=None):
-    """
-    Runs a shell command safely.
-
-    :param command: list of command + args
-    :param allow_fail: if True, do not raise on error
-    :param return_complete: if True, return subprocess.CompletedProcess instead of stdout
-    :param loading_msg: if provided, show a yaspin spinner with this message
-    :raises GitCommandError: when the command fails and allow_fail is False
-    """
+def run_command(command, return_complete=False, loading_msg=None):
 
     spinner = yaspin(text=loading_msg, color="cyan") if loading_msg else None
 
@@ -64,17 +55,10 @@ def run_command(command, allow_fail=False, return_complete=False, loading_msg=No
                 try:
                     subprocess.run(fix_command, check=True)
                     success("Directory trusted. Retrying command...")
-                    return run_command(command, allow_fail, return_complete, loading_msg=loading_msg)
+                    return run_command(command, return_complete, loading_msg=loading_msg)
                 except OSError as fix_err:
                     error(f"Failed to apply fix: {fix_err}")
             else:
                 warning("Fix declined. Operations in this directory will continue to fail.")
 
-        if allow_fail:
-            return e
-
         raise GitCommandError(command, stderr=stderr, returncode=returncode)
-
-def command_failed(result):
-    # Returns True if run_command had error
-    return isinstance(result, Exception)
