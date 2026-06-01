@@ -68,26 +68,37 @@ src/pygitgo/
 ├── main.py                # Entry point, argument parsing, command routing
 ├── exceptions.py          # GitGoError hierarchy (GitCommandError, AuthError, ConfigError)
 ├── commands/
-│   ├── git_operations.py  # Core git subprocess helpers (push, init, branch, etc.)
+│   ├── config.py          # gitgo config handler (set/get defaults)
+│   ├── git_branch.py      # Branch queries: get current branch, check existence, create
+│   ├── git_core.py        # Core write operations: commit, init, push
+│   ├── git_remote.py      # Remote sync, rebase recovery, connection checks
 │   ├── jump.py            # Safe branch switching with Try-and-Revert engine
+│   ├── link.py            # Init, link remote, and push a new repo
 │   ├── pull.py            # Safe pull with auto-stash and rebase
+│   ├── push.py            # Stage, commit, push (with selective staging support)
 │   ├── staging.py         # Interactive file picker for selective commits
-│   ├── state.py           # Named stash wrapper (save/load/delete/list)
-│   └── undo.py            # Undo commit, undo add, wipe changes
+│   ├── stash.py           # Low-level git stash wrappers (push/pop/apply/drop/list/clear)
+│   ├── state.py           # Named stash interface (save/load/delete/list)
+│   ├── undo.py            # Undo commit, undo add, wipe changes
+│   └── user.py            # gitgo user handler (login/logout/display)
 ├── auth/
 │   ├── account.py         # Git identity (user.name / user.email)
 │   ├── manager.py         # Login/logout orchestration
 │   └── ssh_utils.py       # SSH key generation, known_hosts, HTTPS to SSH conversion
 └── utils/
+    ├── bootstrap.py       # First-run setup (git check, known_hosts init)
     ├── colors.py          # ANSI color helpers (info, success, warning, error)
-    ├── config.py          # GitGo config file management
+    ├── config.py          # GitGo config read/write via git config --global
     ├── executor.py        # subprocess wrapper with spinner
-    ├── platform_utils.py  # OS/Termux detection, path resolution
-    ├── setup.py           # First-run setup wizard
-    └── update_checker.py  # Background PyPI version check
+    ├── platform.py        # OS/Termux detection (get_platform, is_termux)
+    ├── update_checker.py  # Background PyPI version check
+    └── validators.py      # URL validation helpers (validate_repo_url)
 ```
 
-**Key rule:** Command logic lives in `commands/`. `main.py` only handles argument parsing and routes to the right function. Keep it that way.
+**Key rules:**
+- Command logic lives in `commands/`. Each file owns one domain. `main.py` only parses args and routes.
+- Utils are pure helpers with no side effects. If a function prints or raises, it belongs in `commands/`, not `utils/`.
+- Entry points follow the `*_operation` naming pattern: `push_operation`, `state_operation`, `user_operation`, etc.
 
 ---
 

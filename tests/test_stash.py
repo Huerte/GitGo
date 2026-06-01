@@ -1,13 +1,13 @@
 import pytest
 from pygitgo.exceptions import GitCommandError
-from pygitgo.commands.stash_operation import (
+from pygitgo.commands.stash import (
     git_stash_push, git_stash_pop, git_stash_apply,
     git_stash_drop, git_stash_list, git_stash_clear
 )
 
 
 def test_git_stash_push_success(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Saved working directory and index state WIP on main")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Saved working directory and index state WIP on main")
     result = git_stash_push()
     assert result is True
     fake_run.assert_called_once_with(
@@ -17,14 +17,14 @@ def test_git_stash_push_success(mocker):
 
 
 def test_git_stash_push_no_changes(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="No local changes to save")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="No local changes to save")
     result = git_stash_push()
     assert result is False
 
 
 def test_git_stash_push_failure(mocker):
     fake_run = mocker.patch(
-        "pygitgo.commands.stash_operation.run_command",
+        "pygitgo.commands.stash.run_command",
         side_effect=GitCommandError(["git", "stash", "push"])
     )
     result = git_stash_push()
@@ -32,7 +32,7 @@ def test_git_stash_push_failure(mocker):
 
 
 def test_git_stash_pop_success(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Dropped refs/stash@{0}")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Dropped refs/stash@{0}")
     result = git_stash_pop()
     assert result is True
     fake_run.assert_called_once_with(
@@ -43,7 +43,7 @@ def test_git_stash_pop_success(mocker):
 
 def test_git_stash_pop_failure(mocker):
     fake_run = mocker.patch(
-        "pygitgo.commands.stash_operation.run_command",
+        "pygitgo.commands.stash.run_command",
         side_effect=GitCommandError(["git", "stash", "pop"])
     )
     result = git_stash_pop()
@@ -51,7 +51,7 @@ def test_git_stash_pop_failure(mocker):
 
 
 def test_git_stash_apply_success_no_id(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Applied stash")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Applied stash")
     result = git_stash_apply()
     assert result is True
     fake_run.assert_called_once_with(
@@ -61,7 +61,7 @@ def test_git_stash_apply_success_no_id(mocker):
 
 
 def test_git_stash_apply_success_with_id(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Applied stash")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Applied stash")
     result = git_stash_apply(stash_id="2")
     assert result is True
     fake_run.assert_called_once_with(
@@ -72,7 +72,7 @@ def test_git_stash_apply_success_with_id(mocker):
 
 def test_git_stash_apply_failure(mocker):
     fake_run = mocker.patch(
-        "pygitgo.commands.stash_operation.run_command",
+        "pygitgo.commands.stash.run_command",
         side_effect=GitCommandError(["git", "stash", "apply"])
     )
     result = git_stash_apply()
@@ -80,7 +80,7 @@ def test_git_stash_apply_failure(mocker):
 
 
 def test_git_stash_drop_success_no_id(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Dropped stash")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Dropped stash")
     result = git_stash_drop()
     assert result is True
     fake_run.assert_called_once_with(
@@ -90,7 +90,7 @@ def test_git_stash_drop_success_no_id(mocker):
 
 
 def test_git_stash_drop_success_with_id(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Dropped stash")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Dropped stash")
     result = git_stash_drop(stash_id="1")
     assert result is True
     fake_run.assert_called_once_with(
@@ -101,7 +101,7 @@ def test_git_stash_drop_success_with_id(mocker):
 
 def test_git_stash_drop_failure(mocker):
     fake_run = mocker.patch(
-        "pygitgo.commands.stash_operation.run_command",
+        "pygitgo.commands.stash.run_command",
         side_effect=GitCommandError(["git", "stash", "drop"])
     )
     result = git_stash_drop()
@@ -110,7 +110,7 @@ def test_git_stash_drop_failure(mocker):
 
 def test_git_stash_list_success(mocker):
     stash_list_output = "stash@{0}||2026-06-01 10:00:00||Auto-Save\nstash@{1}||2026-06-01 10:05:00||My-State"
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value=stash_list_output)
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value=stash_list_output)
     result = git_stash_list()
     assert result == stash_list_output
     fake_run.assert_called_once_with(
@@ -125,7 +125,7 @@ def test_git_stash_list_success(mocker):
 
 def test_git_stash_list_failure(mocker):
     fake_run = mocker.patch(
-        "pygitgo.commands.stash_operation.run_command",
+        "pygitgo.commands.stash.run_command",
         side_effect=GitCommandError(["git", "stash", "list"])
     )
     result = git_stash_list()
@@ -133,7 +133,7 @@ def test_git_stash_list_failure(mocker):
 
 
 def test_git_stash_clear_success(mocker):
-    fake_run = mocker.patch("pygitgo.commands.stash_operation.run_command", return_value="Cleared all stashes")
+    fake_run = mocker.patch("pygitgo.commands.stash.run_command", return_value="Cleared all stashes")
     result = git_stash_clear()
     assert result is True
     fake_run.assert_called_once_with(
@@ -144,7 +144,7 @@ def test_git_stash_clear_success(mocker):
 
 def test_git_stash_clear_failure(mocker):
     fake_run = mocker.patch(
-        "pygitgo.commands.stash_operation.run_command",
+        "pygitgo.commands.stash.run_command",
         side_effect=GitCommandError(["git", "stash", "clear"])
     )
     result = git_stash_clear()

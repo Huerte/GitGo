@@ -1,13 +1,12 @@
-from pygitgo.commands.git_operations import (
+from pygitgo.commands.git_branch import (
     is_branch_exist, get_current_branch, git_new_branch, get_main_branch,
 )
-from pygitgo.commands.stash_operation import (
+from pygitgo.commands.stash import (
     git_stash_pop, git_stash_push, git_stash_apply, git_stash_drop
 )
 from pygitgo.utils.colors import warning, info, success, error
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
-from json import load
 
 
 def undo_jump_operation(original_branch, stashed_code, created_branch=None):

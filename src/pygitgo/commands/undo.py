@@ -32,7 +32,7 @@ def undo_changes():
     success("Working tree reset. All changes discarded.")
 
 
-def undo_operations(args):
+def undo_operation(args):
     action = args.action
 
     if action == "commit":

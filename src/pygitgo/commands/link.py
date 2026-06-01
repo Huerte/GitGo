@@ -1,22 +1,11 @@
-from pygitgo.commands.git_operations import (
-    git_init, git_commit, git_push, add_remote_origin,
-    confirm_remote_link, get_current_branch
-)
+from pygitgo.commands.git_core import git_init, git_commit, git_push
+from pygitgo.commands.git_branch import get_current_branch
+from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
 from pygitgo.utils.config import get_config
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.colors import success, warning, error, highlight, print_banner
 from pygitgo.exceptions import GitCommandError, GitGoError
-import re
-
-
-def validate_repo_url(url):
-    """Validate that the URL looks like a valid Git repository URL."""
-    patterns = [
-        r'^https?://[\w.-]+/[\w.-]+/[\w.-]+(?:\.git)?/?$',  # HTTPS
-        r'^git@[\w.-]+:[\w.-]+/[\w.-]+(?:\.git)?$',          # SSH
-    ]
-    return any(re.match(p, url.strip()) for p in patterns)
-
+from pygitgo.utils.validators import validate_repo_url
 
 def link_operation(args):
     repo_url = args.url

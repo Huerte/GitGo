@@ -18,6 +18,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Updated success banners to a concise, military-style format for major operations.
 - Improved error messages to provide actionable next steps instead of generic advice.
 - Refactored codebase to standardize internal API returns, remove redundant checks, and optimize stash operations.
+- Split `git_operations.py` into `git_core.py`, `git_branch.py`, and `git_remote.py` for cleaner separation of concerns.
+- Moved `config_operation` out of `utils/config.py` into `commands/config.py`.
+- Moved `user_management` and `display_current_user` out of `main.py` into `commands/user.py`.
+- Renamed `stash_operation.py` to `stash.py`, `platform_utils.py` to `platform.py`, and `setup.py` to `bootstrap.py`.
+- Renamed all command handler entry points to a consistent `*_operation` naming pattern (`state_operation`, `undo_operation`, `user_operation`).
+- Moved `validate_repo_url` out of `commands/link.py` into `utils/validators.py`.
+- Removed dead code: `get_status_content()`, `create_main_branch()`, unused `from json import load` import, and 11 installer-only functions from `platform.py`.
 
 ### Fixed
 - Fixed GitGo hanging indefinitely during login if an SSH passphrase prompt was triggered invisibly.

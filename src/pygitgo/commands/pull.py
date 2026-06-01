@@ -1,4 +1,4 @@
-from pygitgo.commands.git_operations import get_current_branch
+from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.utils.colors import success, warning, error, info
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command

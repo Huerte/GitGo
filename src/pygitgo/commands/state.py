@@ -1,5 +1,5 @@
 from pygitgo.utils.colors import info, success, warning, error, highlight
-from pygitgo.commands.stash_operation import (
+from pygitgo.commands.stash import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
 )
@@ -189,7 +189,7 @@ def delete_state(identifier=None):
     success(f"State {state_id} deleted.")
 
 
-def state_operations(args):
+def state_operation(args):
     alias = getattr(args, "action_alias", None)
     positional = getattr(args, "action", None)
 
