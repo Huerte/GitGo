@@ -1,4 +1,4 @@
-from pygitgo.utils.config import get_config, set_config
+from pygitgo.utils.config import get_config, set_config, get_default_branch
 import subprocess
 
 
@@ -55,3 +55,50 @@ def test_get_config_error_handling(mocker):
     fake_run = mocker.patch('pygitgo.utils.config.run_command', side_effect=GitCommandError(['git']))
     result = get_config("default-key", "fallback")
     assert result == "fallback"
+
+
+# --- get_default_branch tests ---
+
+def test_get_default_branch_uses_git_init_default_branch(mocker):
+    # Level 1: native git config wins over gitgo config and hard fallback.
+    mocker.patch(
+        "pygitgo.utils.config.subprocess.check_output",
+        return_value="develop\n",
+    )
+    result = get_default_branch()
+    assert result == "develop"
+
+
+def test_get_default_branch_falls_back_to_gitgo_config(mocker):
+    # Level 2: init.defaultBranch unset, gitgo.default-branch is set.
+    mocker.patch(
+        "pygitgo.utils.config.subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(1, "git"),
+    )
+    mocker.patch("pygitgo.utils.config.run_command", return_value="trunk")
+    result = get_default_branch()
+    assert result == "trunk"
+
+
+def test_get_default_branch_hard_fallback_to_main(mocker):
+    # Level 3: both sources absent, returns "main".
+    mocker.patch(
+        "pygitgo.utils.config.subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(1, "git"),
+    )
+    from pygitgo.exceptions import GitCommandError
+    mocker.patch("pygitgo.utils.config.run_command", side_effect=GitCommandError(["git"]))
+    result = get_default_branch()
+    assert result == "main"
+
+
+def test_get_default_branch_handles_git_not_found(mocker):
+    # FileNotFoundError when git is not on PATH should not crash.
+    mocker.patch(
+        "pygitgo.utils.config.subprocess.check_output",
+        side_effect=FileNotFoundError,
+    )
+    from pygitgo.exceptions import GitCommandError
+    mocker.patch("pygitgo.utils.config.run_command", side_effect=GitCommandError(["git"]))
+    result = get_default_branch()
+    assert result == "main"

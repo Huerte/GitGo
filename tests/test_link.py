@@ -35,10 +35,10 @@ def test_link_new_repo_no_remote_refs(mocker):
     fake_add_remote = mocker.patch("pygitgo.commands.link.add_remote_origin")
     mocker.patch("pygitgo.commands.link.confirm_remote_link", return_value=True)
     mocker.patch("pygitgo.commands.link.get_current_branch", return_value="master")
-    mocker.patch("pygitgo.commands.link.get_config", return_value="main")
+    mocker.patch("pygitgo.commands.link.get_default_branch", return_value="main")
     fake_push = mocker.patch("pygitgo.commands.link.git_push")
 
-    fake_run = mocker.patch("pygitgo.commands.link.run_command", return_value="")  # remote_refs is empty
+    fake_run = mocker.patch("pygitgo.commands.link.run_command", return_value="")
 
     args = Namespace(url="git@github.com:user/repo.git", message="Initial commit")
     link_operation(args)
@@ -57,7 +57,7 @@ def test_link_new_repo_with_remote_refs_pull_success(mocker):
     mocker.patch("pygitgo.commands.link.add_remote_origin")
     mocker.patch("pygitgo.commands.link.confirm_remote_link", return_value=True)
     mocker.patch("pygitgo.commands.link.get_current_branch", return_value="main")
-    mocker.patch("pygitgo.commands.link.get_config", return_value="main")
+    mocker.patch("pygitgo.commands.link.get_default_branch", return_value="main")
     fake_push = mocker.patch("pygitgo.commands.link.git_push")
     fake_success = mocker.patch("pygitgo.commands.link.success")
 
@@ -87,7 +87,7 @@ def test_link_new_repo_with_remote_refs_pull_failure(mocker):
     mocker.patch("pygitgo.commands.link.add_remote_origin")
     mocker.patch("pygitgo.commands.link.confirm_remote_link", return_value=True)
     mocker.patch("pygitgo.commands.link.get_current_branch", return_value="main")
-    mocker.patch("pygitgo.commands.link.get_config", return_value="main")
+    mocker.patch("pygitgo.commands.link.get_default_branch", return_value="main")
     fake_error = mocker.patch("pygitgo.commands.link.error")
     fake_warning = mocker.patch("pygitgo.commands.link.warning")
 

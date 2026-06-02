@@ -1,9 +1,9 @@
 from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.exceptions import GitGoError, GitCommandError
-from pygitgo.utils.executor import run_command
-from pygitgo.utils.config import get_config
 from pygitgo.commands.git_remote import handle_rebase
+from pygitgo.utils.config import get_default_branch
+from pygitgo.utils.executor import run_command
 import os
 
 
@@ -43,7 +43,7 @@ def git_init():
         warning("Already a git repository! Skipping init...")
         return False
 
-    default_main_branch = get_config("default-branch", "main")
+    default_main_branch = get_default_branch()
 
     try:
         run_command(["git", "init", "-b", default_main_branch], loading_msg="Initializing git repository...")
