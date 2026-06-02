@@ -26,7 +26,7 @@ def _push_interrupt_cleanup(original_branch, original_head, created_branch):
     if commit_was_made:
         info(f"Commit was saved locally on '{current_branch}' but was not pushed.")
         info("Run 'gitgo push' to retry the push.")
-        info("Run 'gitgo undo commit' to undo the commit instead.")
+        info("Run 'gitgo undo commit' to undo the local commit instead.")
         return
 
     try:
@@ -141,10 +141,12 @@ def push_operation(args):
 
         print_banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.")
 
+        print()
         if auto_switched_from:
-            print()
             info(f"Switched from '{auto_switched_from}' to '{branch}' automatically.")
-            info(f"Run 'gitgo undo commit' then 'gitgo jump {auto_switched_from}' to revert this push and return.")
+            info(f"Run 'gitgo undo push' to revert the push, then 'gitgo jump {auto_switched_from}' to return.")
+        else:
+            info("Run 'gitgo undo push' to revert this push if it was unintended.")
 
     except KeyboardInterrupt:
         print()

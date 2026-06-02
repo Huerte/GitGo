@@ -1,3 +1,4 @@
+from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.utils.colors import success, warning, info, error
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
@@ -48,6 +49,54 @@ def undo_changes():
         sys.exit(130)
 
 
+def undo_link():
+    try:
+        run_command(["git", "remote", "remove", "origin"])
+        success("Remote 'origin' removed.")
+    except GitCommandError as e:
+        raise GitGoError(
+            f"Could not remove remote 'origin'. Is one set? Details: {e}"
+        )
+
+    try:
+        run_command(["git", "reset", "--soft", "HEAD~"])
+        success("Initial commit undone. Files are back to staged, ready to re-link.")
+    except GitCommandError:
+        info("Remote removed. Could not undo the commit (none or multiple found).")
+        info("Run 'gitgo undo commit' separately if needed.")
+
+
+def undo_push():
+    try:
+        branch = get_current_branch()
+    except GitCommandError as e:
+        raise GitGoError(f"Could not determine the current branch: {e}")
+
+    error("DANGER: This force-pushes to the remote. Other collaborators will be affected.")
+    warning("Only use this if no one else has pulled the commit you are reverting.")
+    confirm = input("Are you sure you want to undo the last push? (y/n): ")
+    if confirm.lower() != "y":
+        info("Canceled. Remote is unchanged.")
+        return
+
+    try:
+        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...")
+    except GitCommandError as e:
+        raise GitGoError(f"Undo failed — no previous commit to revert. Details: {e}")
+
+    try:
+        run_command(
+            ["git", "push", "--force", "origin", branch],
+            loading_msg=f"Force-pushing reverted state to '{branch}'..."
+        )
+        success(f"Last push reverted. Remote '{branch}' is back to the previous commit.")
+        info("Your files are still staged locally. Edit and push again when ready.")
+    except GitCommandError as e:
+        warning("Local commit was undone, but the force-push failed.")
+        warning(f"Run manually: git push --force origin {branch}")
+        raise GitGoError(f"Force-push failed: {e}")
+
+
 def undo_operation(args):
     action = args.action
 
@@ -57,5 +106,9 @@ def undo_operation(args):
         undo_add()
     elif action == "changes":
         undo_changes()
+    elif action == "link":
+        undo_link()
+    elif action == "push":
+        undo_push()
     else:
         raise GitGoError(f"Unknown undo operation: {action}")

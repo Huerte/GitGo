@@ -27,7 +27,7 @@ def _pull_interrupt_cleanup():
         stash_list = run_command(["git", "stash", "list"])
         if stash_list and "autostash" in stash_list.lower():
             info("An autostash entry was found. Your local changes are safe.")
-            info("Run 'gitgo state list' to view it, or 'gitgo state load 1' to restore it.")
+            info("Run 'gitgo state list' to find it, then 'gitgo state load <id>' to restore it.")
     except GitCommandError:
         pass
 

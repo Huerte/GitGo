@@ -63,7 +63,7 @@ gitgo link https://github.com/username/repo.git "init"
 ## Features
 
 - **Single commands for linking, pushing, and stashing.** No more chaining five commands together.
-- **Undo:** Roll back commits, unstage files, or discard local changes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`.
+- **Undo:** Roll back commits, unstage files, discard local changes, or revert pushes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`, `undo link`, `undo push`.
 - **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
 - **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
 - **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
@@ -170,6 +170,8 @@ Undo recent mistakes with commands named for what they undo.
 gitgo undo commit    # Undo the last commit (files stay staged)
 gitgo undo add       # Unstage files
 gitgo undo changes   # DANGER: permanently discard all uncommitted edits
+gitgo undo link      # Remove remote and undo initial commit
+gitgo undo push      # DANGER: Revert last push with a force-push
 ```
 
 ### 6. Save Your Work-in-Progress
@@ -245,6 +247,8 @@ Undo recent actions with subcommands named for what they undo.
 gitgo undo commit    # Undo the last commit without losing files
 gitgo undo add       # Unstage files
 gitgo undo changes   # Permanently discard all new files and uncommitted edits
+gitgo undo link      # Remove the remote and undo the initial commit
+gitgo undo push      # DANGER: Revert the last push with a force-push
 ```
 
 ### `gitgo state`

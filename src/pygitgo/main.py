@@ -123,14 +123,16 @@ def main():
             "Examples:\n"
             "  gitgo undo commit       Undo your last commit (your files are safe)\n"
             "  gitgo undo add          Undo 'git add' (files are no longer ready to commit)\n"
-            "  gitgo undo changes      DANGER: Throw away all new changes and start fresh"
+            "  gitgo undo changes      DANGER: Throw away all new changes and start fresh\n"
+            "  gitgo undo link         Remove the remote and undo the initial commit\n"
+            "  gitgo undo push         DANGER: Revert the last push with a force-push"
         ), 
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     undo_parser.add_argument(
         "action", 
-        choices=["commit", "add", "changes"], 
-        help="What to undo: 'commit', 'add', or 'changes'"
+        choices=["commit", "add", "changes", "link", "push"], 
+        help="What to undo: 'commit', 'add', 'changes', 'link', or 'push'"
     )
 
     pull_parser = subparsers.add_parser("pull", 
