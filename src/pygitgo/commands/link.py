@@ -101,7 +101,7 @@ def link_operation(args):
         print_banner("REPOSITORY INITIALIZED AND DEPLOYED.")
 
         print()
-        info("Run 'gitgo undo commit' to revert this push if the deploy was unintended.")
+        info("Run 'gitgo undo link' to remove the remote and undo the initial commit.")
 
     except KeyboardInterrupt:
         print()

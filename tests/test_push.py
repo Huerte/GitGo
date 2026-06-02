@@ -39,7 +39,7 @@ def test_push_wrong_branch_auto_switch(mocker):
 
     fake_info.assert_any_call("Switching to target branch 'feature-branch'...")
     fake_info.assert_any_call("Switched from 'main' to 'feature-branch' automatically.")
-    fake_info.assert_any_call("Run 'gitgo undo commit' then 'gitgo jump main' to revert this push and return.")
+    fake_info.assert_any_call("Run 'gitgo undo push' to revert the push, then 'gitgo jump main' to return.")
     jump_args = fake_jump.call_args[0][0]
     assert jump_args.branch == "feature-branch"
     fake_commit.assert_called_once_with("Init commit")
