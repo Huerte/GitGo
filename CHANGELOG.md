@@ -8,6 +8,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Dynamic Branch Initialization:** `gitgo link` and core init routines now dynamically resolve the default branch name. It respects your global `init.defaultBranch` setting, falls back to the `gitgo.default-branch` config, and defaults to `main` if neither is found.
+
 ---
 
 ## [1.7.0] - 2026-06-02

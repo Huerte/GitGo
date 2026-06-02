@@ -1,11 +1,11 @@
-from pygitgo.utils.colors import success, warning, error, highlight, info, print_banner
 from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
+from pygitgo.utils.colors import success, warning, error, info, print_banner
 from pygitgo.commands.git_core import git_init, git_commit, git_push
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.executor import run_command
-from pygitgo.utils.config import get_config
 from pygitgo.utils.validators import validate_repo_url
+from pygitgo.utils.config import get_default_branch
+from pygitgo.utils.executor import run_command
 import sys
 
 
@@ -42,10 +42,6 @@ def link_operation(args):
 
     commit_message = args.message
 
-    highlight("INITIATING LINK OPERATION...")
-    highlight(f"Target: {repo_url}")
-    print()
-
     initialized = False
     committed = False
     remote_added = False
@@ -76,7 +72,7 @@ def link_operation(args):
             return
 
         current_branch = get_current_branch()
-        main_branch = get_config("default-branch", "main")
+        main_branch = get_default_branch()
 
         if current_branch != main_branch:
             run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch}' to '{main_branch}'...")
@@ -99,8 +95,6 @@ def link_operation(args):
                 warning(f"Run: git pull origin {main_branch} --allow-unrelated-histories")
                 warning(f"Then: gitgo push {main_branch} 'your message'\n")
                 return
-
-        print_banner("REPOSITORY INITIALIZED AND LINKED.")
 
         git_push(current_branch)
 

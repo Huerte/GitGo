@@ -30,7 +30,7 @@ def test_git_init_already_initialized(mocker):
 
 def test_git_init_success(mocker):
     mocker.patch('os.path.isdir', return_value=False)
-    mocker.patch('pygitgo.commands.git_core.get_config', return_value='main')
+    mocker.patch('pygitgo.commands.git_core.get_default_branch', return_value='main')
     fake_success = mocker.patch('pygitgo.commands.git_core.success')
     fake_run = mocker.patch('pygitgo.commands.git_core.run_command', return_value='ok')
 
@@ -46,7 +46,7 @@ def test_git_init_success(mocker):
 def test_git_init_fallback(mocker):
     from pygitgo.exceptions import GitCommandError
     mocker.patch('os.path.isdir', return_value=False)
-    mocker.patch('pygitgo.commands.git_core.get_config', return_value='main')
+    mocker.patch('pygitgo.commands.git_core.get_default_branch', return_value='main')
     fake_success = mocker.patch('pygitgo.commands.git_core.success')
     
     fake_run = mocker.patch(

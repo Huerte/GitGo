@@ -1,4 +1,4 @@
-from pygitgo.utils.update_checker import check_for_updates_background
+from pygitgo.utils.update_checker import check_for_updates_background, check_for_updates
 from pygitgo.utils.bootstrap import ensure_first_run_setup
 from pygitgo.utils.colors import info, warning, error
 from pygitgo.commands.config import config_operation
@@ -147,12 +147,15 @@ def main():
     args = parser.parse_args()
 
     if getattr(args, 'version', False):
-        print(f"GitGo {get_version()}")
+        current_v = get_version()
+        print(f"GitGo {current_v}")
         print(f"Support GitGo: https://ko-fi.com/huerte")
+        check_for_updates(current_v)
         return
 
     if args.ready:
         info("ALL UNITS ONLINE. GitGo STANDING BY. AWAITING COMMANDS...")
+        check_for_updates(get_version())
         return
 
     if not args.command:
