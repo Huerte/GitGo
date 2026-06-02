@@ -102,13 +102,12 @@ def link_operation(args):
 
         print_banner("REPOSITORY INITIALIZED AND LINKED.")
 
-        user_choice = input(f"Do you want to push now? (y/n): ").lower()
-        if user_choice != 'y':
-            return
-
         git_push(current_branch)
 
         print_banner("REPOSITORY INITIALIZED AND DEPLOYED.")
+
+        print()
+        info("Run 'gitgo undo commit' to revert this push if the deploy was unintended.")
 
     except KeyboardInterrupt:
         print()

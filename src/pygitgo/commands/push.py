@@ -70,6 +70,7 @@ def push_operation(args):
         original_head = None
 
     created_branch = None
+    auto_switched_from = None
 
     try:
         if args.new:
@@ -86,11 +87,9 @@ def push_operation(args):
             elif branch and is_branch_exist(branch):
                 current_branch = get_current_branch()
                 if current_branch != branch:
-                    warning(f"You are currently on branch '{current_branch}', not '{branch}'.")
-                    user_choice = input(f"Do you want to switch to branch '{branch}'? (y/n): ").lower()
-                    if user_choice != 'y':
-                        raise GitGoError("\nPush aborted to prevent committing to the wrong branch.\n")
+                    info(f"Switching to target branch '{branch}'...")
                     jump_operation(Namespace(branch=branch))
+                    auto_switched_from = current_branch
 
             elif not branch:
                 branch = get_current_branch()
@@ -141,6 +140,11 @@ def push_operation(args):
                     return
 
         print_banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.")
+
+        if auto_switched_from:
+            print()
+            info(f"Switched from '{auto_switched_from}' to '{branch}' automatically.")
+            info(f"Run 'gitgo undo commit' then 'gitgo jump {auto_switched_from}' to revert this push and return.")
 
     except KeyboardInterrupt:
         print()

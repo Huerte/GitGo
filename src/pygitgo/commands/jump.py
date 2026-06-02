@@ -86,14 +86,13 @@ def jump_operation(args):
                 print()
                 warning("You cannot switch branches with unsaved changes. Jump canceled.")
                 return
-            else:
-                stash_result = git_stash_push(label="GitGo Jump Auto-Stash", loading_msg="Saving your changes before jumping...")
-                if not stash_result:
-                    warning("Stash failed. Your working tree may have untracked files.")
-                    info("Run:  git status   to see what's blocking the stash.")
-                    raise GitGoError("Jump aborted — could not save working changes.")
-                info("Changes saved. Jumping to the new branch...")
-                stashed_code = True
+            stash_result = git_stash_push(label="GitGo Jump Auto-Stash", loading_msg="Saving your changes before jumping...")
+            if not stash_result:
+                warning("Stash failed. Your working tree may have untracked files.")
+                info("Run:  git status   to see what's blocking the stash.")
+                raise GitGoError("Jump aborted: could not save working changes.")
+            info("Changes saved. Jumping to the new branch...")
+            stashed_code = True
 
         if not is_branch_exist(target_branch):
             print()
@@ -119,12 +118,7 @@ def jump_operation(args):
                 run_command(['git', 'pull', 'origin', main_branch], loading_msg=f"Downloading the latest updates from '{main_branch}'...")
             except GitCommandError:
                 warning(f"Failed to pull updates from '{main_branch}'. No internet, or the remote branch doesn't exist yet.")
-                user_input = input("Stay on the new branch without the latest updates? (y/n): ").strip().lower()
-                if user_input != 'y':
-                    undo_jump_operation(original_branch, stashed_code, created_branch)
-                    raise GitGoError("Jump aborted — could not sync with remote.")
-                else:
-                    info(f"On '{target_branch}', but without the latest updates from '{main_branch}'.")
+                info(f"On '{target_branch}', but without the latest updates from '{main_branch}'.")
 
         if stashed_code:
             apply_result = git_stash_apply(loading_msg="Unpacking your unsaved changes...")

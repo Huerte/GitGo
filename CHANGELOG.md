@@ -17,6 +17,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Safe Interruptions:** Hitting `Ctrl+C` (KeyboardInterrupt) mid-command now triggers smart, command-specific cleanup routines. It aborts in-progress rebases, unstages partial commits, and tells you exactly what state your files are in.
 
 ### Changed
+- Removed redundant confirmation prompts during branch switches and deployments, replacing them with automatic actions and post-action undo hints for a smoother UX.
 - Removed the `allow_fail` flag from `run_command` and switched to a robust `try/except` exception-based architecture to prevent silent failures.
 - Refactored CLI messaging to use a consistent tone, removing robotic phrases and filler words.
 - Standardized terminal output spacing and colors across all commands.

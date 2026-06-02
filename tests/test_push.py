@@ -25,23 +25,10 @@ def test_push_new_branch_success(mocker):
     fake_push.assert_called_once_with("feature-branch")
 
 
-def test_push_wrong_branch_abort(mocker):
+def test_push_wrong_branch_auto_switch(mocker):
     mocker.patch("pygitgo.commands.push.is_branch_exist", return_value=True)
     mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
-    mocker.patch("builtins.input", return_value="n")
-    mocker.patch("pygitgo.commands.push.warning")
-
-    args = Namespace(branch="feature-branch", message="Init commit", new=False, select=False)
-    with pytest.raises(GitGoError) as exc_info:
-        push_operation(args)
-    assert "Push aborted to prevent committing to the wrong branch." in str(exc_info.value)
-
-
-def test_push_wrong_branch_switch(mocker):
-    mocker.patch("pygitgo.commands.push.is_branch_exist", return_value=True)
-    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
-    mocker.patch("builtins.input", return_value="y")
-    mocker.patch("pygitgo.commands.push.warning")
+    fake_info = mocker.patch("pygitgo.commands.push.info")
     fake_jump = mocker.patch("pygitgo.commands.push.jump_operation")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
@@ -50,6 +37,9 @@ def test_push_wrong_branch_switch(mocker):
     args = Namespace(branch="feature-branch", message="Init commit", new=False, select=False)
     push_operation(args)
 
+    fake_info.assert_any_call("Switching to target branch 'feature-branch'...")
+    fake_info.assert_any_call("Switched from 'main' to 'feature-branch' automatically.")
+    fake_info.assert_any_call("Run 'gitgo undo commit' then 'gitgo jump main' to revert this push and return.")
     jump_args = fake_jump.call_args[0][0]
     assert jump_args.branch == "feature-branch"
     fake_commit.assert_called_once_with("Init commit")
