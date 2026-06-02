@@ -1,8 +1,7 @@
 from pygitgo.utils.update_checker import check_for_updates_background
+from pygitgo.utils.bootstrap import ensure_first_run_setup
 from pygitgo.utils.colors import info, warning, error
 from pygitgo.commands.config import config_operation
-from pygitgo.exceptions import GitGoError
-from pygitgo.utils.bootstrap import ensure_first_run_setup
 from pygitgo.commands.state import state_operation
 from pygitgo.commands.undo import undo_operation
 from pygitgo.commands.pull import pull_operation
@@ -10,6 +9,7 @@ from pygitgo.commands.jump import jump_operation
 from pygitgo.commands.link import link_operation
 from pygitgo.commands.push import push_operation
 from pygitgo.commands.user import user_operation
+from pygitgo.exceptions import GitGoError
 import argparse
 import sys
 
@@ -182,6 +182,10 @@ def main():
     except GitGoError as e:
         error(f"{e}")
         sys.exit(1)
+    except KeyboardInterrupt:
+        print()
+        warning("Operation canceled.")
+        sys.exit(130)
 
 if __name__ == "__main__":
     main()

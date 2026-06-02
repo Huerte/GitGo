@@ -1,6 +1,7 @@
-from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.colors import success, warning, info, error
+from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
+import sys
 
 
 def undo_commit():
@@ -26,10 +27,25 @@ def undo_changes():
         info("Canceled. Your files are safe.")
         return
 
-    run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
-    run_command(["git", "clean", "-fd"], loading_msg="Removing new files...")
+    reset_done = False
+    try:
+        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
+        reset_done = True
+        run_command(["git", "clean", "-fd"], loading_msg="Removing new files...")
+        success("Working tree reset. All changes discarded.")
 
-    success("Working tree reset. All changes discarded.")
+    except KeyboardInterrupt:
+        print()
+        if reset_done:
+            warning("Interrupted during file removal. Finishing cleanup...")
+            try:
+                run_command(["git", "clean", "-fd"])
+                success("Working tree reset. All changes discarded.")
+            except GitCommandError:
+                warning("Could not finish cleanup. Run 'git clean -fd' manually.")
+        else:
+            success("Reset canceled before any changes were made. Your files are safe.")
+        sys.exit(130)
 
 
 def undo_operation(args):

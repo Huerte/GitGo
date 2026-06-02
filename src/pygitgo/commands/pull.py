@@ -2,6 +2,34 @@ from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.utils.colors import success, warning, error, info
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
+from pathlib import Path
+import sys
+
+
+def _pull_interrupt_cleanup():
+    rebase_in_progress = (
+        Path(".git/rebase-merge").exists() or
+        Path(".git/rebase-apply").exists()
+    )
+
+    if rebase_in_progress:
+        warning("A rebase is in progress from the interrupted pull.")
+        try:
+            run_command(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...")
+            success("Rebase aborted. Branch is back to its pre-pull state.")
+        except GitCommandError:
+            error("Could not abort rebase automatically.")
+            info("Run manually: git rebase --abort")
+    else:
+        success("No partial rebase detected. Branch is clean.")
+
+    try:
+        stash_list = run_command(["git", "stash", "list"])
+        if stash_list and "autostash" in stash_list.lower():
+            info("An autostash entry was found. Your local changes are safe.")
+            info("Run 'gitgo state list' to view it, or 'gitgo state load 1' to restore it.")
+    except GitCommandError:
+        pass
 
 
 def pull_operation(args):
@@ -25,6 +53,12 @@ def pull_operation(args):
         )
 
         success(f"Project is up to date with '{branch}'.")
+
+    except KeyboardInterrupt:
+        print()
+        warning("Pull interrupted (Ctrl+C).")
+        _pull_interrupt_cleanup()
+        sys.exit(130)
 
     except GitCommandError as e:
         error_msg = str(e).lower()

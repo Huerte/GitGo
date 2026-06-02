@@ -8,8 +8,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.7.0] - 2026-06-02
+
 ### Added
 - **Auto SSH Commit Signing:** GitGo now uses the SSH key generated during `gitgo user login` to automatically sign all commits using temporary `-c` flags, giving you the Verified badge on GitHub without modifying global git configs.
+- **Safe Interruptions:** Hitting `Ctrl+C` (KeyboardInterrupt) mid-command now triggers smart, command-specific cleanup routines. It aborts in-progress rebases, unstages partial commits, and tells you exactly what state your files are in.
 
 ### Changed
 - Removed the `allow_fail` flag from `run_command` and switched to a robust `try/except` exception-based architecture to prevent silent failures.
