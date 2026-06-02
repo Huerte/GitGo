@@ -205,3 +205,22 @@ def test_delete_state_no_args(mocker):
 
     fake_drop.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("State 2 deleted.")
+
+
+def test_load_state_keyboard_interrupt(mocker):
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
+    mocker.patch("pygitgo.commands.state.git_stash_apply", side_effect=KeyboardInterrupt)
+    fake_run = mocker.patch("pygitgo.commands.state.run_command")
+    fake_warning = mocker.patch("pygitgo.commands.state.warning")
+    fake_success = mocker.patch("pygitgo.commands.state.success")
+
+    from pygitgo.commands.state import load_state
+    with pytest.raises(SystemExit) as sys_exit:
+        load_state("1")
+
+    assert sys_exit.value.code == 130
+    fake_warning.assert_any_call("State load interrupted (Ctrl+C).")
+    fake_run.assert_called_once_with(["git", "checkout", "--", "."])
+    fake_success.assert_called_once_with("Partial changes cleaned up. Your stash is still saved.")
+

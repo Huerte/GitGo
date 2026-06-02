@@ -29,3 +29,5 @@ TODO.md
 docs/
 todo/
 .coverage
+gitgo-simulation/
+simulate_gitgo.py

@@ -36,7 +36,6 @@ def test_link_new_repo_no_remote_refs(mocker):
     mocker.patch("pygitgo.commands.link.confirm_remote_link", return_value=True)
     mocker.patch("pygitgo.commands.link.get_current_branch", return_value="master")
     mocker.patch("pygitgo.commands.link.get_config", return_value="main")
-    mocker.patch("builtins.input", return_value="y")
     fake_push = mocker.patch("pygitgo.commands.link.git_push")
 
     fake_run = mocker.patch("pygitgo.commands.link.run_command", return_value="")  # remote_refs is empty
@@ -59,7 +58,6 @@ def test_link_new_repo_with_remote_refs_pull_success(mocker):
     mocker.patch("pygitgo.commands.link.confirm_remote_link", return_value=True)
     mocker.patch("pygitgo.commands.link.get_current_branch", return_value="main")
     mocker.patch("pygitgo.commands.link.get_config", return_value="main")
-    mocker.patch("builtins.input", return_value="n")  # Do not push
     fake_push = mocker.patch("pygitgo.commands.link.git_push")
     fake_success = mocker.patch("pygitgo.commands.link.success")
 
@@ -79,7 +77,7 @@ def test_link_new_repo_with_remote_refs_pull_success(mocker):
         loading_msg="Pulling and merging remote content..."
     )
     fake_success.assert_any_call("Remote content merged.")
-    fake_push.assert_not_called()
+    fake_push.assert_called_once_with("main")
 
 
 def test_link_new_repo_with_remote_refs_pull_failure(mocker):

@@ -1,9 +1,9 @@
-import pytest
 from unittest.mock import patch, MagicMock
 from pygitgo.commands.pull import pull_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
 from argparse import Namespace
 import subprocess
+import pytest
 
 @patch("pygitgo.commands.pull.run_command")
 @patch("pygitgo.commands.pull.success")
@@ -67,3 +67,63 @@ def test_pull_operation_merge_conflict(mock_run_command):
     args = Namespace(branch="main")
     with pytest.raises(GitGoError):
         pull_operation(args)
+
+
+@patch("pygitgo.commands.pull.run_command")
+@patch("pygitgo.commands.pull.success")
+@patch("pygitgo.commands.pull.warning")
+@patch("pygitgo.commands.pull.Path")
+def test_pull_keyboard_interrupt_rebase_in_progress(mock_path, mock_warning, mock_success, mock_run_command):
+    def side_effect_fn(*args, **kwargs):
+        cmd = args[0]
+        if cmd[1] == "ls-remote":
+            return "1234567890abcdef"
+        if cmd[1] == "pull":
+            raise KeyboardInterrupt()
+        return ""
+
+    mock_run_command.side_effect = side_effect_fn
+
+    mock_path_instance = MagicMock()
+    mock_path_instance.exists.return_value = True
+    mock_path.return_value = mock_path_instance
+
+    args = Namespace(branch="main")
+    with pytest.raises(SystemExit) as sys_exit:
+        pull_operation(args)
+
+    assert sys_exit.value.code == 130
+    mock_run_command.assert_any_call(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...")
+    mock_warning.assert_any_call("Pull interrupted (Ctrl+C).")
+    mock_warning.assert_any_call("A rebase is in progress from the interrupted pull.")
+    mock_success.assert_called_with("Rebase aborted. Branch is back to its pre-pull state.")
+
+
+@patch("pygitgo.commands.pull.run_command")
+@patch("pygitgo.commands.pull.success")
+@patch("pygitgo.commands.pull.warning")
+@patch("pygitgo.commands.pull.Path")
+def test_pull_keyboard_interrupt_no_rebase(mock_path, mock_warning, mock_success, mock_run_command):
+    def side_effect_fn(*args, **kwargs):
+        cmd = args[0]
+        if cmd[1] == "ls-remote":
+            return "1234567890abcdef"
+        if cmd[1] == "pull":
+            raise KeyboardInterrupt()
+        return ""
+
+    mock_run_command.side_effect = side_effect_fn
+
+    mock_path_instance = MagicMock()
+    mock_path_instance.exists.return_value = False
+    mock_path.return_value = mock_path_instance
+
+    args = Namespace(branch="main")
+    with pytest.raises(SystemExit) as sys_exit:
+        pull_operation(args)
+
+    assert sys_exit.value.code == 130
+    for call in mock_run_command.call_args_list:
+        assert "--abort" not in call[0][0]
+    mock_success.assert_called_with("No partial rebase detected. Branch is clean.")
+

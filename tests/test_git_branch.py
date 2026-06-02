@@ -20,32 +20,51 @@ def test_git_branch_logic(mocker):
 def test_git_branch_exists_jump_yes(mocker):
     from pygitgo.exceptions import GitCommandError
     fake_run = mocker.patch("pygitgo.commands.git_branch.run_command", side_effect=GitCommandError(["git", "checkout", "-b"]))
+    mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="main")  # different branch
     mocker.patch("builtins.input", return_value="y")
     fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
     fake_error = mocker.patch("pygitgo.commands.git_branch.error")
 
     branch_name = "existing-branch"
     result = git_new_branch(branch_name)
-    
+
     assert result == "existing-branch"
     fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
-    
+
     args = fake_jump.call_args[0][0]
     assert args.branch == branch_name
+
 
 def test_git_branch_exists_jump_no(mocker):
     from pygitgo.exceptions import GitCommandError, GitGoError
     fake_run = mocker.patch("pygitgo.commands.git_branch.run_command", side_effect=GitCommandError(["git", "checkout", "-b"]))
+    mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="main")  # different branch
     mocker.patch("builtins.input", return_value="n")
     fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
     fake_error = mocker.patch("pygitgo.commands.git_branch.error")
 
     branch_name = "existing-branch"
-    
+
     with pytest.raises(GitGoError):
         git_new_branch(branch_name)
     fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
     fake_jump.assert_not_called()
+
+
+def test_git_branch_already_on_target_skips_prompt(mocker):
+    from pygitgo.exceptions import GitCommandError
+    mocker.patch("pygitgo.commands.git_branch.run_command", side_effect=GitCommandError(["git", "checkout", "-b"]))
+    mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="feat/safe-interruptions")
+    fake_info = mocker.patch("pygitgo.commands.git_branch.info", create=True)
+    fake_input = mocker.patch("builtins.input")
+    fake_jump = mocker.patch("pygitgo.commands.jump.jump_operation")
+
+    result = git_new_branch("feat/safe-interruptions")
+
+    assert result == "feat/safe-interruptions"
+    fake_input.assert_not_called()  # no prompt shown
+    fake_jump.assert_not_called()   # no jump triggered
+    fake_info.assert_called_once_with("Already on branch 'feat/safe-interruptions'. Continuing...")
 
 def test_get_current_branch(mocker):
     fake_run = mocker.patch("pygitgo.commands.git_branch.run_command", return_value='main')

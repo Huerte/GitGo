@@ -71,6 +71,7 @@ gitgo link https://github.com/username/repo.git "init"
 - **SSH auto-setup & signing:** Generates an `ed25519` key, loads it into `ssh-agent`, opens your GitHub SSH settings page, and automatically signs all future commits for the verified badge.
 - **HTTPS-to-SSH conversion:** Detects HTTPS remotes and rewrites them before pushing if SSH is configured. No manual `git remote set-url`.
 - **Termux support:** Detects the Termux environment, adjusts install paths, uses `termux-open` for browser actions, and patches the dubious ownership Git error.
+- **Safe interruptions:** Hitting `Ctrl+C` midway through a command automatically aborts in-progress merges, cleans up partial states, and tells you exactly what was and wasn't saved.
 
 ---
 

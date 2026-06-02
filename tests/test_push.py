@@ -1,7 +1,7 @@
-import pytest
-from argparse import Namespace
-from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.push import push_operation
+from pygitgo.exceptions import GitGoError
+from argparse import Namespace
+import pytest
 
 
 def test_push_new_branch_flag_no_name():
@@ -25,23 +25,10 @@ def test_push_new_branch_success(mocker):
     fake_push.assert_called_once_with("feature-branch")
 
 
-def test_push_wrong_branch_abort(mocker):
+def test_push_wrong_branch_auto_switch(mocker):
     mocker.patch("pygitgo.commands.push.is_branch_exist", return_value=True)
     mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
-    mocker.patch("builtins.input", return_value="n")
-    mocker.patch("pygitgo.commands.push.warning")
-
-    args = Namespace(branch="feature-branch", message="Init commit", new=False, select=False)
-    with pytest.raises(GitGoError) as exc_info:
-        push_operation(args)
-    assert "Push aborted to prevent committing to the wrong branch." in str(exc_info.value)
-
-
-def test_push_wrong_branch_switch(mocker):
-    mocker.patch("pygitgo.commands.push.is_branch_exist", return_value=True)
-    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
-    mocker.patch("builtins.input", return_value="y")
-    mocker.patch("pygitgo.commands.push.warning")
+    fake_info = mocker.patch("pygitgo.commands.push.info")
     fake_jump = mocker.patch("pygitgo.commands.push.jump_operation")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
@@ -50,7 +37,9 @@ def test_push_wrong_branch_switch(mocker):
     args = Namespace(branch="feature-branch", message="Init commit", new=False, select=False)
     push_operation(args)
 
-    # Verify that it switches branch first
+    fake_info.assert_any_call("Switching to target branch 'feature-branch'...")
+    fake_info.assert_any_call("Switched from 'main' to 'feature-branch' automatically.")
+    fake_info.assert_any_call("Run 'gitgo undo commit' then 'gitgo jump main' to revert this push and return.")
     jump_args = fake_jump.call_args[0][0]
     assert jump_args.branch == "feature-branch"
     fake_commit.assert_called_once_with("Init commit")
@@ -116,7 +105,7 @@ def test_push_select_success(mocker):
 
 def test_push_clean_but_unpushed_commits(mocker):
     mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
-    mocker.patch("pygitgo.commands.push.git_commit", return_value=False)  # clean working tree
+    mocker.patch("pygitgo.commands.push.git_commit", return_value=False) 
     fake_run = mocker.patch("pygitgo.commands.push.run_command", return_value="abc1234 Unpushed commit message\n")
     fake_warning = mocker.patch("pygitgo.commands.push.warning")
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
@@ -125,15 +114,15 @@ def test_push_clean_but_unpushed_commits(mocker):
     args = Namespace(branch=None, message="Commit message", new=False, select=False)
     push_operation(args)
 
-    fake_run.assert_called_once_with(["git", "log", "--oneline", "origin/main..HEAD"], loading_msg="Checking for unpushed commits...")
+    fake_run.assert_any_call(["git", "log", "--oneline", "origin/main..HEAD"], loading_msg="Checking for unpushed commits...")
     fake_warning.assert_called_once_with("\nNo changes to commit, but found unpushed commits. Pushing to remote...")
     fake_push.assert_called_once_with("main")
 
 
 def test_push_clean_and_up_to_date(mocker):
     mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
-    mocker.patch("pygitgo.commands.push.git_commit", return_value=False)  # clean working tree
-    fake_run = mocker.patch("pygitgo.commands.push.run_command", return_value="")  # no unpushed commits
+    mocker.patch("pygitgo.commands.push.git_commit", return_value=False) 
+    fake_run = mocker.patch("pygitgo.commands.push.run_command", return_value="") 
     fake_info = mocker.patch("pygitgo.commands.push.info")
     fake_warning = mocker.patch("pygitgo.commands.push.warning")
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
@@ -141,7 +130,47 @@ def test_push_clean_and_up_to_date(mocker):
     args = Namespace(branch=None, message="Commit message", new=False, select=False)
     push_operation(args)
 
-    fake_run.assert_called_once_with(["git", "log", "--oneline", "origin/main..HEAD"], loading_msg="Checking for unpushed commits...")
+    fake_run.assert_any_call(["git", "log", "--oneline", "origin/main..HEAD"], loading_msg="Checking for unpushed commits...")
     fake_info.assert_called_once_with("\nWorking tree is clean and everything is up to date.")
     fake_warning.assert_called_once_with("Make some changes first before using GitGo to commit and push.")
     fake_push.assert_not_called()
+
+
+def test_push_keyboard_interrupt_no_changes_made(mocker):
+    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.push.git_commit", side_effect=KeyboardInterrupt)
+    fake_run = mocker.patch("pygitgo.commands.push.run_command")
+    fake_run.return_value = "initial_hash" 
+    fake_warning = mocker.patch("pygitgo.commands.push.warning")
+    fake_info = mocker.patch("pygitgo.commands.push.info")
+
+    fake_run.side_effect = lambda cmd, *a, **kw: "" if cmd == ["git", "status", "--porcelain"] else "initial_hash"
+
+    args = Namespace(branch=None, message="Commit message", new=False, select=False)
+    with pytest.raises(SystemExit) as sys_exit:
+        push_operation(args)
+
+    assert sys_exit.value.code == 130
+    fake_warning.assert_any_call("Push interrupted (Ctrl+C).")
+
+
+def test_push_keyboard_interrupt_commit_made(mocker):
+    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
+    mocker.patch("pygitgo.commands.push.git_push", side_effect=KeyboardInterrupt)
+    
+    fake_run = mocker.patch("pygitgo.commands.push.run_command")
+    fake_run.side_effect = ["old_hash", "new_hash"] # first call: initial rev-parse HEAD. second call: post-cleanup check.
+    
+    fake_warning = mocker.patch("pygitgo.commands.push.warning")
+    fake_info = mocker.patch("pygitgo.commands.push.info")
+
+    args = Namespace(branch=None, message="Commit message", new=False, select=False)
+    with pytest.raises(SystemExit) as sys_exit:
+        push_operation(args)
+
+    assert sys_exit.value.code == 130
+    fake_warning.assert_any_call("Push interrupted (Ctrl+C).")
+    fake_info.assert_any_call("Commit was saved locally on 'main' but was not pushed.")
+
+

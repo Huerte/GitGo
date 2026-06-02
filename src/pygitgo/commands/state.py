@@ -5,6 +5,7 @@ from pygitgo.commands.stash import (
 )
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
+import sys
 
 
 
@@ -123,11 +124,23 @@ def load_state(state_id=None):
 
     selected_state = save_states[int(state_id) - 1]
 
-    apply_result = git_stash_apply(stash_id=str(selected_state["stash_index"]))
-    if not apply_result:
-        error(f"Failed to load state. There may be a conflict with your current changes.")
-        raise GitGoError("Load failed — resolve conflicts first.")
-    success(f"State '{selected_state['message']}' restored.")
+    try:
+        apply_result = git_stash_apply(stash_id=str(selected_state["stash_index"]))
+        if not apply_result:
+            error(f"Failed to load state. There may be a conflict with your current changes.")
+            raise GitGoError("Load failed — resolve conflicts first.")
+        success(f"State '{selected_state['message']}' restored.")
+
+    except KeyboardInterrupt:
+        print()
+        warning("State load interrupted (Ctrl+C).")
+        try:
+            run_command(["git", "checkout", "--", "."])
+            success("Partial changes cleaned up. Your stash is still saved.")
+            info(f"Run 'gitgo state load {state_id}' to try again.")
+        except GitCommandError:
+            warning("Could not clean up automatically. Run 'git status' to check, then 'git checkout -- .' if needed.")
+        sys.exit(130)
 
 
 def save_state(state_name=None):
@@ -139,7 +152,7 @@ def save_state(state_name=None):
     except GitCommandError:
         warning("Could not check for local changes - make sure you're in a valid git repository.")
         return
-    
+
     if not has_changes.strip():
         info("No local changes to save.")
         return
