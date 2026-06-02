@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.7.1] - 2026-06-03
+
 ### Added
 - **Expanded Undo:** Added `gitgo undo link` to cleanly remove an initialized remote and undo the initial commit, and `gitgo undo push` to force-revert the last remote push.
 - **Dynamic Branch Initialization:** `gitgo link` and core init routines now dynamically resolve the default branch name. It respects your global `init.defaultBranch` setting, falls back to the `gitgo.default-branch` config, and defaults to `main` if neither is found.
