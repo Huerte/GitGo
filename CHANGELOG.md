@@ -12,7 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide with screenshots covering the full `gitgo user login` flow for starters.
 
 ---
-
+ 
 ## [1.7.1] - 2026-06-03
 
 ### Added
