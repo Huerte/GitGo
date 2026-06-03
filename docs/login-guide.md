@@ -41,7 +41,8 @@ gitgo user login
 
 If you are already connected to GitHub, GitGo will tell you right away and stop. You don't need to do anything else.
 
-![Already logged in message](..\assets\guides\login\step-1-already-logged-in.png)
+![Already logged in message](../assets/guides/login/step-1-already-logged-in.png)
+
 > *If you see this, you're already connected. Jump to [Troubleshooting](#troubleshooting) if something feels wrong.*
 
 ---
