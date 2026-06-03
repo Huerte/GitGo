@@ -130,11 +130,13 @@ pip install -e .
 
 ### 1. Set Up Your Identity
 
-Run this once on a new machine. GitGo generates an SSH key, adds it to `ssh-agent`, prints the public key, and opens your GitHub SSH settings page so you can add it for both authentication and commit signing.
+Run this once on each machine you use. GitGo generates an SSH key, prints it for you to copy, and opens GitHub so you can add it. You add the same key twice: once as an **Authentication Key** (to push and pull), once as a **Signing Key** (so your commits show Verified). After that, GitGo tests the connection and sets up your Git identity automatically.
 
 ```bash
 gitgo user login
 ```
+
+For a full walkthrough with screenshots, see the [Login Guide](docs/login-guide.md).
 
 ### 2. Link a New Project to GitHub
 
