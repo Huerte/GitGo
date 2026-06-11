@@ -1,6 +1,7 @@
 from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
+from pygitgo.utils.platform import open_url
 from . import ssh_utils
 import os
 
@@ -39,7 +40,7 @@ def login():
         info("  2. Once as 'Signing Key'          (so your commits show as Verified)")
         info("Both entries use the exact same key text.")
 
-        ssh_utils.open_github_settings()
+        open_url("https://github.com/settings/ssh/new")
         
         input(
             "After adding both keys on GitHub,\n"
@@ -65,6 +66,7 @@ def login():
     info("  1. The key was not pasted on GitHub")
     info("  2. SSH agent is not running (try: eval $(ssh-agent) && ssh-add)")
     info("  3. Network or firewall is blocking SSH connections")
+    info("Need help? Full guide: https://github.com/Huerte/GitGo/blob/main/docs/login-guide.md")
     return False
     
 def logout():

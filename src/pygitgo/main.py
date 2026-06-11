@@ -9,6 +9,7 @@ from pygitgo.commands.jump import jump_operation
 from pygitgo.commands.link import link_operation
 from pygitgo.commands.push import push_operation
 from pygitgo.commands.user import user_operation
+from pygitgo.commands.new import new_operation
 from pygitgo.exceptions import GitGoError
 import argparse
 import sys
@@ -146,6 +147,37 @@ def main():
     )
     pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
 
+    new_parser = subparsers.add_parser(
+        "new",
+        help="Create a GitHub repo and link the current project to it",
+        epilog=(
+            "Examples:\n"
+            "  gitgo new                          Use current directory name as repo name\n"
+            "  gitgo new my-app                   Create repo 'my-app' and push\n"
+            "  gitgo new my-app --private         Create a private repo\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    new_parser.add_argument(
+        "name",
+        default=None,
+        nargs="?",
+        metavar="NAME",
+        help="Repository name. Defaults to current directory name."
+    )
+    new_parser.add_argument(
+        "-p", "--private",
+        default=False,
+        action="store_true",
+        help="Create a private repository."
+    )
+    new_parser.add_argument(
+        "-d", "--description",
+        default="",
+        metavar="TEXT",
+        help="Short repository description shown on GitHub."
+    )
+    
     args = parser.parse_args()
 
     if getattr(args, 'version', False):
@@ -184,6 +216,8 @@ def main():
             undo_operation(args)
         elif args.command == "pull":
             pull_operation(args)
+        elif args.command == "new":
+            new_operation(args)
     except GitGoError as e:
         error(f"{e}")
         sys.exit(1)

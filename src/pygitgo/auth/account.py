@@ -21,7 +21,6 @@ def get_user():
 
     return name, email
 
-    
 def set_user(name, email):
     run_command(["git", "config", "--global", "user.name", name])
     run_command(["git", "config", "--global", "user.email", email])
@@ -65,5 +64,4 @@ def ensure_user_configure(default_email=None, default_username=None):
     
     error("Invalid configuration. Name and Email are required.")
     return False
-
 

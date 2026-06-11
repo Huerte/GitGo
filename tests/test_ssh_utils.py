@@ -1,11 +1,10 @@
-import pytest
-from pathlib import Path
-from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.auth.ssh_utils import (
     ensure_github_known_host, check_connection, get_github_username,
-    get_ssh_key_path, generate_ssh_key, open_github_settings,
-    convert_https_to_ssh, is_ssh_url
+    generate_ssh_key, convert_https_to_ssh, is_ssh_url
 )
+from pygitgo.exceptions import GitGoError
+from pathlib import Path
+import pytest
 
 
 def test_ensure_github_known_host_already_exists(mocker):
