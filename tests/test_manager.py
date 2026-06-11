@@ -1,12 +1,11 @@
-import pytest
-from pathlib import Path
-from pygitgo.exceptions import GitCommandError
 from pygitgo.auth.manager import login, logout
+from pathlib import Path
 
 
 def test_login_already_logged_in(mocker):
     fake_check = mocker.patch("pygitgo.auth.manager.ssh_utils.check_connection", return_value=True)
     fake_success = mocker.patch("pygitgo.auth.manager.success")
+    mocker.patch("pygitgo.auth.manager.open_url")
 
     result = login()
 
@@ -19,13 +18,13 @@ def test_login_new_user_success(mocker):
     # check_connection returns False first, then True on verification
     fake_check = mocker.patch("pygitgo.auth.manager.ssh_utils.check_connection", side_effect=[False, True])
     mocker.patch("pygitgo.auth.manager.info")
+    mocker.patch("pygitgo.auth.manager.open_url")
     mocker.patch("pygitgo.auth.manager.success")
     mocker.patch("builtins.input", side_effect=["test@example.com", ""])
     mocker.patch("pygitgo.auth.manager.ssh_utils.generate_ssh_key", return_value=Path("mock_key"))
     
     # Mock reading public key
     mocker.patch("builtins.open", mocker.mock_open(read_data="ssh-rsa AAAAB3NzaC1yc2E..."))
-    mocker.patch("pygitgo.auth.manager.ssh_utils.open_github_settings")
     mocker.patch("pygitgo.auth.manager.ssh_utils.get_github_username", return_value="GithubUser")
     fake_ensure = mocker.patch("pygitgo.auth.account.ensure_user_configure", return_value=True)
 
@@ -42,8 +41,9 @@ def test_login_new_user_verification_fails(mocker):
     mocker.patch("pygitgo.auth.manager.error")
     mocker.patch("builtins.input", side_effect=["test@example.com", ""])
     mocker.patch("pygitgo.auth.manager.ssh_utils.generate_ssh_key", return_value=Path("mock_key"))
+    mocker.patch("pygitgo.auth.manager.open_url")
     mocker.patch("builtins.open", mocker.mock_open(read_data="ssh-rsa AAAAB3NzaC1yc2E..."))
-    mocker.patch("pygitgo.auth.manager.ssh_utils.open_github_settings")
+
 
     result = login()
 
