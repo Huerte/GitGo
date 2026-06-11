@@ -16,7 +16,7 @@
 
 <br />
 
-If GitGo saves you time, consider sponsoring. It helps keep the project going.
+If GitGo saves you time, give it a star. If you want to go further, sponsoring helps keep it going.
 
 <a href="https://github.com/sponsors/Huerte">
   <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-%E2%9D%A4-EA4AAA?style=for-the-badge&logo=github" alt="Sponsor on GitHub" />
