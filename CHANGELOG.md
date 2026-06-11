@@ -8,8 +8,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Project Scaffolding:** Added `gitgo init` to handle local project setup, gitignore fetching, and GitHub template downloads.
+- **Remote Repo Creation:** Added `gitgo new` to create remote GitHub repositories without leaving the terminal.
+
 ### Changed
 - **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide with screenshots covering the full `gitgo user login` flow for starters.
+- **Internal Utils:** Centralized browser opening logic and updated the auth manager to support repo creation tokens.
 
 ---
  

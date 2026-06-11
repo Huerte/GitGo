@@ -1,11 +1,8 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.colors import info, success, warning
 from pygitgo.utils.executor import run_command
-from pygitgo.utils import platform as platform_utils
 from pathlib import Path
-import webbrowser
 import subprocess
-import shutil
 import os
 import re
 
@@ -101,27 +98,6 @@ def generate_ssh_key(email):
         pass 
     
     return key_path
-
-
-def open_github_settings():
-    url = "https://github.com/settings/ssh/new"
-    opened = False
-
-    try:
-        if platform_utils.is_termux():
-            if shutil.which("termux-open"):
-                subprocess.run(["termux-open", url], check=False)
-                opened = True
-        else:
-            opened = webbrowser.open(url)
-    except Exception:
-        opened = False
-
-    if not opened:
-        warning("Could not open browser automatically.")
-
-    info("\nIf the browser did not open, visit this URL manually:")
-    print(f"\n  {url}\n")
 
 
 def convert_https_to_ssh(url):    

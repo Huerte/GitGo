@@ -29,3 +29,4 @@ todo/
 .coverage
 gitgo-simulation/
 simulate_gitgo.py
+src/pygitgo/commands/tag.py
