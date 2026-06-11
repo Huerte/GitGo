@@ -1,6 +1,6 @@
+from pygitgo.utils.colors import info, success
 from pygitgo.utils.platform import open_url
 from pygitgo.exceptions import GitGoError
-from pygitgo.utils.colors import *
 import subprocess
 import urllib
 import json
