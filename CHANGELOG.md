@@ -9,13 +9,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- **Project Scaffolding:** Added `gitgo init` to handle local project setup, gitignore fetching, and GitHub template downloads.
-- **Remote Repo Creation:** Added `gitgo new` to create remote GitHub repositories without leaving the terminal.
+- **Remote Repo Creation:** Added `gitgo repo` to create a remote GitHub repository without leaving the terminal.
+- **Quickstart Command:** Added `gitgo new <name> [lang]` as a one-shot command that scaffolds a local project, creates the GitHub repo, and pushes it all in sequence.
 
 ### Changed
 - **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide with screenshots covering the full `gitgo user login` flow for starters.
 - **Internal Utils:** Centralized browser opening logic and updated the auth manager to support repo creation tokens.
 - `gitgo new` token prompt now opens the classic PAT page by default, making it easier to create non-expiring tokens.
+- **Python Scaffolding:** `gitgo init <name> python` now generates a modern `pyproject.toml` and `.python-version` file instead of `requirements.txt`.
 
 ### Fixed
 - Fixed `gitgo new` opening the browser on every call. It now saves the token to git config (`gitgo.github-token`) after the first paste.
@@ -180,4 +181,4 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **HTTPS to SSH Conversion:** If your remote is HTTPS and SSH is configured, GitGo silently converts the remote URL before pushing.
 - **Termux Support:** Detects Termux via environment variables, adjusts binary paths to `$PREFIX/bin`, uses `termux-open` for browser actions, and handles the `detected dubious ownership` Git error natively.
 - **URL Validation:** `gitgo link` validates the repository URL format (HTTPS and SSH) before proceeding.
-- **Exception Hierarchy:** `GitGoError`, `GitCommandError`, `AuthError`, `ConfigError` for structured error handling across the codebase.
+- **Exception Hierarchy:** `GitGoError`, `GitCommandError` for structured error handling across the codebase.

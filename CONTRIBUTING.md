@@ -66,7 +66,7 @@ That's it. No Docker, no virtual environment required
 ```
 src/pygitgo/
 ├── main.py                # Entry point, argument parsing, command routing
-├── exceptions.py          # GitGoError hierarchy (GitCommandError, AuthError, ConfigError)
+├── exceptions.py          # GitGoError hierarchy (GitCommandError)
 ├── commands/
 │   ├── config.py          # gitgo config handler (set/get defaults)
 │   ├── git_branch.py      # Branch queries: get current branch, check existence, create
@@ -161,7 +161,7 @@ git commit -m "update"
 
 ### Error Handling
 
-- Raise `GitGoError` subclasses (`GitCommandError`, `AuthError`, `ConfigError`) instead of calling `sys.exit()` inside command modules.
+- Raise `GitGoError` subclasses (`GitCommandError`) instead of calling `sys.exit()` inside command modules.
 - Only `main.py` should call `sys.exit()`. Command functions should raise or return.
 - Never swallow exceptions silently with empty `except` blocks.
 

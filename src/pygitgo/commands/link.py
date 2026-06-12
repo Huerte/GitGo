@@ -30,17 +30,13 @@ def _link_interrupt_cleanup(repo_url, initialized, committed, remote_added):
         success("No git state was changed.")
 
 
-def link_operation(args):
-    repo_url = args.url
-
+def link_core(repo_url, commit_message="Initial commit", silent=False):
     if not validate_repo_url(repo_url):
         raise GitGoError(
             "\nInvalid repository URL!\n"
             "Expected format: https://github.com/username/repo.git"
             "             or: git@github.com:username/repo.git\n"
         )
-
-    commit_message = args.message
 
     initialized = False
     committed = False
@@ -98,13 +94,18 @@ def link_operation(args):
 
         git_push(current_branch)
 
-        print_banner("REPOSITORY INITIALIZED AND DEPLOYED.")
-
-        print()
-        info("Run 'gitgo undo link' to remove the remote and undo the initial commit.")
+        if not silent:
+            print_banner("REPOSITORY INITIALIZED AND DEPLOYED.")
+            print()
+            info("Run 'gitgo undo link' to remove the remote and undo the initial commit.")
 
     except KeyboardInterrupt:
         print()
         warning("Link interrupted (Ctrl+C).")
         _link_interrupt_cleanup(repo_url, initialized, committed, remote_added)
         sys.exit(130)
+
+
+def link_operation(args):
+    link_core(args.url, args.message)
+
