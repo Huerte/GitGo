@@ -9,6 +9,8 @@ from pygitgo.commands.jump import jump_operation
 from pygitgo.commands.link import link_operation
 from pygitgo.commands.push import push_operation
 from pygitgo.commands.user import user_operation
+from pygitgo.commands.repo import repo_operation
+from pygitgo.commands.init import init_operation
 from pygitgo.commands.new import new_operation
 from pygitgo.exceptions import GitGoError
 import argparse
@@ -147,23 +149,94 @@ def main():
     )
     pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
 
-    new_parser = subparsers.add_parser(
-        "new",
-        help="Create a GitHub repo and link the current project to it",
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Scaffold a new project structure",
         epilog=(
             "Examples:\n"
-            "  gitgo new                          Use current directory name as repo name\n"
-            "  gitgo new my-app                   Create repo 'my-app' and push\n"
-            "  gitgo new my-app --private         Create a private repo\n"
+            "  gitgo init my-app python          Scaffold a Python project locally\n"
+            "  gitgo init my-app --template owner/repo  Download a template locally\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    new_parser.add_argument(
+    init_parser.add_argument(
+        "name",
+        metavar="NAME",
+        help="Project name or path to scaffold"
+    )
+    init_parser.add_argument(
+        "lang",
+        nargs="?",
+        default=None,
+        metavar="LANG",
+        help="Language to scaffold (e.g. python, node, rust, go)."
+    )
+    init_parser.add_argument(
+        "--template",
+        default=None,
+        metavar="OWNER/REPO",
+        help="GitHub template repo to clone instead of a language scaffold."
+    )
+
+    repo_parser = subparsers.add_parser(
+        "repo",
+        help="Create a remote GitHub repository",
+        epilog=(
+            "Examples:\n"
+            "  gitgo repo                         Use current directory name as repo name\n"
+            "  gitgo repo my-app                  Create repo 'my-app' on GitHub\n"
+            "  gitgo repo my-app --private        Create a private repo\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    repo_parser.add_argument(
         "name",
         default=None,
         nargs="?",
         metavar="NAME",
         help="Repository name. Defaults to current directory name."
+    )
+    repo_parser.add_argument(
+        "-p", "--private",
+        default=False,
+        action="store_true",
+        help="Create a private repository."
+    )
+    repo_parser.add_argument(
+        "-d", "--description",
+        default="",
+        metavar="TEXT",
+        help="Short repository description shown on GitHub."
+    )
+
+    new_parser = subparsers.add_parser(
+        "new",
+        help="Scaffold, create remote repo, and push in one command",
+        epilog=(
+            "Examples:\n"
+            "  gitgo new my-app python            Scaffold a Python project and push it\n"
+            "  gitgo new my-app --private         Private repo, no language scaffold\n"
+            "  gitgo new my-app rust --private    Private Rust project\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    new_parser.add_argument(
+        "name",
+        metavar="NAME",
+        help="Project name. Used for both the local folder and the GitHub repo."
+    )
+    new_parser.add_argument(
+        "lang",
+        nargs="?",
+        default=None,
+        metavar="LANG",
+        help="Language to scaffold (e.g. python, node, rust, go)."
+    )
+    new_parser.add_argument(
+        "--template",
+        default=None,
+        metavar="OWNER/REPO",
+        help="GitHub template repo to clone instead of a language scaffold."
     )
     new_parser.add_argument(
         "-p", "--private",
@@ -177,7 +250,7 @@ def main():
         metavar="TEXT",
         help="Short repository description shown on GitHub."
     )
-    
+
     args = parser.parse_args()
 
     if getattr(args, 'version', False):
@@ -216,8 +289,12 @@ def main():
             undo_operation(args)
         elif args.command == "pull":
             pull_operation(args)
+        elif args.command == "repo":
+            repo_operation(args)
         elif args.command == "new":
             new_operation(args)
+        elif args.command == "init":
+            init_operation(args)
     except GitGoError as e:
         error(f"{e}")
         sys.exit(1)

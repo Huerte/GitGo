@@ -1,11 +1,15 @@
-import urllib
-
 from pygitgo.commands.git_core import git_init
+from pygitgo.utils.colors import info, success
 from pygitgo.exceptions import GitGoError
-from pygitgo.utils.colors import *
+import urllib.request
+import urllib.error
+import zipfile
+import json
+import io
 import os
 
-LANG_ALIASES: dict[str, str] = {
+
+LANG_ALIASES = {
     "py":        "python",
     "rs":        "rust",
     "rb":        "ruby",
@@ -13,21 +17,29 @@ LANG_ALIASES: dict[str, str] = {
     "cpp":       "c++",
     "cc":        "c++",
     "cplusplus": "c++",
-    "cs":        "csharp",
+    
+    "cs":        "visualstudio",
+    "csharp":    "visualstudio",
+
+    ".net":      "dotnet",
 
     "js":         "node",
     "ts":         "node",
     "javascript": "node",
     "typescript": "node",
     "golang":     "go",
-    "dotnet":     "csharp",
-    ".net":       "csharp",
 }
 
-PYTHON_REQUIREMENTS = """# Add project dependencies here
+PYTHON_PYPROJECT = """[project]
+name = "{name}"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []
 """
 
-NODE_PACKAGE_JSON = """{{
+NODE_PACKAGE_JSON = """{{\
   "name": "{name}",
   "version": "1.0.0",
   "description": "",
@@ -68,47 +80,49 @@ GO_MOD = """module {name}
 go 1.20
 """
 
+CSHARP_CSPROJ = """<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>
+"""
+
 README_TEMPLATE = """# {name}
 
-Scaffolded u
 """
+
+GITIGNORE_API_URL = "https://api.github.com/repos/github/gitignore/contents/"
 
 
 def _fetch_available_templates():
-    pass
-
-def _fetch_gitignore(language):
-    url = (
-        f"https://raw.githubusercontent.com/github/gitignore/main/{language}.gitignore"
-    )
     req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "GitGo-CLI"}
+        GITIGNORE_API_URL,
+        headers={
+            "User-Agent": "GitGo-CLI",
+            "Accept": "application/vnd.github+json",
+        },
     )
-
     try:
-        with urllib.request.urlopen(req, timeout=15) as response:
-            return response.read().decode("utf-8")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            entries = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        if e.code == 404:
-            raise GitGoError(
-                f"Language '{language}' not found in GitHub gitignore templates."
-            )
-        raise GitGoError(f"Failed to fetch gitignore: HTTP {e.code}")
+        raise GitGoError(f"Failed to fetch template list: HTTP {e.code}")
     except Exception as e:
-        raise GitGoError(f"Network error fetching gitignore: {e}")
+        raise GitGoError(f"Network error fetching template list: {e}")
+
+    suffix = ".gitignore"
+    return {
+        item["name"][: -len(suffix)].lower(): item["name"][: -len(suffix)]
+        for item in entries
+        if item.get("type") == "file" and item["name"].endswith(suffix)
+    }
 
 
-def _download_and_extract_template():
-    pass
-
-
-def _scaffold_language():
-    pass
-
-
-def _resolved_language(language, available):
-    normalized = LANG_ALIASES.get(language.lower(), language.lower())
+def _resolve_lang(lang, available):
+    normalized = LANG_ALIASES.get(lang.lower(), lang.lower())
     if normalized in available:
         return available[normalized]
 
@@ -120,22 +134,143 @@ def _resolved_language(language, available):
         key=lambda t: abs(len(t) - len(normalized)),
     )[:5]
     hint = f"\n  Similar templates: {', '.join(suggestions)}" if suggestions else ""
-    raise GitGoError(f"No .gitignore template found for '{language}'.{hint}")
+    raise GitGoError(f"No .gitignore template found for '{lang}'.{hint}")
 
-def _download_and_extract_template(template)
+
+def _fetch_gitignore(resolved_lang):
+    url = (
+        f"https://raw.githubusercontent.com/github/gitignore/main"
+        f"/{resolved_lang}.gitignore"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "GitGo-CLI"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise GitGoError(
+                f"Language '{resolved_lang}' not found in GitHub gitignore templates."
+            )
+        raise GitGoError(f"Failed to fetch gitignore: HTTP {e.code}")
+    except Exception as e:
+        raise GitGoError(f"Network error fetching gitignore: {e}")
+
+
+def _download_and_extract_template(template_slug, target_dir):
+    url = f"https://api.github.com/repos/{template_slug}/zipball"
+    req = urllib.request.Request(url, headers={"User-Agent": "GitGo-CLI"})
+    info(f"Downloading template from GitHub: {template_slug}...")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            zip_data = response.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise GitGoError(
+                f"Template repository '{template_slug}' not found on GitHub."
+            )
+        raise GitGoError(f"Failed to download template: HTTP {e.code}")
+    except Exception as e:
+        raise GitGoError(f"Network error downloading template: {e}")
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+            namelist = zf.namelist()
+            if not namelist:
+                raise GitGoError("Downloaded ZIP archive is empty.")
+
+            root_dir = namelist[0].split("/")[0] + "/"
+            for member in namelist:
+                if not member.startswith(root_dir):
+                    continue
+                rel_path = member[len(root_dir):]
+                if not rel_path:
+                    continue
+                dest = os.path.join(target_dir, rel_path)
+                if member.endswith("/"):
+                    os.makedirs(dest, exist_ok=True)
+                else:
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
+                    with zf.open(member) as src, open(dest, "wb") as out:
+                        out.write(src.read())
+        success("Template extracted successfully.")
+    except Exception as e:
+        raise GitGoError(f"Failed to extract template: {e}")
+
+
+def _scaffold_language(lang, target_dir, name):
+    available = _fetch_available_templates()
+    resolved_lang = _resolve_lang(lang, available)
+    gitignore_content = _fetch_gitignore(resolved_lang)
+
+    with open(os.path.join(target_dir, "README.md"), "w", encoding="utf-8") as f:
+        f.write(README_TEMPLATE.format(name=name))
+    with open(os.path.join(target_dir, ".gitignore"), "w", encoding="utf-8") as f:
+        f.write(gitignore_content)
+
+    info("Created README.md and .gitignore")
+
+    canonical = LANG_ALIASES.get(lang.lower(), lang.lower())
+
+    if canonical == "python":
+        with open(os.path.join(target_dir, "pyproject.toml"), "w", encoding="utf-8") as f:
+            f.write(PYTHON_PYPROJECT.format(name=name))
+        with open(os.path.join(target_dir, ".python-version"), "w", encoding="utf-8") as f:
+            f.write("3.8\n")
+        info("Created pyproject.toml and .python-version")
+
+    elif canonical == "node":
+        with open(os.path.join(target_dir, "package.json"), "w", encoding="utf-8") as f:
+            f.write(NODE_PACKAGE_JSON.format(name=name))
+        info("Created package.json")
+
+    elif canonical == "rust":
+        cargo_path = os.path.join(target_dir, "Cargo.toml")
+        with open(cargo_path, "w", encoding="utf-8") as f:
+            f.write(RUST_CARGO_TOML.format(name=name))
+        src_dir = os.path.join(target_dir, "src")
+        os.makedirs(src_dir, exist_ok=True)
+        with open(os.path.join(src_dir, "main.rs"), "w", encoding="utf-8") as f:
+            f.write('fn main() {\n    println!("Hello, world!");\n}\n')
+        info("Created Cargo.toml and src/main.rs")
+
+    elif canonical == "dart":
+        with open(os.path.join(target_dir, "pubspec.yaml"), "w", encoding="utf-8") as f:
+            f.write(DART_PUBSPEC_YAML.format(name=name))
+        info("Created pubspec.yaml")
+
+    elif canonical == "flutter":
+        with open(os.path.join(target_dir, "pubspec.yaml"), "w", encoding="utf-8") as f:
+            f.write(FLUTTER_PUBSPEC_YAML.format(name=name))
+        info("Created pubspec.yaml (Flutter)")
+
+    elif canonical == "go":
+        with open(os.path.join(target_dir, "go.mod"), "w", encoding="utf-8") as f:
+            f.write(GO_MOD.format(name=name))
+        with open(os.path.join(target_dir, "main.go"), "w", encoding="utf-8") as f:
+            f.write(
+                'package main\n\nimport "fmt"\n\n'
+                'func main() {\n\tfmt.Println("Hello, World!")\n}\n'
+            )
+        info("Created go.mod and main.go")
+
+    elif canonical in ("visualstudio", "dotnet"):
+        csproj_path = os.path.join(target_dir, f"{name}.csproj")
+        with open(csproj_path, "w", encoding="utf-8") as f:
+            f.write(CSHARP_CSPROJ)
+        with open(os.path.join(target_dir, "Program.cs"), "w", encoding="utf-8") as f:
+            f.write('Console.WriteLine("Hello, World!");\n')
+        info(f"Created {name}.csproj and Program.cs")
 
 
 def init_operation(args):
-    
     target_dir = args.name
 
     if os.path.exists(target_dir) and os.listdir(target_dir):
         raise GitGoError(f"Folder '{target_dir}' already exists and is not empty.")
-    
+
     os.makedirs(target_dir, exist_ok=True)
 
     orig_cwd = os.getcwd()
-
     try:
         if args.template:
             _download_and_extract_template(args.template, target_dir)
@@ -157,5 +292,3 @@ def init_operation(args):
         raise e
     finally:
         os.chdir(orig_cwd)
-
-
