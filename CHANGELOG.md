@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.8.0] - 2026-06-12
+
 ### Added
 - **Remote Repo Creation:** Added `gitgo repo` to create a remote GitHub repository without leaving the terminal.
 - **Quickstart Command:** Added `gitgo new <name> [lang]` as a one-shot command that scaffolds a local project, creates the GitHub repo, and pushes it all in sequence.
