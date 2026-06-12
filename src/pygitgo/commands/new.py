@@ -1,5 +1,6 @@
-from pygitgo.utils.colors import info, success
+from pygitgo.utils.colors import info, success, warning
 from pygitgo.utils.platform import open_url
+from pygitgo.utils.config import get_config, set_config
 from pygitgo.exceptions import GitGoError
 import subprocess
 import urllib
@@ -8,12 +9,42 @@ import os
 
 GITHUB_API = "https://api.github.com"
 
+_TOKEN_URL = "https://github.com/settings/tokens/new?scopes=repo&description=GitGo"
+
+
+def _clear_saved_token():
+    try:
+        subprocess.run(
+            ["git", "config", "--global", "--unset", "gitgo.github-token"],
+            capture_output=True
+        )
+    except Exception:
+        pass
+
+
+def _prompt_for_token():
+    info("GitGo needs a GitHub token to create repositories.")
+    info("Required scope: repo")
+    info("Tip: set 'Expiration' to 'No expiration' for a permanent token (Classic PAT only).")
+    open_url(_TOKEN_URL)
+
+    token = input(
+        "After creating the token on GitHub,\n"
+        "come back here and paste it: "
+    ).strip()
+
+    if not token:
+        raise GitGoError("Cancelled. No repository was created.")
+
+    set_config("github-token", token, silent=True)
+    return token
+
+
 def _get_github_token():
-    
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     if token:
         return token
-    
+
     try:
         result = subprocess.run(
             ["gh", "auth", "token"],
@@ -25,20 +56,12 @@ def _get_github_token():
                 return token
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
-    
-    info("GitGo needs a GitHub token to create repositories.")
-    info("Required scope: repo")
-    open_url("https://github.com/settings/tokens/new?scopes=repo")
 
-    token = input(
-        "After creating the token on GitHub,\n"
-        "come back here and paste it: "
-    ).strip()
+    token = get_config("github-token", "").strip()
+    if token:
+        return token
 
-    if not token:
-        raise GitGoError("Cancelled. No repository was created.")
-
-    return token
+    return _prompt_for_token()
 
 
 def create_github_repo(name, private=False, description="", token=None):
@@ -71,7 +94,11 @@ def create_github_repo(name, private=False, description="", token=None):
         if e.code == 422:
             raise GitGoError(f"Repository '{name}' already exists on GitHub.")
         elif e.code == 401:
-            raise GitGoError("Unauthorized. Your token might be expired. Try logging in again.")
+            warning("Token is invalid or expired. Clearing saved token...")
+            _clear_saved_token()
+            warning("Please create a new token. Opening GitHub now...")
+            new_token = _prompt_for_token()
+            return create_github_repo(name, private=private, description=description, token=new_token)
 
         body = e.read().decode("utf-8", errors="replace")
         try:
