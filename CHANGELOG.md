@@ -20,6 +20,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Template URLs:** `gitgo init --template` now supports full GitHub URLs (e.g., `https://github.com/owner/repo` or `.git` extensions) in addition to the short `owner/repo` format.
 
 ### Fixed
+- Fixed `gitgo new` skipping the initial commit and push due to a double `git init` bug. It now properly deploys the scaffolded files.
 - Fixed `gitgo new` opening the browser on every call. It now saves the token to git config (`gitgo.github-token`) after the first paste.
 - Fixed `gitgo new` crashing when an old token expires. It now clears the dead token and re-prompts automatically.
 

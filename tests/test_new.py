@@ -21,7 +21,7 @@ def test_new_operation_quickstart(mock_chdir, mock_link_core, mock_repo_operatio
     mock_init_operation.assert_called_once_with(args)
     mock_chdir.assert_called_once_with("my-project")
     mock_repo_operation.assert_called_once_with(args, silent=True)
-    mock_link_core.assert_called_once_with("https://github.com/user/my-project.git", "Initial commit", silent=True)
+    mock_link_core.assert_called_once_with("https://github.com/user/my-project.git", "Initial commit", silent=True, already_initialized=True)
 
     captured = capsys.readouterr()
     assert "undo link" in captured.out

@@ -12,7 +12,7 @@ def new_operation(args):
 
     repo_url = repo_operation(args, silent=True)
 
-    link_core(repo_url, "Initial commit", silent=True)
+    link_core(repo_url, "Initial commit", silent=True, already_initialized=True)
 
     print_banner("PROJECT LAUNCHED. SCAFFOLDED, CREATED, AND DEPLOYED.")
 

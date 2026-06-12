@@ -30,7 +30,7 @@ def _link_interrupt_cleanup(repo_url, initialized, committed, remote_added):
         success("No git state was changed.")
 
 
-def link_core(repo_url, commit_message="Initial commit", silent=False):
+def link_core(repo_url, commit_message="Initial commit", silent=False, already_initialized=False):
     if not validate_repo_url(repo_url):
         raise GitGoError(
             "\nInvalid repository URL!\n"
@@ -43,9 +43,13 @@ def link_core(repo_url, commit_message="Initial commit", silent=False):
     remote_added = False
 
     try:
-        is_new_repo = git_init()
-        if is_new_repo:
+        if already_initialized:
+            is_new_repo = True
             initialized = True
+        else:
+            is_new_repo = git_init()
+            if is_new_repo:
+                initialized = True
 
         if not is_new_repo:
             add_remote_origin(repo_url)
