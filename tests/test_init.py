@@ -97,3 +97,17 @@ def test_init_operation_lang(mock_git_init, mock_scaffold, tmp_path):
 
     mock_scaffold.assert_called_once_with("python", args.name, args.name)
     mock_git_init.assert_called_once()
+
+
+def test_parse_template_slug():
+    from pygitgo.commands.init import _parse_template_slug
+    
+    assert _parse_template_slug("owner/repo") == "owner/repo"
+    assert _parse_template_slug("https://github.com/owner/repo") == "owner/repo"
+    assert _parse_template_slug("https://github.com/owner/repo.git") == "owner/repo"
+    assert _parse_template_slug("git@github.com:owner/repo.git") == "owner/repo"
+    
+    import pytest
+    from pygitgo.exceptions import GitGoError
+    with pytest.raises(GitGoError):
+        _parse_template_slug("invalid_format")

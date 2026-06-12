@@ -26,14 +26,14 @@ If GitGo saves you time, give it a star. If you want to go further, sponsoring h
 
 ---
 
-GitGo wraps your most-typed git commands into shorter ones. It covers init, add, commit, push, branch, and stash. It also includes features most wrappers leave out: SSH key setup, HTTPS-to-SSH conversion, and a named stash interface called state management.
+GitGo wraps your most-typed git commands into shorter ones. It covers init, scaffold, add, commit, push, branch, and stash. It also includes features most wrappers leave out: SSH key setup, HTTPS-to-SSH conversion, a named stash interface called state management, and a one-shot quickstart command that takes you from nothing to a live GitHub repo in seconds.
 
 ```bash
 # Instead of this:
-git init && git add . && git commit -m "init" && git remote add origin <url> && git push -u origin main
+mkdir my-app && cd my-app && git init && git add . && git commit -m "init" && git remote add origin <url> && git push -u origin main
 
 # Run this:
-gitgo link https://github.com/username/repo.git "init"
+gitgo new my-app python
 ```
 
 ---
@@ -63,6 +63,9 @@ gitgo link https://github.com/username/repo.git "init"
 ## Features
 
 - **Single commands for linking, pushing, and stashing.** No more chaining five commands together.
+- **Quickstart with `new`:** One command to scaffold your project, create the GitHub repo, and push it. No switching tabs, no manual steps.
+- **Project scaffolding with `init`:** Generates a language-specific project structure with a `.gitignore` from GitHub's official templates. Supports Python, Node, Rust, Go, C#, and more.
+- **Remote repo creation with `repo`:** Creates a GitHub repo directly from the terminal without touching a browser.
 - **Undo:** Roll back commits, unstage files, discard local changes, or revert pushes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`, `undo link`, `undo push`.
 - **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
 - **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
@@ -138,15 +141,39 @@ gitgo user login
 
 For a full walkthrough with screenshots, see the [Login Guide](docs/login-guide.md).
 
-### 2. Link a New Project to GitHub
+### 2. Start a New Project From Scratch
 
-Point GitGo at an existing empty GitHub repo. It initializes Git, stages everything, commits, and pushes — including pulling unrelated histories if the remote isn't empty.
+One command scaffolds the local project, creates the GitHub repo, and pushes it. No tab switching.
+
+```bash
+gitgo new my-app python
+gitgo new my-app rust --private
+gitgo new my-app         # no scaffold, just the repo and push
+```
+
+Or use the individual steps if you want more control:
+
+```bash
+# Step 1: scaffold the project locally
+gitgo init my-app python
+
+# Step 2: create the remote GitHub repo
+cd my-app
+gitgo repo my-app --private
+
+# Step 3: connect and push
+gitgo link https://github.com/username/my-app.git
+```
+
+### 3. Link an Existing Project to GitHub
+
+Point GitGo at an existing empty GitHub repo. It initializes Git, stages everything, commits, and pushes, including pulling unrelated histories if the remote isn't empty.
 
 ```bash
 gitgo link https://github.com/username/repo.git "Initial commit"
 ```
 
-### 3. Push Changes
+### 4. Push Changes
 
 ```bash
 # Push to an existing branch
@@ -156,7 +183,7 @@ gitgo push main "Fix auth bug"
 gitgo push -n feat/login "Add login flow"
 ```
 
-### 4. Switch Branches
+### 5. Switch Branches
 
 Switch branches with uncommitted work in progress. `jump` stashes your changes, moves to the target branch, syncs with main, and pops the stash. If the pop triggers a conflict, it offers to abort and restore the repo to its prior state.
 
@@ -164,7 +191,7 @@ Switch branches with uncommitted work in progress. `jump` stashes your changes, 
 gitgo jump feat/new-login
 ```
 
-### 5. Undo Mistakes
+### 6. Undo Mistakes
 
 Undo recent mistakes with commands named for what they undo.
 
@@ -176,7 +203,7 @@ gitgo undo link      # Remove remote and undo initial commit
 gitgo undo push      # DANGER: Revert last push with a force-push
 ```
 
-### 6. Save Your Work-in-Progress
+### 7. Save Your Work-in-Progress
 
 ```bash
 gitgo state save "halfway through refactor"
@@ -184,7 +211,7 @@ gitgo state list
 gitgo state load 1
 ```
 
-### 7. Custom Defaults
+### 8. Custom Defaults
 
 ```bash
 gitgo config set default-branch develop
@@ -195,6 +222,55 @@ gitgo config get default-branch
 ---
 
 ## Command Reference
+
+### `gitgo new`
+
+One-shot quickstart. Scaffolds a local project, creates the GitHub remote repo, and pushes, all in one command.
+
+```bash
+gitgo new <name> [lang]
+gitgo new my-app python            # scaffold Python project and push
+gitgo new my-app rust --private    # private Rust project
+gitgo new my-app                   # no scaffold, just create repo and push
+```
+
+| Flag | Description |
+|------|-------------|
+| `lang` | Language to scaffold. Options: `python`, `node`, `rust`, `go`, `cs`, and more |
+| `--template OWNER/REPO` | Use a GitHub template repo instead of a language scaffold |
+| `-p`, `--private` | Create a private repository |
+| `-d`, `--description TEXT` | Short description shown on GitHub |
+
+### `gitgo init`
+
+Scaffolds a project folder locally. Creates a README, `.gitignore` (fetched from GitHub's official templates), and language-specific starter files.
+
+```bash
+gitgo init my-app python                                       # generates pyproject.toml and .python-version
+gitgo init my-app node                                         # generates package.json and index.js
+gitgo init my-app cs                                           # generates .csproj and Program.cs
+gitgo init my-app --template owner/repo                        # slug format
+gitgo init my-app --template https://github.com/owner/repo    # full URL accepted too
+```
+
+Supported languages: `python` (`py`), `node` (`js`, `ts`), `rust` (`rs`), `go` (`golang`), `csharp` (`cs`), and any language with a `.gitignore` template on GitHub.
+
+### `gitgo repo`
+
+Creates a remote GitHub repository without touching your local files.
+
+```bash
+gitgo repo [name]                  # use current directory name if no name given
+gitgo repo my-app --private
+gitgo repo my-app -d "My project description"
+```
+
+| Flag | Description |
+|------|-------------|
+| `-p`, `--private` | Create a private repository |
+| `-d`, `--description TEXT` | Short description shown on GitHub |
+
+On first run, GitGo opens GitHub's PAT page and prompts you to paste a token with `repo` scope. The token is saved to git config for future calls. If the token expires, GitGo detects the 401 and re-prompts automatically.
 
 ### `gitgo push`
 

@@ -17,6 +17,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Internal Utils:** Centralized browser opening logic and updated the auth manager to support repo creation tokens.
 - `gitgo new` token prompt now opens the classic PAT page by default, making it easier to create non-expiring tokens.
 - **Python Scaffolding:** `gitgo init <name> python` now generates a modern `pyproject.toml` and `.python-version` file instead of `requirements.txt`.
+- **Template URLs:** `gitgo init --template` now supports full GitHub URLs (e.g., `https://github.com/owner/repo` or `.git` extensions) in addition to the short `owner/repo` format.
 
 ### Fixed
 - Fixed `gitgo new` opening the browser on every call. It now saves the token to git config (`gitgo.github-token`) after the first paste.

@@ -72,10 +72,13 @@ src/pygitgo/
 │   ├── git_branch.py      # Branch queries: get current branch, check existence, create
 │   ├── git_core.py        # Core write operations: commit, init, push
 │   ├── git_remote.py      # Remote sync, rebase recovery, connection checks
+│   ├── init.py            # gitgo init handler (local project scaffolding)
 │   ├── jump.py            # Safe branch switching with Try-and-Revert engine
 │   ├── link.py            # Init, link remote, and push a new repo
+│   ├── new.py             # gitgo new handler (quickstart: init + repo + link)
 │   ├── pull.py            # Safe pull with auto-stash and rebase
 │   ├── push.py            # Stage, commit, push (with selective staging support)
+│   ├── repo.py            # gitgo repo handler (remote GitHub repo creation)
 │   ├── staging.py         # Interactive file picker for selective commits
 │   ├── stash.py           # Low-level git stash wrappers (push/pop/apply/drop/list/clear)
 │   ├── state.py           # Named stash interface (save/load/delete/list)

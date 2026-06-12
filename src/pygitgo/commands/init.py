@@ -5,6 +5,7 @@ import urllib.request
 import urllib.error
 import zipfile
 import json
+import re
 import io
 import os
 
@@ -156,6 +157,20 @@ def _fetch_gitignore(resolved_lang):
         raise GitGoError(f"Network error fetching gitignore: {e}")
 
 
+def _parse_template_slug(template):
+    # For github url
+    match = re.search(r"github\.com[/:]([^/]+/[^/.]+)", template)
+    if match:
+        return match.group(1)
+    # For repo slug
+    if re.match(r"^[^/]+/[^/]+$", template):
+        return template
+    raise GitGoError(
+        f"Invalid template format: '{template}'.\n"
+        "Expected: owner/repo, https://github.com/owner/repo, or https://github.com/owner/repo.git"
+    )
+
+
 def _download_and_extract_template(template_slug, target_dir):
     url = f"https://api.github.com/repos/{template_slug}/zipball"
     req = urllib.request.Request(url, headers={"User-Agent": "GitGo-CLI"})
@@ -273,7 +288,8 @@ def init_operation(args):
     orig_cwd = os.getcwd()
     try:
         if args.template:
-            _download_and_extract_template(args.template, target_dir)
+            slug = _parse_template_slug(args.template)
+            _download_and_extract_template(slug, target_dir)
         elif args.lang:
             _scaffold_language(args.lang, target_dir, target_dir)
 
