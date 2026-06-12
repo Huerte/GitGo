@@ -15,16 +15,18 @@ def get_config(key, fallback_value):
         return fallback_value
 
 
-def set_config(key, value):
+def set_config(key, value, silent=False):
 
     config_key = f"gitgo.{key}"
 
     try:
-        result = run_command(['git', 'config', '--global', config_key, value])
-        success(f"\nConfiguration saved: {key} = '{value}'")
+        run_command(['git', 'config', '--global', config_key, value])
+        if not silent:
+            success(f"\nConfiguration saved: {key} = '{value}'")
         return True
     except GitCommandError:
-        error(f"\nFailed to save configuration for '{key}'.")
+        if not silent:
+            error(f"\nFailed to save configuration for '{key}'.")
         return False
 
 

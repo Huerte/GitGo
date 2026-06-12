@@ -1,11 +1,11 @@
-import pytest
 from unittest.mock import patch, MagicMock
+from pygitgo.exceptions import GitGoError
 from pygitgo.commands.new import (
     _get_github_token,
     create_github_repo,
     new_operation,
 )
-from pygitgo.exceptions import GitGoError
+import pytest
 
 
 @patch.dict("os.environ", {"GITHUB_TOKEN": "test-token"})
@@ -27,7 +27,7 @@ def test_get_github_token_gh_cli(mock_run):
 def test_get_github_token_guided(mock_input, mock_open_url, mock_run):
     mock_run.side_effect = FileNotFoundError()
     assert _get_github_token() == "user-pasted-token"
-    mock_open_url.assert_called_once_with("https://github.com/settings/tokens/new?scopes=repo")
+    mock_open_url.assert_called_once_with("https://github.com/settings/tokens/new?scopes=repo&description=GitGo")
 
 
 @patch.dict("os.environ", {}, clear=True)

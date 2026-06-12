@@ -15,6 +15,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide with screenshots covering the full `gitgo user login` flow for starters.
 - **Internal Utils:** Centralized browser opening logic and updated the auth manager to support repo creation tokens.
+- `gitgo new` token prompt now opens the classic PAT page by default, making it easier to create non-expiring tokens.
+
+### Fixed
+- Fixed `gitgo new` opening the browser on every call. It now saves the token to git config (`gitgo.github-token`) after the first paste.
+- Fixed `gitgo new` crashing when an old token expires. It now clears the dead token and re-prompts automatically.
 
 ---
  
