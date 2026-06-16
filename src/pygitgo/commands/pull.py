@@ -15,8 +15,7 @@ def _pull_interrupt_cleanup():
     if rebase_in_progress:
         warning("A rebase is in progress from the interrupted pull.")
         try:
-            run_command(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...")
-            success("Rebase aborted. Branch is back to its pre-pull state.")
+            run_command(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...", ok_text="Rebase aborted. Branch is back to its pre-pull state.")
         except GitCommandError:
             error("Could not abort rebase automatically.")
             info("Run manually: git rebase --abort")
@@ -49,10 +48,9 @@ def pull_operation(args):
 
         run_command(
             ["git", "pull", "--rebase", "--autostash", "origin", branch],
-            loading_msg=f"Downloading latest updates for '{branch}' (auto-saving your code)..."
+            loading_msg=f"Downloading latest updates for '{branch}' (auto-saving your code)...",
+            ok_text=f"Project is up to date with '{branch}'."
         )
-
-        success(f"Project is up to date with '{branch}'.")
 
     except KeyboardInterrupt:
         print()

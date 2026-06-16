@@ -160,8 +160,7 @@ def test_push_keyboard_interrupt_commit_made(mocker):
     mocker.patch("pygitgo.commands.push.git_push", side_effect=KeyboardInterrupt)
     
     fake_run = mocker.patch("pygitgo.commands.push.run_command")
-    fake_run.side_effect = ["old_hash", "new_hash"] # first call: initial rev-parse HEAD. second call: post-cleanup check.
-    
+    fake_run.side_effect = ["old_hash", "new_hash"]
     fake_warning = mocker.patch("pygitgo.commands.push.warning")
     fake_info = mocker.patch("pygitgo.commands.push.info")
 

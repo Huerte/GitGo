@@ -21,7 +21,7 @@ def test_config_operation_not_valid_keys(mocker):
 
 def test_config_operation_set_no_value(mocker):
     fake_error = mocker.patch('pygitgo.commands.config.error')
-    args = Namespace(key="default-branch", action="set") # value is missing
+    args = Namespace(key="default-branch", action="set")
     config_operation(args)
     fake_error.assert_called_with("\nYou must provide a value to set!\n")
 

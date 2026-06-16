@@ -1,4 +1,5 @@
 from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
 from pygitgo.utils.platform import open_url
@@ -6,69 +7,101 @@ from . import ssh_utils
 import os
 
 
+def _configure_ssh_signing(key_path):
+    try:
+        run_command(["git", "config", "--global", "gpg.format", "ssh"])
+        run_command(["git", "config", "--global", "user.signingkey", str(key_path)])
+    except Exception:
+        pass
+    
+
 def login():
-    if ssh_utils.check_connection():
-        success("You are already logged in!")
+    from .account import sanitize_signing_config, ensure_user_configure
+
+    sanitize_signing_config()
+
+    key_path = ssh_utils.get_ssh_key_path()
+    already_logged_in = key_path.exists()
+    ok_text = "Already logged in via GitGo." if already_logged_in else "GitHub connection verified."
+
+    if ssh_utils.check_connection(ok_text=ok_text):
+        if already_logged_in:
+            _configure_ssh_signing(key_path)
+            ensure_user_configure(default_username=ssh_utils.get_github_username())
+        else:
+            warning("GitHub SSH connection is active, but NOT via a GitGo-managed key.")
+            warning("To use GitGo's full login (SSH + verified commits), you must log out first.")
+            info("Run: gitgo user logout")
+            info("Then run: gitgo user login")
+
         return True
-
-    info("initiating login sequence...")
-
+    
+    info("Initiating login sequence...")
     while True:
         email = input("Enter your email for GitHub: ").strip()
         if "@" in email and "." in email:
             break
         else:
             error("Please enter a valid email address.")
-        
 
     key_path = ssh_utils.generate_ssh_key(email=email)
     pub_key_path = str(key_path) + ".pub"
 
-    with open(pub_key_path, 'r') as f:
+    with open(pub_key_path, "r") as f:
         pub_key = f.read()
 
-    if pub_key:
-        success("SSH Key generated successfully!")
-
-        print("\n" + "=" * len(pub_key))
-        print(pub_key, end='')
-        print("=" * len(pub_key) + "\n")
-        
-        info("Copy the key above (between the lines).")
-        info("You need to add this key TWICE on GitHub:")
-        info("  1. Once as 'Authentication Key'  (so you can push and pull)")
-        info("  2. Once as 'Signing Key'          (so your commits show as Verified)")
-        info("Both entries use the exact same key text.")
-
-        open_url("https://github.com/settings/ssh/new")
-        
-        input(
-            "After adding both keys on GitHub,\n"
-            "come back here and press Enter to verify the connection..."
-        )
-
-    else:
+    if not pub_key:
         error("Failed to read the generated public key.")
         return False
 
-    if ssh_utils.check_connection():
-        from .account import ensure_user_configure
-        
+    success("SSH Key generated successfully!")
+
+    print()
+    print("  Your SSH public key:")
+    print()
+    print(f"  {pub_key.strip()}")
+    print()
+
+    info("Copy the key above, then add it TWICE on GitHub:")
+    info("  1. Authentication Key  — for pushing and pulling")
+    info("  2. Signing Key         — for Verified commits")
+    info("Same key text for both.")
+
+    input("\nOnce you've copied the key, press Enter to open GitHub...")
+
+    open_url("https://github.com/settings/ssh/new")
+
+    input(
+        "\nAfter adding both keys on GitHub,\n"
+        "come back here and press Enter to verify the connection..."
+    )
+
+    ssh_utils.ensure_ssh_agent(ssh_utils.get_ssh_key_path())
+
+    ssh_utils.clear_ssh_cache()
+
+    if ssh_utils.check_connection(ok_text="Login successful. You are connected.", fail_text="SSH key not recognised by GitHub."):
         github_username = ssh_utils.get_github_username()
-
         ensure_user_configure(default_email=email, default_username=github_username)
-
-        success("\nLogin Successful! You are connected.\n")
         return True
     
     error("Login Failed. The SSH key may not have been added to GitHub correctly.")
     info("Possible causes:")
     info("  1. The key was not pasted on GitHub")
-    info("  2. SSH agent is not running (try: eval $(ssh-agent) && ssh-add)")
+
+    if get_platform() == "windows":
+        info("  2. SSH agent is not running — run in PowerShell (as Administrator):")
+        info("       Set-Service ssh-agent -StartupType Automatic")
+        info("       Start-Service ssh-agent")
+        info("     Then run 'gitgo user login' again.")
+    else:
+        info("  2. SSH agent is not running (try: eval $(ssh-agent) && ssh-add)")
+        
     info("  3. Network or firewall is blocking SSH connections")
     info("Need help? Full guide: https://github.com/Huerte/GitGo/blob/main/docs/login-guide.md")
     return False
-    
+
+ 
 def logout():
     key_path = ssh_utils.get_ssh_key_path()
     if not key_path.exists():

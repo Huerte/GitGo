@@ -70,7 +70,6 @@ def test_create_github_repo_success(mock_urlopen):
 @patch("pygitgo.commands.repo._prompt_for_token", return_value="new-token")
 @patch("pygitgo.commands.repo._clear_saved_token")
 def test_create_github_repo_401_retry(mock_clear, mock_prompt, mock_token, mock_urlopen):
-    # First call fails with 401, second call (during retry) succeeds
     mock_error_resp = MagicMock()
     mock_error_resp.code = 401
     mock_error_resp.read.return_value = b'{"message": "Unauthorized"}'
@@ -79,7 +78,6 @@ def test_create_github_repo_401_retry(mock_clear, mock_prompt, mock_token, mock_
     mock_success_resp.read.return_value = b'{"clone_url": "https://github.com/user/repo-retry.git"}'
     mock_success_resp.__enter__.return_value = mock_success_resp
 
-    # We mock urlopen to raise HTTPError first, then return success response
     mock_urlopen.side_effect = [
         urllib.error.HTTPError("url", 401, "msg", {}, mock_error_resp),
         mock_success_resp

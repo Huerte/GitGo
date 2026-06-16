@@ -9,17 +9,16 @@ def add_remote_origin(repo_url):
     try:
         existing_remote = run_command(["git", "remote", "get-url", "origin"])
         warning(f"Remote origin already exists: {existing_remote}")
-        run_command(["git", "remote", "set-url", "origin", clean_url], loading_msg="Updating remote URL...")
+        run_command(["git", "remote", "set-url", "origin", clean_url], loading_msg="Updating remote URL...", ok_text=f"Remote origin set to: {clean_url}")
     except GitCommandError:
-        run_command(["git", "remote", "add", "origin", clean_url], loading_msg="Adding remote origin...")
-
-    success(f"Remote origin set to: {clean_url}")
+        run_command(["git", "remote", "add", "origin", clean_url], loading_msg="Adding remote origin...", ok_text=f"Remote origin set to: {clean_url}")
 
 
-def confirm_remote_link():
+def confirm_remote_link(ok_text=None):
     try:
-        run_command(["git", "ls-remote", "origin"], loading_msg="Testing connection to remote...")
-        success("Remote is reachable.")
+        if not ok_text:
+            ok_text = "Remote is reachable."
+        run_command(["git", "ls-remote", "origin"], loading_msg="Testing connection to remote...", ok_text=ok_text)
         return True
     except GitCommandError:
         error("Connection failed — verify the URL and your SSH key.")
@@ -44,14 +43,13 @@ def check_and_sync_branch(branch):
                 )
                 if behind_check and int(behind_check) > 0:
                     warning(f"Local branch is behind remote by {behind_check} commit(s). Pulling changes...")
-                    output = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...")
+                    output = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Synced with remote.")
                     if output:
                         print(output)
-                    success("Synced with remote.")
                 else:
-                    success("Branch is up to date.")
+                    info("Branch is up to date.")
             else:
-                success("Branch is already up to date.")
+                info("Branch is already up to date.")
         except (GitCommandError, ValueError):
             warning("Remote branch doesn't exist yet. First push will create it.")
     except (GitCommandError, OSError):

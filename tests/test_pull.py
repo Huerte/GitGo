@@ -21,9 +21,10 @@ def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_ru
     mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"])
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "main"], 
-        loading_msg="Downloading latest updates for 'main' (auto-saving your code)..."
+        loading_msg="Downloading latest updates for 'main' (auto-saving your code)...",
+        ok_text="Project is up to date with 'main'."
     )
-    mock_success.assert_called_once()
+    mock_success.assert_not_called()
 
 @patch("pygitgo.commands.pull.run_command")
 @patch("pygitgo.commands.pull.success")
@@ -40,9 +41,10 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
     mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "feature/test"])
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "feature/test"], 
-        loading_msg="Downloading latest updates for 'feature/test' (auto-saving your code)..."
+        loading_msg="Downloading latest updates for 'feature/test' (auto-saving your code)...",
+        ok_text="Project is up to date with 'feature/test'."
     )
-    mock_success.assert_called_once()
+    mock_success.assert_not_called()
 
 @patch("pygitgo.commands.pull.run_command")
 def test_pull_operation_branch_not_found(mock_run_command):
@@ -93,10 +95,10 @@ def test_pull_keyboard_interrupt_rebase_in_progress(mock_path, mock_warning, moc
         pull_operation(args)
 
     assert sys_exit.value.code == 130
-    mock_run_command.assert_any_call(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...")
+    mock_run_command.assert_any_call(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...", ok_text="Rebase aborted. Branch is back to its pre-pull state.")
     mock_warning.assert_any_call("Pull interrupted (Ctrl+C).")
     mock_warning.assert_any_call("A rebase is in progress from the interrupted pull.")
-    mock_success.assert_called_with("Rebase aborted. Branch is back to its pre-pull state.")
+    mock_success.assert_not_called()
 
 
 @patch("pygitgo.commands.pull.run_command")
@@ -126,4 +128,3 @@ def test_pull_keyboard_interrupt_no_rebase(mock_path, mock_warning, mock_success
     for call in mock_run_command.call_args_list:
         assert "--abort" not in call[0][0]
     mock_success.assert_called_with("No partial rebase detected. Branch is clean.")
-

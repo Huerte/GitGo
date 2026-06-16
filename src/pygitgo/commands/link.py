@@ -55,15 +55,13 @@ def link_core(repo_url, commit_message="Initial commit", silent=False, already_i
             add_remote_origin(repo_url)
             remote_added = True
 
-            if confirm_remote_link():
-                success("\nRemote linked to existing repository.")
-                success(f"Ready to push with: gitgo push <branch> 'your message'\n")
+            if confirm_remote_link(ok_text="Remote linked to existing repository."):
+                info("Ready to push with: gitgo push <branch> 'your message'")
             return
 
-        commit_made = git_commit(commit_message, loading_msg="Creating initial commit...")
+        commit_made = git_commit(commit_message, loading_msg="Creating initial commit...", ok_text="Initial commit created.")
         if commit_made:
             committed = True
-            success("Initial commit created.")
 
         add_remote_origin(repo_url)
         remote_added = True
@@ -87,9 +85,9 @@ def link_core(repo_url, commit_message="Initial commit", silent=False, already_i
             try:
                 run_command(
                     ["git", "pull", "origin", main_branch, "--allow-unrelated-histories", "--no-edit"],
-                    loading_msg="Pulling and merging remote content..."
+                    loading_msg="Pulling and merging remote content...",
+                    ok_text="Remote content merged."
                 )
-                success("Remote content merged.")
             except GitCommandError:
                 error("Failed to merge remote content. You may need to resolve conflicts manually.")
                 warning(f"Run: git pull origin {main_branch} --allow-unrelated-histories")

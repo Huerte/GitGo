@@ -1,13 +1,18 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.colors import info, success, warning
+from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pathlib import Path
 import subprocess
+import time
 import os
 import re
 
 
 SSH_TIMEOUT_SECONDS = 10
+
+_cached_ssh_response = None
+_cache_populated = False
 
 
 def ensure_github_known_host():
@@ -47,13 +52,50 @@ def _get_github_ssh_response():
     except (subprocess.TimeoutExpired, OSError):
         return None
 
-def check_connection():
+
+def _get_cached_ssh_response():
+    global _cached_ssh_response, _cache_populated
+    if not _cache_populated:
+        _cached_ssh_response = _get_github_ssh_response()
+        _cache_populated = True
+    return _cached_ssh_response
+
+
+def clear_ssh_cache():
+    global _cached_ssh_response, _cache_populated
+    _cached_ssh_response = None
+    _cache_populated = False
+
+
+def check_connection(ok_text=None, fail_text=None):
+    from yaspin import yaspin
+    import sys
+    
     ensure_github_known_host()
-    output = _get_github_ssh_response()
-    return output is not None and "successfully authenticated" in output
+
+    kwargs = {"text": ok_text or "Verifying GitHub connection..."}
+    if sys.stdout.isatty():
+        kwargs["color"] = "cyan"
+    spinner = yaspin(**kwargs)
+    spinner.start()
+
+    output = _get_cached_ssh_response()
+    connected = output is not None and "successfully authenticated" in output
+
+    if connected:
+        if ok_text:
+            spinner.text = ok_text
+        spinner.ok("✔")
+    else:
+        if fail_text:
+            spinner.text = fail_text
+        spinner.fail("✖")
+
+    return connected
+
 
 def get_github_username():
-    output = _get_github_ssh_response()
+    output = _get_cached_ssh_response()
     if output and "Hi " in output and "!" in output:
         try:
             return output.split("Hi ")[1].split("!")[0]
@@ -92,10 +134,8 @@ def generate_ssh_key(email):
             "\nFailed to generate SSH key. Is 'ssh-keygen' installed on your system?\n"
             f"Details: {e}"
         )
-    try:
-        run_command(["ssh-add", str(key_path)])
-    except (GitCommandError, OSError):
-        pass 
+    
+    ensure_ssh_agent(key_path)
     
     return key_path
 
@@ -114,3 +154,42 @@ def convert_https_to_ssh(url):
 
 def is_ssh_url(url):
     return url.strip().startswith("git@")
+
+def _try_ssh_add(key_path):
+    try:
+        run_command(["ssh-add", str(key_path)])
+        return True
+    except (GitCommandError, OSError):
+        return False
+
+def ensure_ssh_agent(key_path):
+    if _try_ssh_add(key_path):
+        return True
+    
+    if get_platform() == "windows":
+        try:
+            subprocess.run(
+                ["sc", "start", "ssh-agent"],
+                capture_output=True, timeout=5
+            )
+        except Exception:
+            pass
+
+        time.sleep(1)
+
+        if _try_ssh_add(key_path):
+            return True
+        
+        warning("SSH agent is not running on this machine.")
+        info("To fix this permanently, run in PowerShell (as Administrator):")
+        info("  Set-Service ssh-agent -StartupType Automatic")
+        info("  Start-Service ssh-agent")
+        info("Then run 'gitgo user login' again.")
+
+    else:
+        warning("SSH agent is not running.")
+        info("Run:  eval $(ssh-agent) && ssh-add")
+        info("Then run 'gitgo user login' again.")
+
+    return False
+    

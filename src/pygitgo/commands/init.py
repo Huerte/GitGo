@@ -172,19 +172,31 @@ def _parse_template_slug(template):
 
 
 def _download_and_extract_template(template_slug, target_dir):
+    from yaspin import yaspin
+    import sys
     url = f"https://api.github.com/repos/{template_slug}/zipball"
     req = urllib.request.Request(url, headers={"User-Agent": "GitGo-CLI"})
-    info(f"Downloading template from GitHub: {template_slug}...")
+    kwargs = {"text": f"Downloading template from GitHub: {template_slug}..."}
+    if sys.stdout.isatty():
+        kwargs["color"] = "cyan"
+    spinner = yaspin(**kwargs)
+    spinner.start()
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             zip_data = response.read()
     except urllib.error.HTTPError as e:
         if e.code == 404:
+            spinner.text = f"Template '{template_slug}' not found on GitHub."
+            spinner.fail("✖")
             raise GitGoError(
                 f"Template repository '{template_slug}' not found on GitHub."
             )
+        spinner.text = f"Failed to download template: HTTP {e.code}"
+        spinner.fail("✖")
         raise GitGoError(f"Failed to download template: HTTP {e.code}")
     except Exception as e:
+        spinner.text = f"Network error downloading template: {e}"
+        spinner.fail("✖")
         raise GitGoError(f"Network error downloading template: {e}")
 
     try:
@@ -207,8 +219,11 @@ def _download_and_extract_template(template_slug, target_dir):
                     os.makedirs(os.path.dirname(dest), exist_ok=True)
                     with zf.open(member) as src, open(dest, "wb") as out:
                         out.write(src.read())
-        success("Template extracted successfully.")
+        spinner.text = "Template extracted successfully."
+        spinner.ok("✔")
     except Exception as e:
+        spinner.text = f"Failed to extract template: {e}"
+        spinner.fail("✖")
         raise GitGoError(f"Failed to extract template: {e}")
 
 
@@ -294,9 +309,8 @@ def init_operation(args):
             _scaffold_language(args.lang, target_dir, target_dir)
 
         os.chdir(target_dir)
-        git_init()
+        git_init(ok_text=f"Initialized empty Git repository in {os.path.abspath('.')}")
 
-        success(f"\nInitialized empty Git repository in {os.path.abspath('.')}")
         info("Next step: Create a remote repo with 'gitgo new <name>'")
 
     except Exception as e:

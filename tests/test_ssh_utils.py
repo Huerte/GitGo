@@ -1,6 +1,7 @@
 from pygitgo.auth.ssh_utils import (
     ensure_github_known_host, check_connection, get_github_username,
-    generate_ssh_key, convert_https_to_ssh, is_ssh_url
+    generate_ssh_key, convert_https_to_ssh, is_ssh_url,
+    _try_ssh_add, ensure_ssh_agent, clear_ssh_cache
 )
 from pygitgo.exceptions import GitGoError
 from pathlib import Path
@@ -22,7 +23,6 @@ def test_ensure_github_known_host_not_exists(mocker):
     mocker.patch("pathlib.Path.mkdir")
     mock_file = mocker.patch("builtins.open", mocker.mock_open())
     
-    # Mock return value of run_command as a completed process
     mock_process = mocker.MagicMock()
     mock_process.stdout = "github.com ssh-rsa AAA...\n"
     fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command", return_value=mock_process)
@@ -39,16 +39,26 @@ def test_check_connection_success(mocker):
     mocker.patch("pygitgo.auth.ssh_utils.ensure_github_known_host")
     mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value="Hi user! You've successfully authenticated.")
 
+    mock_spinner = mocker.MagicMock()
+    mocker.patch("yaspin.yaspin", return_value=mock_spinner)
+
     result = check_connection()
     assert result is True
+    mock_spinner.start.assert_called_once()
+    mock_spinner.ok.assert_called_once_with("✔")
 
 
 def test_check_connection_failure(mocker):
     mocker.patch("pygitgo.auth.ssh_utils.ensure_github_known_host")
     mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value="Permission denied.")
 
+    mock_spinner = mocker.MagicMock()
+    mocker.patch("yaspin.yaspin", return_value=mock_spinner)
+
     result = check_connection()
     assert result is False
+    mock_spinner.start.assert_called_once()
+    mock_spinner.fail.assert_called_once_with("✖")
 
 
 def test_get_github_username_success(mocker):
@@ -116,4 +126,61 @@ def test_is_ssh_url_valid(url):
 def test_is_ssh_url_invalid(url):
     result = is_ssh_url(url)
     assert result is False
+
+
+def test_try_ssh_add_success(mocker):
+    fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command", return_value="added")
+    assert _try_ssh_add(Path("mock_key")) is True
+    fake_run.assert_called_once_with(["ssh-add", "mock_key"])
+
+
+def test_try_ssh_add_failure(mocker):
+    from pygitgo.exceptions import GitCommandError
+    fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command", side_effect=GitCommandError(["ssh-add"]))
+    assert _try_ssh_add(Path("mock_key")) is False
+
+
+def test_ensure_ssh_agent_success_immediately(mocker):
+    fake_try = mocker.patch("pygitgo.auth.ssh_utils._try_ssh_add", return_value=True)
+    assert ensure_ssh_agent(Path("mock_key")) is True
+    fake_try.assert_called_once_with(Path("mock_key"))
+
+
+def test_ensure_ssh_agent_windows_success_after_start(mocker):
+    fake_try = mocker.patch("pygitgo.auth.ssh_utils._try_ssh_add", side_effect=[False, True])
+    mocker.patch("pygitgo.auth.ssh_utils.get_platform", return_value="windows")
+    fake_sub = mocker.patch("subprocess.run")
+    mocker.patch("time.sleep")
+
+    assert ensure_ssh_agent(Path("mock_key")) is True
+    assert fake_try.call_count == 2
+    fake_sub.assert_called_once_with(["sc", "start", "ssh-agent"], capture_output=True, timeout=5)
+
+
+def test_ensure_ssh_agent_windows_failure(mocker):
+    fake_try = mocker.patch("pygitgo.auth.ssh_utils._try_ssh_add", return_value=False)
+    mocker.patch("pygitgo.auth.ssh_utils.get_platform", return_value="windows")
+    fake_sub = mocker.patch("subprocess.run")
+    mocker.patch("time.sleep")
+    fake_warning = mocker.patch("pygitgo.auth.ssh_utils.warning")
+    fake_info = mocker.patch("pygitgo.auth.ssh_utils.info")
+
+    assert ensure_ssh_agent(Path("mock_key")) is False
+    assert fake_try.call_count == 2
+    fake_sub.assert_called_once_with(["sc", "start", "ssh-agent"], capture_output=True, timeout=5)
+    assert fake_warning.call_count == 1
+    assert fake_info.call_count == 4
+
+
+def test_ensure_ssh_agent_linux_failure(mocker):
+    fake_try = mocker.patch("pygitgo.auth.ssh_utils._try_ssh_add", return_value=False)
+    mocker.patch("pygitgo.auth.ssh_utils.get_platform", return_value="linux")
+    fake_warning = mocker.patch("pygitgo.auth.ssh_utils.warning")
+    fake_info = mocker.patch("pygitgo.auth.ssh_utils.info")
+
+    assert ensure_ssh_agent(Path("mock_key")) is False
+    fake_try.assert_called_once_with(Path("mock_key"))
+    assert fake_warning.call_count == 1
+    assert fake_info.call_count == 2
+
 

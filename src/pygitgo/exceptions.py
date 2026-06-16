@@ -3,7 +3,6 @@ class GitGoError(Exception):
 
 
 class GitCommandError(GitGoError):
-    """Raised when a git subprocess command fails."""
     def __init__(self, command, stderr="", returncode=1):
         self.command = command
         self.stderr = stderr

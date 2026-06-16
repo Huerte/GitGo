@@ -20,7 +20,8 @@ def test_undo_jump_operation_no_stash(mocker):
     )
     fake_run.assert_any_call(
         ['git', 'checkout', "original_branch"],
-        loading_msg="Jumping you back to the original branch 'original_branch'..."
+        loading_msg="Jumping you back to the original branch 'original_branch'...",
+        ok_text="Canceled safely. Back on 'original_branch'."
     )
     fake_pop.assert_not_called()
 
@@ -37,9 +38,10 @@ def test_undo_jump_operation_with_stash(mocker):
     )
     fake_run.assert_any_call(
         ['git', 'checkout', "original_branch"],
-        loading_msg="Jumping you back to the original branch 'original_branch'..."
+        loading_msg="Jumping you back to the original branch 'original_branch'...",
+        ok_text=None
     )
-    fake_pop.assert_called_once()
+    fake_pop.assert_called_once_with(ok_text="Canceled safely. Back on 'original_branch'. Your code is safe.")
 
 
 def test_undo_jump_operation_deletes_ghost_branch(mocker):
@@ -54,9 +56,10 @@ def test_undo_jump_operation_deletes_ghost_branch(mocker):
     )
     fake_run.assert_any_call(
         ["git", "branch", "-D", "ghost-branch"],
-        loading_msg="Removing the empty branch 'ghost-branch'..."
+        loading_msg="Removing the empty branch 'ghost-branch'...",
+        ok_text=None
     )
-    fake_pop.assert_called_once()
+    fake_pop.assert_called_once_with(ok_text="Canceled safely. Back on 'original_branch'. Your code is safe.")
 
 
 def test_jump_operation_same_branch(mocker):
@@ -97,12 +100,13 @@ def test_jump_operation_has_changes_moves_to_branch(mocker):
     fake_success = mocker.patch('pygitgo.commands.jump.success')
     mocker.patch('pygitgo.commands.jump.git_stash_push', return_value=True)
     mocker.patch('pygitgo.commands.jump.git_stash_apply', return_value=True)
-    mocker.patch('pygitgo.commands.jump.git_stash_drop', return_value=True)
+    fake_drop = mocker.patch('pygitgo.commands.jump.git_stash_drop', return_value=True)
     mocker.patch('pygitgo.commands.jump.run_command', side_effect=lambda *a, **kw: 'M file.txt' if a[0] == ['git', 'status', '--porcelain'] else 'ok')
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
     fake_info.assert_any_call("Changes saved. Jumping to the new branch...")
-    fake_success.assert_called_with("On 'feature'. Your changes came with you.")
+    fake_drop.assert_called_once_with(loading_msg="Cleaning up the temporary stash...", ok_text="On 'feature'. Your changes came with you.")
+    fake_success.assert_not_called()
 
 
 def test_jump_operation_no_changes(mocker):
@@ -114,7 +118,7 @@ def test_jump_operation_no_changes(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
-    fake_success.assert_called_with("On 'feature'.")
+    fake_success.assert_not_called()
 
 
 
@@ -137,7 +141,6 @@ def test_jump_operation_branch_not_exist_cancel_operation(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=False)
-    # First input: "move changes?" yes, Second: "create branch?" no
     mocker.patch('builtins.input', side_effect=['y', 'n'])
 
     fake_info = mocker.patch('pygitgo.commands.jump.info')
@@ -149,15 +152,14 @@ def test_jump_operation_branch_not_exist_cancel_operation(mocker):
 
     fake_info.assert_any_call("Changes saved. Jumping to the new branch...")
     fake_info.assert_any_call("Exiting without jumping...")
-    fake_pop.assert_called_once()
+    fake_pop.assert_called_once_with(loading_msg="Putting your unsaved changes back...")
 
 
 def test_jump_operation_branch_not_exist_create_branch(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=False)
-    mocker.patch('pygitgo.commands.jump.git_new_branch', return_value=None)
-    # First input: "move changes?" yes, Second: "create branch?" yes
+    fake_new_branch = mocker.patch('pygitgo.commands.jump.git_new_branch', return_value=None)
     mocker.patch('builtins.input', side_effect=['y', 'y'])
 
     fake_success = mocker.patch('pygitgo.commands.jump.success')
@@ -174,9 +176,10 @@ def test_jump_operation_branch_not_exist_create_branch(mocker):
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
 
     fake_info.assert_any_call("Changes saved. Jumping to the new branch...")
-    fake_success.assert_any_call("On 'feature'. Your changes came with you.")
+    fake_new_branch.assert_called_once_with('feature', ok_text="Branch 'feature' created.")
+    fake_success.assert_not_called()
     fake_apply.assert_called_once()
-    fake_drop.assert_called_once()
+    fake_drop.assert_called_once_with(loading_msg="Cleaning up the temporary stash...", ok_text="On 'feature'. Your changes came with you.")
 
 
 def test_jump_operation_sync_fail_stay(mocker):
@@ -207,7 +210,6 @@ def test_jump_operation_merge_conflict_cancel(mocker):
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
     mocker.patch('pygitgo.commands.jump.undo_jump_operation', return_value=None)
-    # First: "move changes?" yes, Second: "fix conflict?" no
     mocker.patch('builtins.input', side_effect=['y', 'n'])
 
     fake_error = mocker.patch('pygitgo.commands.jump.error')
@@ -230,7 +232,6 @@ def test_jump_operation_merge_conflict_stay(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
-    # First: "move changes?" yes, Second: "fix conflict?" yes
     mocker.patch('builtins.input', side_effect=['y', 'y'])
 
     fake_success = mocker.patch('pygitgo.commands.jump.success')
@@ -254,4 +255,3 @@ def test_jump_operation_merge_conflict_stay(mocker):
     fake_warning.assert_any_call("Open your editor and fix the conflict lines.")
     fake_info.assert_any_call("Your stash backup is still saved. Run 'gitgo state list' to see it.")
     fake_drop.assert_not_called()
-

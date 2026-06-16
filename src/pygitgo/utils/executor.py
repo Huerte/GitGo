@@ -6,9 +6,13 @@ import os
 import re
 
 
-def run_command(command, return_complete=False, loading_msg=None):
+def run_command(command, return_complete=False, loading_msg=None, ok_text=None, err_text=None):
 
-    spinner = yaspin(text=loading_msg, color="cyan") if loading_msg else None
+    import sys
+    kwargs = {"text": loading_msg}
+    if sys.stdout.isatty():
+        kwargs["color"] = "cyan"
+    spinner = yaspin(**kwargs) if loading_msg else None
 
     if spinner:
         spinner.start()
@@ -22,11 +26,15 @@ def run_command(command, return_complete=False, loading_msg=None):
         )
 
         if spinner:
+            if ok_text:
+                spinner.text = ok_text
             spinner.ok("✔")
 
         return result if return_complete else result.stdout.strip()
     except (subprocess.CalledProcessError, OSError) as e:
         if spinner:
+            if err_text:
+                spinner.text = err_text
             spinner.fail("✖")
 
         stderr = ""
