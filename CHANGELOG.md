@@ -10,6 +10,20 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.8.1] - 2026-06-16
+
+### Changed
+- **Performance:** Cached the SSH handshake response so it doesn't run twice during login.
+- **UX:** Added a loading spinner to the GitHub connection check so the terminal doesn't freeze silently.
+- **Performance:** Removed a redundant network check that ran the first time you used any command.
+- **UX Refactoring:** Merged success and error messages with loading spinners across all commands. Success text now prints inline via `ok_text`, and failure text via `err_text`/`fail_text`, eliminating trailing blank lines and duplicate output.
+- **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide covering the full `gitgo user login` flow.
+
+### Fixed
+- Fixed the 4-10 second silent delay during `gitgo user login`.
+
+---
+
 ## [1.8.0] - 2026-06-12
 
 ### Added
@@ -17,12 +31,6 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Quickstart Command:** Added `gitgo new <name> [lang]` as a one-shot command that scaffolds a local project, creates the GitHub repo, and pushes it all in sequence.
 
 ### Changed
-- **Performance:** Cached the SSH handshake response so it doesn't run twice during login.
-- **UX:** Added a loading spinner to the GitHub connection check so the terminal doesn't freeze silently.
-- **Performance:** Removed a redundant network check that ran the first time you used any command.
-- **UX Refactoring:** Merged success and error messages with loading spinners across all commands. Success text now prints inline via `ok_text`, and failure text via `err_text`/`fail_text`, eliminating trailing blank lines and duplicate output.
-- **Tests:** Updated all unit test mocks for the new `ok_text`, `err_text`, and `fail_text` parameters. Conditionally applied yaspin colors based on TTY presence to eliminate UserWarnings in pytest and CI. 250 tests passing, 0 warnings.
-- **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide covering the full `gitgo user login` flow.
 - **Internal Utils:** Centralized browser opening logic and updated the auth manager to support repo creation tokens.
 - `gitgo new` token prompt now opens the classic PAT page by default, making it easier to create non-expiring tokens.
 - **Python Scaffolding:** `gitgo init <name> python` now generates a modern `pyproject.toml` and `.python-version` file instead of `requirements.txt`.
@@ -30,7 +38,6 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Cleaned up old commented-out code in `manager.py`.
 
 ### Fixed
-- Fixed the 4-10 second silent delay during `gitgo user login`.
 - Fixed `gitgo new` skipping the initial commit and push due to a double `git init` bug. It now properly deploys the scaffolded files.
 - Fixed `gitgo new` opening the browser on every call. It now saves the token to git config (`gitgo.github-token`) after the first paste.
 - Fixed `gitgo new` crashing when an old token expires. It now clears the dead token and re-prompts automatically.
