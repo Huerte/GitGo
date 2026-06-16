@@ -14,21 +14,19 @@ def undo_jump_operation(original_branch, stashed_code, created_branch=None):
     if created_branch:
         run_command(["git", "checkout", original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
         try:
-            run_command(["git", "branch", "-D", created_branch], loading_msg=f"Removing the empty branch '{created_branch}'...")
+            ok_text = None if stashed_code else f"Canceled safely. Back on '{original_branch}'."
+            run_command(["git", "branch", "-D", created_branch], loading_msg=f"Removing the empty branch '{created_branch}'...", ok_text=ok_text)
         except GitCommandError:
             warning(f"Could not delete branch '{created_branch}'. Remove it manually with: git branch -D {created_branch}")
     else:
         run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Canceling... Putting your files back exactly how they were...")
-        run_command(['git', 'checkout', original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...")
+        ok_text = None if stashed_code else f"Canceled safely. Back on '{original_branch}'."
+        run_command(['git', 'checkout', original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...", ok_text=ok_text)
 
     if stashed_code:
-        pop_result = git_stash_pop()
+        pop_result = git_stash_pop(ok_text=f"Canceled safely. Back on '{original_branch}'. Your code is safe.")
         if not pop_result:
             warning("Could not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.")
-
-    print()
-    success(f"Canceled safely.")
-    success(f"Back on '{original_branch}'. Your code is safe.")
 
 
 def _jump_interrupt_cleanup(original_branch, stashed_code, created_branch):
@@ -52,10 +50,8 @@ def _jump_interrupt_cleanup(original_branch, stashed_code, created_branch):
             if stashed_code:
                 warning("Then restore your stash: git stash pop")
     elif stashed_code:
-        pop_result = git_stash_pop()
-        if pop_result:
-            success("Your stashed changes have been restored.")
-        else:
+        pop_result = git_stash_pop(ok_text="Your stashed changes have been restored.")
+        if not pop_result:
             warning("Could not restore stash automatically. Run 'gitgo state list' to find it.")
     else:
         success("No git state was changed. Your files are safe.")
@@ -107,18 +103,26 @@ def jump_operation(args):
                         warning("Could not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.")
                 return
 
-            git_new_branch(target_branch)
+            ok_text = f"Branch '{target_branch}' created." if stashed_code else f"On '{target_branch}'."
+            git_new_branch(target_branch, ok_text=ok_text)
             created_branch = target_branch
         else:
-            run_command(['git', 'checkout', target_branch], loading_msg=f"Moving you to branch '{target_branch}'...")
-
-            main_branch = get_main_branch()
-
-            try:
-                run_command(['git', 'pull', 'origin', main_branch], loading_msg=f"Downloading the latest updates from '{main_branch}'...")
-            except GitCommandError:
-                warning(f"Failed to pull updates from '{main_branch}'. No internet, or the remote branch doesn't exist yet.")
-                info(f"On '{target_branch}', but without the latest updates from '{main_branch}'.")
+            if stashed_code:
+                run_command(['git', 'checkout', target_branch], loading_msg=f"Moving you to branch '{target_branch}'...", ok_text=f"Moved to branch '{target_branch}'.")
+                main_branch = get_main_branch()
+                try:
+                    run_command(['git', 'pull', 'origin', main_branch], loading_msg=f"Downloading the latest updates from '{main_branch}'...", ok_text=f"Downloaded updates from '{main_branch}'.")
+                except GitCommandError:
+                    warning(f"Failed to pull updates from '{main_branch}'. No internet, or the remote branch doesn't exist yet.")
+                    info(f"On '{target_branch}', but without the latest updates from '{main_branch}'.")
+            else:
+                run_command(['git', 'checkout', target_branch], loading_msg=f"Moving you to branch '{target_branch}'...", ok_text=f"Moved to branch '{target_branch}'.")
+                main_branch = get_main_branch()
+                try:
+                    run_command(['git', 'pull', 'origin', main_branch], loading_msg=f"Downloading the latest updates from '{main_branch}'...", ok_text=f"On '{target_branch}'. Up to date with '{main_branch}'.")
+                except GitCommandError:
+                    warning(f"Failed to pull updates from '{main_branch}'. No internet, or the remote branch doesn't exist yet.")
+                    info(f"On '{target_branch}', but without the latest updates from '{main_branch}'.")
 
         if stashed_code:
             apply_result = git_stash_apply(loading_msg="Unpacking your unsaved changes...")
@@ -141,15 +145,11 @@ def jump_operation(args):
                     info("Your stash backup is still saved. Run 'gitgo state list' to see it.")
                     return
             else:
-                drop_result = git_stash_drop(loading_msg="Cleaning up the temporary stash...")
+                drop_result = git_stash_drop(loading_msg="Cleaning up the temporary stash...", ok_text=f"On '{target_branch}'. Your changes came with you.")
                 if not drop_result:
                     warning("Could not clean up the temporary stash. Run 'gitgo state list' to remove it manually.")
-                print()
-                success(f"On '{target_branch}'. Your changes came with you.")
                 return
         else:
-            print()
-            success(f"On '{target_branch}'.")
             return
 
     except KeyboardInterrupt:

@@ -67,20 +67,28 @@ def clear_ssh_cache():
     _cache_populated = False
 
 
-def check_connection():
+def check_connection(ok_text=None, fail_text=None):
     from yaspin import yaspin
-
+    import sys
+    
     ensure_github_known_host()
 
-    spinner = yaspin(text="Verifying GitHub connection...", color="cyan")
+    kwargs = {"text": ok_text or "Verifying GitHub connection..."}
+    if sys.stdout.isatty():
+        kwargs["color"] = "cyan"
+    spinner = yaspin(**kwargs)
     spinner.start()
 
     output = _get_cached_ssh_response()
     connected = output is not None and "successfully authenticated" in output
 
     if connected:
+        if ok_text:
+            spinner.text = ok_text
         spinner.ok("✔")
     else:
+        if fail_text:
+            spinner.text = fail_text
         spinner.fail("✖")
 
     return connected

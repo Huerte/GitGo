@@ -30,11 +30,11 @@ def is_branch_exist(branch):
     return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
 
 
-def git_new_branch(branch):
+def git_new_branch(branch, ok_text=None):
     try:
-        run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...")
-        print()
-        success(f"Branch '{branch}' created.")
+        if not ok_text:
+            ok_text = f"Branch '{branch}' created."
+        run_command(["git", "checkout", "-b", branch], loading_msg=f"Creating branch '{branch}'...", ok_text=ok_text)
     except GitCommandError:
         try:
             current = get_current_branch()

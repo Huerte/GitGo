@@ -57,10 +57,8 @@ def test_get_config_error_handling(mocker):
     assert result == "fallback"
 
 
-# --- get_default_branch tests ---
 
 def test_get_default_branch_uses_git_init_default_branch(mocker):
-    # Level 1: native git config wins over gitgo config and hard fallback.
     mocker.patch(
         "pygitgo.utils.config.subprocess.check_output",
         return_value="develop\n",
@@ -70,7 +68,6 @@ def test_get_default_branch_uses_git_init_default_branch(mocker):
 
 
 def test_get_default_branch_falls_back_to_gitgo_config(mocker):
-    # Level 2: init.defaultBranch unset, gitgo.default-branch is set.
     mocker.patch(
         "pygitgo.utils.config.subprocess.check_output",
         side_effect=subprocess.CalledProcessError(1, "git"),
@@ -81,7 +78,6 @@ def test_get_default_branch_falls_back_to_gitgo_config(mocker):
 
 
 def test_get_default_branch_hard_fallback_to_main(mocker):
-    # Level 3: both sources absent, returns "main".
     mocker.patch(
         "pygitgo.utils.config.subprocess.check_output",
         side_effect=subprocess.CalledProcessError(1, "git"),
@@ -93,7 +89,6 @@ def test_get_default_branch_hard_fallback_to_main(mocker):
 
 
 def test_get_default_branch_handles_git_not_found(mocker):
-    # FileNotFoundError when git is not on PATH should not crash.
     mocker.patch(
         "pygitgo.utils.config.subprocess.check_output",
         side_effect=FileNotFoundError,

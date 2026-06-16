@@ -118,15 +118,30 @@ def repo_operation(args, silent=False):
         info(f"No name given: using current directory name: '{repo_name}'")
 
     token = _get_github_token()
-    info(f"Creating GitHub repository '{repo_name}'...")
-    repo_ = create_github_repo(
-        name=repo_name,
-        private=args.private,
-        description=args.description or "",
-        token=token
-    )
-    repo_url = repo_.get("clone_url")
-    success(f"Successfully created remote repository: {repo_url}")
+
+    from yaspin import yaspin
+    import sys
+    kwargs = {"text": f"Creating GitHub repository '{repo_name}'..."}
+    if sys.stdout.isatty():
+        kwargs["color"] = "cyan"
+    spinner = yaspin(**kwargs)
+    spinner.start()
+
+    try:
+        repo_ = create_github_repo(
+            name=repo_name,
+            private=args.private,
+            description=args.description or "",
+            token=token
+        )
+        repo_url = repo_.get("clone_url")
+        spinner.text = f"Successfully created remote repository: {repo_url}"
+        spinner.ok("✔")
+    except Exception as e:
+        spinner.text = str(e)
+        spinner.fail("✖")
+        raise e
+
     if not silent:
         info(f"\nTo connect and push your local code, run:\n  gitgo link {repo_url}")
     return repo_url

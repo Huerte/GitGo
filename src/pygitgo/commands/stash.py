@@ -1,11 +1,12 @@
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
 
-def git_stash_push(label="GitGo Auto-Stash", loading_msg="Saving your changes..."):
+def git_stash_push(label="GitGo Auto-Stash", loading_msg="Saving your changes...", ok_text=None):
     try:
         result = run_command(
             ["git", "stash", "push", "-u", "-m", label],
-            loading_msg=loading_msg
+            loading_msg=loading_msg,
+            ok_text=ok_text
         )
 
         if isinstance(result, str) and "No local changes to save" in result:
@@ -17,53 +18,54 @@ def git_stash_push(label="GitGo Auto-Stash", loading_msg="Saving your changes...
         return False
     
 
-def git_stash_pop(loading_msg="Restoring your saved changes..."):
+def git_stash_pop(loading_msg="Restoring your saved changes...", ok_text=None):
     try:
         run_command(
             ["git", "stash", "pop"], 
-            loading_msg=loading_msg
+            loading_msg=loading_msg,
+            ok_text=ok_text
         )
         return True
     except GitCommandError:
         return False
 
 
-def git_stash_apply(stash_id=None, loading_msg="Applying saved changes..."):
+def git_stash_apply(stash_id=None, loading_msg="Applying saved changes...", ok_text=None):
     command = ["git", "stash", "apply"]
     if stash_id is not None:
         command.append(f"stash@{{{stash_id}}}")
 
     try:
-        run_command(command, loading_msg=loading_msg)
+        run_command(command, loading_msg=loading_msg, ok_text=ok_text)
         return True
     except GitCommandError:
         return False
 
 
-def git_stash_drop(stash_id=None, loading_msg="Cleaning up stash..."):
+def git_stash_drop(stash_id=None, loading_msg="Cleaning up stash...", ok_text=None):
     command = ["git", "stash", "drop"]
     if stash_id is not None:
         command.append(f"stash@{{{stash_id}}}")
 
     try:
-        run_command(command, loading_msg=loading_msg)
+        run_command(command, loading_msg=loading_msg, ok_text=ok_text)
         return True
     except GitCommandError:
         return False
 
-def git_stash_list(loading_msg="Fetching stash list..."):
+def git_stash_list(loading_msg="Fetching stash list...", ok_text=None):
     try:
         return run_command([
             "git", "stash", "list",
             "--date=format:%Y-%m-%d %H:%M:%S",
             "--pretty=%gd||%cd||%s"
-        ], loading_msg=loading_msg)
+        ], loading_msg=loading_msg, ok_text=ok_text)
     except GitCommandError:
         return ""
 
-def git_stash_clear(loading_msg="Clearing all stashes..."):
+def git_stash_clear(loading_msg="Clearing all stashes...", ok_text=None):
     try:
-        run_command(["git", "stash", "clear"], loading_msg=loading_msg)
+        run_command(["git", "stash", "clear"], loading_msg=loading_msg, ok_text=ok_text)
         return True
     except GitCommandError:
         return False

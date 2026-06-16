@@ -19,7 +19,7 @@ def _get_signing_flags():
     ]
 
 
-def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=False):
+def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=False, ok_text=None):
     try:
         status_result = run_command(["git", "status", "--porcelain"])
         if not status_result.strip():
@@ -36,29 +36,31 @@ def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=
 
     signing_flags = _get_signing_flags()
     commit_command = ["git"] + signing_flags + ["commit", "-S", "-m", clean_message]
-    run_command(commit_command, loading_msg=loading_msg)
+    run_command(commit_command, loading_msg=loading_msg, ok_text=ok_text)
 
     return True
 
 
-def git_init():
+def git_init(ok_text=None):
     if os.path.isdir(".git"):
         warning("Already a git repository! Skipping init...")
         return False
 
     default_main_branch = get_default_branch()
 
+    if not ok_text:
+        ok_text = "Git repository initialized."
+
     try:
-        run_command(["git", "init", "-b", default_main_branch], loading_msg="Initializing git repository...")
+        run_command(["git", "init", "-b", default_main_branch], loading_msg="Initializing git repository...", ok_text=ok_text)
     except GitCommandError:
         run_command(["git", "init"], loading_msg="Initializing git repository...")
-        run_command(["git", "checkout", "-b", default_main_branch])
+        run_command(["git", "checkout", "-b", default_main_branch], ok_text=ok_text)
 
-    success("Git repository initialized.")
     return True
 
 
-def git_push(branch):
+def git_push(branch, ok_text=None):
     try:
         remote_url = run_command(["git", "remote", "get-url", "origin"]).strip()
     except GitCommandError:
@@ -67,13 +69,11 @@ def git_push(branch):
     if remote_url and not is_ssh_url(remote_url) and check_connection():
         ssh_url = convert_https_to_ssh(remote_url)
         if ssh_url:
-            run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...")
-            success(f"Remote updated to: {ssh_url}")
+            run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...", ok_text=f"Remote updated to: {ssh_url}")
 
     try:
-        run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...")
+        run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...", ok_text=ok_text, err_text="Push failed: verify your remote URL and SSH key, then try again.")
     except (GitCommandError, OSError) as e:
-        error("Push failed — verify your remote URL and SSH key, then try again.")
         info("Run:  git remote -v   to inspect your current remote.")
         if "rebase in progress" in str(e):
             handle_rebase()

@@ -32,16 +32,14 @@ def undo_changes():
     try:
         run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
         reset_done = True
-        run_command(["git", "clean", "-fd"], loading_msg="Removing new files...")
-        success("Working tree reset. All changes discarded.")
+        run_command(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
 
     except KeyboardInterrupt:
         print()
         if reset_done:
             warning("Interrupted during file removal. Finishing cleanup...")
             try:
-                run_command(["git", "clean", "-fd"])
-                success("Working tree reset. All changes discarded.")
+                run_command(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
             except GitCommandError:
                 warning("Could not finish cleanup. Run 'git clean -fd' manually.")
         else:
@@ -87,9 +85,9 @@ def undo_push():
     try:
         run_command(
             ["git", "push", "--force", "origin", branch],
-            loading_msg=f"Force-pushing reverted state to '{branch}'..."
+            loading_msg=f"Force-pushing reverted state to '{branch}'...",
+            ok_text=f"Last push reverted. Remote '{branch}' is back to the previous commit."
         )
-        success(f"Last push reverted. Remote '{branch}' is back to the previous commit.")
         info("Your files are still staged locally. Edit and push again when ready.")
     except GitCommandError as e:
         warning("Local commit was undone, but the force-push failed.")

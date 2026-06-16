@@ -23,7 +23,6 @@ def test_ensure_github_known_host_not_exists(mocker):
     mocker.patch("pathlib.Path.mkdir")
     mock_file = mocker.patch("builtins.open", mocker.mock_open())
     
-    # Mock return value of run_command as a completed process
     mock_process = mocker.MagicMock()
     mock_process.stdout = "github.com ssh-rsa AAA...\n"
     fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command", return_value=mock_process)

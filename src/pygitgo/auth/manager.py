@@ -20,13 +20,14 @@ def login():
 
     sanitize_signing_config()
 
-    if ssh_utils.check_connection():
-        key_path = ssh_utils.get_ssh_key_path()
+    key_path = ssh_utils.get_ssh_key_path()
+    already_logged_in = key_path.exists()
+    ok_text = "Already logged in via GitGo." if already_logged_in else "GitHub connection verified."
 
-        if key_path.exists():
+    if ssh_utils.check_connection(ok_text=ok_text):
+        if already_logged_in:
             _configure_ssh_signing(key_path)
             ensure_user_configure(default_username=ssh_utils.get_github_username())
-            success("You are already logged in via GitGo.")
         else:
             warning("GitHub SSH connection is active, but NOT via a GitGo-managed key.")
             warning("To use GitGo's full login (SSH + verified commits), you must log out first.")
@@ -79,10 +80,9 @@ def login():
 
     ssh_utils.clear_ssh_cache()
 
-    if ssh_utils.check_connection():
+    if ssh_utils.check_connection(ok_text="Login successful. You are connected.", fail_text="SSH key not recognised by GitHub."):
         github_username = ssh_utils.get_github_username()
         ensure_user_configure(default_email=email, default_username=github_username)
-        success("\nLogin Successful! You are connected.\n")
         return True
     
     error("Login Failed. The SSH key may not have been added to GitHub correctly.")

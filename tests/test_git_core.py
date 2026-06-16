@@ -16,7 +16,8 @@ def test_git_commit(mocker):
 
     fake_run.assert_any_call(
         ['git', 'commit', '-S', '-m', 'Testing the commit feature'],
-        loading_msg="Commiting changes..."
+        loading_msg="Commiting changes...",
+        ok_text=None
     )
 
 def test_git_init_already_initialized(mocker):
@@ -33,23 +34,21 @@ def test_git_init_already_initialized(mocker):
 def test_git_init_success(mocker):
     mocker.patch('os.path.isdir', return_value=False)
     mocker.patch('pygitgo.commands.git_core.get_default_branch', return_value='main')
-    fake_success = mocker.patch('pygitgo.commands.git_core.success')
     fake_run = mocker.patch('pygitgo.commands.git_core.run_command', return_value='ok')
 
     result = git_init()
 
     assert result == True
-    fake_success.assert_called_once()
     fake_run.assert_called_once_with(
         ["git", "init", "-b", 'main'], 
-        loading_msg="Initializing git repository..."
+        loading_msg="Initializing git repository...",
+        ok_text="Git repository initialized."
     )
 
 def test_git_init_fallback(mocker):
     from pygitgo.exceptions import GitCommandError
     mocker.patch('os.path.isdir', return_value=False)
     mocker.patch('pygitgo.commands.git_core.get_default_branch', return_value='main')
-    fake_success = mocker.patch('pygitgo.commands.git_core.success')
     
     fake_run = mocker.patch(
         'pygitgo.commands.git_core.run_command', 
@@ -63,7 +62,6 @@ def test_git_init_fallback(mocker):
     result = git_init()
 
     assert result == True
-    fake_success.assert_called_once()
     assert fake_run.call_count == 3
 
 def test_git_push_already_ssh(mocker):
@@ -80,7 +78,9 @@ def test_git_push_already_ssh(mocker):
 
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
-        loading_msg=f"Pushing to remote branch '{branch}'..."
+        loading_msg=f"Pushing to remote branch '{branch}'...",
+        ok_text=None,
+        err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
 def test_git_push_no_remote(mocker):
@@ -98,7 +98,9 @@ def test_git_push_no_remote(mocker):
 
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
-        loading_msg=f"Pushing to remote branch '{branch}'..."
+        loading_msg=f"Pushing to remote branch '{branch}'...",
+        ok_text=None,
+        err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
 def test_git_push_https_no_connection(mocker):
@@ -112,16 +114,15 @@ def test_git_push_https_no_connection(mocker):
 
     mocker.patch('pygitgo.commands.git_core.is_ssh_url', return_value=False)
     mocker.patch('pygitgo.commands.git_core.check_connection', return_value=False)
-    fake_success = mocker.patch('pygitgo.commands.git_core.success')
     
     branch = 'main'
     git_push(branch)
 
-    fake_success.assert_not_called()
-
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
-        loading_msg=f"Pushing to remote branch '{branch}'..."
+        loading_msg=f"Pushing to remote branch '{branch}'...",
+        ok_text=None,
+        err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
 def test_git_push_convert_https_to_ssh(mocker):
@@ -137,21 +138,21 @@ def test_git_push_convert_https_to_ssh(mocker):
     mocker.patch('pygitgo.commands.git_core.is_ssh_url', return_value=False)
     mocker.patch('pygitgo.commands.git_core.check_connection', return_value=True)
     mocker.patch('pygitgo.commands.git_core.convert_https_to_ssh', return_value=url)
-    fake_success = mocker.patch('pygitgo.commands.git_core.success')
 
     branch = 'main'
     git_push(branch)
 
     fake_run.assert_any_call(
         ["git", "remote", "set-url", "origin", url], 
-        loading_msg="Converting remote from HTTPS to SSH for secure push..."
+        loading_msg="Converting remote from HTTPS to SSH for secure push...",
+        ok_text=f"Remote updated to: {url}"
     )
-
-    fake_success.assert_called()
 
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
-        loading_msg=f"Pushing to remote branch '{branch}'..."
+        loading_msg=f"Pushing to remote branch '{branch}'...",
+        ok_text=None,
+        err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
 def test_git_commit_skip_staging_does_not_run_git_add(mocker):

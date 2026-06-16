@@ -3,47 +3,32 @@
 
 ## Type
 
-<!-- Check the one that fits. Put an 'x' inside the brackets: [x] -->
+<!-- Put an 'x' inside the brackets: [x] -->
 
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Documentation
 - [ ] Refactor / internal
 
-## Overview
-
-<!-- Describe what you changed and why. 2-3 sentences is enough. -->
-
-Closes # <!-- Remove the line if this PR does not address an open Issue -->
-
 ## Changes
 
 <!-- One bullet per change. Say what changed and what effect it has.
      Examples:
-     - `gitgo push`: no longer stops mid-run after a branch jump. It now completes the commit and push automatically.
+     - `gitgo push`: no longer stops mid-run after a branch jump.
      - `CONTRIBUTING.md`: removed the `pytest-cov` task from the Good First Issues table.
      - CI: added a workflow to automatically run tests on Windows and Ubuntu.
 -->
 
 -
 
-## How to Test
-
-<!-- Write the exact steps a reviewer should run to verify your change works.
-     Be specific — include the exact commands and what output to expect.
-     If this PR only updates documentation, you can remove this section.
--->
-
-1. `pip install -e ".[dev]"`
-2.
-3. Expected result:
+Closes # <!-- Remove if this PR does not address an open issue -->
 
 ## Checklist
 
-<!-- Put an 'x' inside the brackets to check a box: [x] -->
+<!-- Put an 'x' inside the brackets: [x] -->
 
-- [ ] I tested my changes locally and they work
-- [ ] I updated `CHANGELOG.md` under the [`[Unreleased]`](https://github.com/Huerte/GitGo/blob/main/CHANGELOG.md) section
-- [ ] I updated `README.md` (if I added or changed a command)
-- [ ] I added or updated tests for my change (if applicable)
-- [ ] My change does not break any existing commands (if it does, describe the impact in the Overview)
+- [ ] Tested locally and changes work as expected
+- [ ] `CHANGELOG.md` updated under [`[Unreleased]`](https://github.com/Huerte/GitGo/blob/main/CHANGELOG.md)
+- [ ] `README.md` updated (if a command was added or changed)
+- [ ] Tests added or updated (if applicable)
+- [ ] No existing commands are broken (if they are, describe the impact above)

@@ -12,7 +12,8 @@ def test_git_stash_push_success(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "push", "-u", "-m", "GitGo Auto-Stash"],
-        loading_msg="Saving your changes..."
+        loading_msg="Saving your changes...",
+        ok_text=None
     )
 
 
@@ -37,7 +38,8 @@ def test_git_stash_pop_success(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "pop"],
-        loading_msg="Restoring your saved changes..."
+        loading_msg="Restoring your saved changes...",
+        ok_text=None
     )
 
 
@@ -56,7 +58,8 @@ def test_git_stash_apply_success_no_id(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "apply"],
-        loading_msg="Applying saved changes..."
+        loading_msg="Applying saved changes...",
+        ok_text=None
     )
 
 
@@ -66,7 +69,8 @@ def test_git_stash_apply_success_with_id(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "apply", "stash@{2}"],
-        loading_msg="Applying saved changes..."
+        loading_msg="Applying saved changes...",
+        ok_text=None
     )
 
 
@@ -85,7 +89,8 @@ def test_git_stash_drop_success_no_id(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "drop"],
-        loading_msg="Cleaning up stash..."
+        loading_msg="Cleaning up stash...",
+        ok_text=None
     )
 
 
@@ -95,7 +100,8 @@ def test_git_stash_drop_success_with_id(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "drop", "stash@{1}"],
-        loading_msg="Cleaning up stash..."
+        loading_msg="Cleaning up stash...",
+        ok_text=None
     )
 
 
@@ -119,7 +125,8 @@ def test_git_stash_list_success(mocker):
             "--date=format:%Y-%m-%d %H:%M:%S",
             "--pretty=%gd||%cd||%s"
         ],
-        loading_msg="Fetching stash list..."
+        loading_msg="Fetching stash list...",
+        ok_text=None
     )
 
 
@@ -138,7 +145,8 @@ def test_git_stash_clear_success(mocker):
     assert result is True
     fake_run.assert_called_once_with(
         ["git", "stash", "clear"],
-        loading_msg="Clearing all stashes..."
+        loading_msg="Clearing all stashes...",
+        ok_text=None
     )
 
 

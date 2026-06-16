@@ -23,8 +23,8 @@ def test_link_existing_repo(mocker):
     link_operation(args)
 
     fake_add_remote.assert_called_once_with("git@github.com:user/repo.git")
-    fake_confirm.assert_called_once()
-    fake_success.assert_any_call("\nRemote linked to existing repository.")
+    fake_confirm.assert_called_once_with(ok_text="Remote linked to existing repository.")
+    fake_success.assert_not_called()
     fake_commit.assert_not_called()
 
 
@@ -43,7 +43,7 @@ def test_link_new_repo_no_remote_refs(mocker):
     args = Namespace(url="git@github.com:user/repo.git", message="Initial commit")
     link_operation(args)
 
-    fake_commit.assert_called_once_with("Initial commit", loading_msg="Creating initial commit...")
+    fake_commit.assert_called_once_with("Initial commit", loading_msg="Creating initial commit...", ok_text="Initial commit created.")
     fake_add_remote.assert_called_once_with("git@github.com:user/repo.git")
     fake_run.assert_any_call(["git", "branch", "-m", "main"], loading_msg="Renaming branch 'master' to 'main'...")
     fake_run.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"], loading_msg="Checking remote branches...")
@@ -74,9 +74,10 @@ def test_link_new_repo_with_remote_refs_pull_success(mocker):
 
     fake_run.assert_any_call(
         ["git", "pull", "origin", "main", "--allow-unrelated-histories", "--no-edit"],
-        loading_msg="Pulling and merging remote content..."
+        loading_msg="Pulling and merging remote content...",
+        ok_text="Remote content merged."
     )
-    fake_success.assert_any_call("Remote content merged.")
+    fake_success.assert_not_called()
     fake_push.assert_called_once_with("main")
 
 

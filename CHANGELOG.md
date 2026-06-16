@@ -16,6 +16,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Performance:** Cached the SSH handshake response so it doesn't run twice during login.
 - **UX:** Added a loading spinner to the GitHub connection check so the terminal doesn't freeze silently.
 - **Performance:** Removed a redundant network check that ran the first time you used any command.
+- **UX Refactoring:** Merged success messages with loading spinners across all commands to produce cleaner, single-line console output and avoid trailing blank/duplicated lines.
+- **Tests Update:** Adjusted unit tests and mocks for the new ok_text parameters to ensure complete coverage, successfully passing all 250 test cases.
+- **Tests Update:** Conditionally applied yaspin colors based on TTY presence to eliminate UserWarnings during pytest and in CI environments.
 - **Documentation:** Added `docs/login-guide.md`, a step-by-step login guide with screenshots covering the full `gitgo user login` flow for starters.
 - **Internal Utils:** Centralized browser opening logic and updated the auth manager to support repo creation tokens.
 - `gitgo new` token prompt now opens the classic PAT page by default, making it easier to create non-expiring tokens.

@@ -18,7 +18,8 @@ def test_confirm_remote_link_success(mocker):
 
     fake_run.assert_called_once_with(
         ["git", "ls-remote", "origin"], 
-        loading_msg="Testing connection to remote..."
+        loading_msg="Testing connection to remote...",
+        ok_text="Remote is reachable."
     )
 
 def test_confirm_remote_link_fallback(mocker):
@@ -33,7 +34,8 @@ def test_confirm_remote_link_fallback(mocker):
 
     fake_run.assert_called_once_with(
         ["git", "ls-remote", "origin"], 
-        loading_msg="Testing connection to remote..."
+        loading_msg="Testing connection to remote...",
+        ok_text="Remote is reachable."
     )
 
 def test_handle_rebase(mocker):
@@ -54,15 +56,14 @@ def test_add_remote_origin_switch_origin(mocker):
         return_value='https://github.com:Huerte/GitGo'
     )
     mocker.patch('pygitgo.commands.git_remote.isinstance', return_value=False)
-    fake_success = mocker.patch('pygitgo.commands.git_remote.success')
 
     url = ".com:Huerte/New-GitGo.git"
     add_remote_origin(url)
 
-    fake_success.assert_called_once_with(f"Remote origin set to: {url}")
     fake_run.assert_called_with(
         ["git", "remote", "set-url", "origin", url], 
-        loading_msg="Updating remote URL..."
+        loading_msg="Updating remote URL...",
+        ok_text=f"Remote origin set to: {url}"
     )
 
 def test_add_remote_origin_add_origin(mocker):
@@ -74,15 +75,14 @@ def test_add_remote_origin_add_origin(mocker):
             "added"
         ]
     )
-    fake_success = mocker.patch('pygitgo.commands.git_remote.success')
 
     url = ".com:Huerte/New-GitGo.git"
     add_remote_origin(url)
 
-    fake_success.assert_called_once_with(f"Remote origin set to: {url}")
     fake_run.assert_called_with(
         ["git", "remote", "add", "origin", url], 
-        loading_msg="Adding remote origin..."
+        loading_msg="Adding remote origin...",
+        ok_text=f"Remote origin set to: {url}"
     )
 
 def test_check_and_sync_branch_equal_branch(mocker):
@@ -94,12 +94,12 @@ def test_check_and_sync_branch_equal_branch(mocker):
         ]
     )
 
-    fake_success = mocker.patch('pygitgo.commands.git_remote.success')
+    fake_info = mocker.patch('pygitgo.commands.git_remote.info')
 
     branch = 'main'
     check_and_sync_branch(branch)
 
-    fake_success.assert_called_once_with("Branch is already up to date.")
+    fake_info.assert_called_once_with("Branch is already up to date.")
     
     assert fake_run.call_args_list == [
         call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
@@ -115,13 +115,12 @@ def test_check_and_sync_branch_remote_ahead(mocker):
         ]
     )
 
-    fake_success = mocker.patch('pygitgo.commands.git_remote.success')
+    fake_info = mocker.patch('pygitgo.commands.git_remote.info')
 
     branch = 'main'
-    remote_branch = 'master'
     check_and_sync_branch(branch)
 
-    fake_success.assert_called_once_with("Branch is up to date.")
+    fake_info.assert_called_once_with("Branch is up to date.")
     
     assert fake_run.call_args_list == [
         call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
@@ -138,19 +137,15 @@ def test_check_and_sync_branch_need_sync(mocker):
         ]
     )
 
-    fake_success = mocker.patch('pygitgo.commands.git_remote.success')
-
     branch = 'main'
     check_and_sync_branch(branch)
-
-    fake_success.assert_called_once_with("Synced with remote.")
     
     assert fake_run.call_args_list == [
         call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
         call(["git", "rev-parse", branch]),
         call(["git", "rev-parse", f"origin/{branch}"]),
         call(["git", "rev-list", "--count", f"{branch}..origin/{branch}"]),
-        call(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...")
+        call(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Synced with remote.")
     ]
 
 def test_check_and_sync_branch_no_remote(mocker):
