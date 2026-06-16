@@ -39,11 +39,11 @@ Open your terminal and run:
 gitgo user login
 ```
 
-If you are already connected to GitHub, GitGo will tell you right away and stop. You don't need to do anything else.
+If you are already connected to GitHub, GitGo checks if the connection uses a GitGo-managed key:
 
-![Already logged in message](../assets/guides/login/step-1-already-logged-in.png)
+- **Managed key found**: GitGo configures SSH signing, ensures your Git identity is set up, and confirms you are already logged in via GitGo.
+- **Unmanaged key found**: GitGo warns you that the active connection is not using a GitGo-managed key. To set up SSH signing and verified commits through GitGo, you must first log out by running `gitgo user logout`, then run `gitgo user login` again.
 
-> *If you see this, you're already connected. Jump to [Troubleshooting](#troubleshooting) if something feels wrong.*
 
 ---
 
@@ -147,13 +147,20 @@ Go to [github.com/settings/keys](https://github.com/settings/keys) and check. Yo
 The key must start with `ssh-ed25519` and end with your email. If you accidentally included the `===` lines or missed part of the key, delete the entry on GitHub and add it again with the correct text.
 
 **Is the SSH agent running?**
-The key needs to be loaded into `ssh-agent` to work. Run this in your terminal:
+The key needs to be loaded into `ssh-agent` to work. GitGo tries to automatically start the SSH agent. If this fails, start it manually based on your operating system:
 
-```bash
-eval $(ssh-agent) && ssh-add
-```
+- **Windows**: Open PowerShell as Administrator and run:
+  ```powershell
+  Set-Service ssh-agent -StartupType Automatic
+  Start-Service ssh-agent
+  ```
+  Then run `gitgo user login` again.
 
-Then run `gitgo user login` again.
+- **Linux and macOS**: Run this in your terminal:
+  ```bash
+  eval $(ssh-agent) && ssh-add
+  ```
+  Then run `gitgo user login` again.
 
 **Is your network blocking SSH?**
 Some office or school networks block SSH connections. Try a different network like your phone's hotspot. To test the connection manually, run:
@@ -163,6 +170,15 @@ ssh -T git@github.com
 ```
 
 If it works, you will see something like: `Hi username! You've successfully authenticated...`
+
+---
+
+## Commit Signing Sanitization
+
+If you have global Git commit signing enabled (`commit.gpgsign` is `true`), but do not have an active GPG configuration, commits might fail. 
+
+To prevent this, GitGo automatically inspects your Git config during login and before every commit. If it detects that GPG signing is enabled without a configured SSH signing key format, it temporarily disables conflicting global GPG configurations by unsetting `gpg.program`. This ensures your commit flow remains uninterrupted.
+
 
 ---
 

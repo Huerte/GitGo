@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest
 import sys
 
 
@@ -16,3 +17,12 @@ def capture_system_exit_code(function):
         return e.code
     except GitGoError:
         return 1
+
+
+@pytest.fixture(autouse=True)
+def _clear_ssh_cache():
+    """Reset the SSH response cache before every test."""
+    from pygitgo.auth.ssh_utils import clear_ssh_cache
+    clear_ssh_cache()
+    yield
+    clear_ssh_cache()

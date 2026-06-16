@@ -65,3 +65,29 @@ def ensure_user_configure(default_email=None, default_username=None):
     error("Invalid configuration. Name and Email are required.")
     return False
 
+def sanitize_signing_config():
+    try:
+        gpgsign = run_command(["git", "config", "--global", "commit.gpgsign"]).strip().lower()
+    except GitCommandError:
+        return
+    
+    if gpgsign != "true":
+        return
+    
+    try:
+        fmt = run_command(["git", "config", "--global", "gpg.format"]).strip().lower()
+    except GitCommandError:
+        fmt = ""
+
+    if fmt == "ssh":
+        return
+    
+    warning("Detected 'commit.gpgsign=true' with no GPG key configured.")
+    warning("Disabling global GPG signing to prevent commit failures.")
+
+    try:
+        run_command(["git", "config", "--global", "--unset", "gpg.program"])
+    except GitCommandError:
+        pass
+    
+

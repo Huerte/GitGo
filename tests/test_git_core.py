@@ -7,10 +7,12 @@ import pytest
 
 def test_git_commit(mocker):
     mocker.patch("pygitgo.commands.git_core._get_signing_flags", return_value=[])
+    fake_sanitize = mocker.patch("pygitgo.commands.git_core.sanitize_signing_config")
     fake_run = mocker.patch("pygitgo.commands.git_core.run_command")
     
     result = git_commit("Testing the commit feature")
     assert result == True
+    fake_sanitize.assert_called_once()
 
     fake_run.assert_any_call(
         ['git', 'commit', '-S', '-m', 'Testing the commit feature'],
@@ -154,6 +156,7 @@ def test_git_push_convert_https_to_ssh(mocker):
 
 def test_git_commit_skip_staging_does_not_run_git_add(mocker):
     mocker.patch("pygitgo.commands.git_core._get_signing_flags", return_value=[])
+    mocker.patch("pygitgo.commands.git_core.sanitize_signing_config")
     fake_run = mocker.patch("pygitgo.commands.git_core.run_command")
     
     fake_run.side_effect = ["M file.py", None]
@@ -165,6 +168,7 @@ def test_git_commit_skip_staging_does_not_run_git_add(mocker):
 
 def test_git_commit_default_runs_git_add(mocker):
     mocker.patch("pygitgo.commands.git_core._get_signing_flags", return_value=[])
+    mocker.patch("pygitgo.commands.git_core.sanitize_signing_config")
     fake_run = mocker.patch("pygitgo.commands.git_core.run_command")
     fake_run.side_effect = ["M file.py", None, None]
     git_commit("my message")
