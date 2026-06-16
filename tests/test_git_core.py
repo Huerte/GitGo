@@ -17,7 +17,7 @@ def test_git_commit(mocker):
     fake_run.assert_any_call(
         ['git', 'commit', '-S', '-m', 'Testing the commit feature'],
         loading_msg="Commiting changes...",
-        ok_text=None
+        ok_text="Changes committed."
     )
 
 def test_git_init_already_initialized(mocker):
@@ -79,7 +79,7 @@ def test_git_push_already_ssh(mocker):
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
         loading_msg=f"Pushing to remote branch '{branch}'...",
-        ok_text=None,
+        ok_text=f"Pushed to remote branch '{branch}'.",
         err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
@@ -99,7 +99,7 @@ def test_git_push_no_remote(mocker):
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
         loading_msg=f"Pushing to remote branch '{branch}'...",
-        ok_text=None,
+        ok_text=f"Pushed to remote branch '{branch}'.",
         err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
@@ -121,7 +121,7 @@ def test_git_push_https_no_connection(mocker):
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
         loading_msg=f"Pushing to remote branch '{branch}'...",
-        ok_text=None,
+        ok_text=f"Pushed to remote branch '{branch}'.",
         err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 
@@ -151,7 +151,7 @@ def test_git_push_convert_https_to_ssh(mocker):
     fake_run.assert_called_with(
         ["git", "push", "-u", "origin", branch], 
         loading_msg=f"Pushing to remote branch '{branch}'...",
-        ok_text=None,
+        ok_text=f"Pushed to remote branch '{branch}'.",
         err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
 

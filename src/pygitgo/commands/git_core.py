@@ -20,6 +20,8 @@ def _get_signing_flags():
 
 
 def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=False, ok_text=None):
+    if not ok_text:
+        ok_text = "Changes committed."
     try:
         status_result = run_command(["git", "status", "--porcelain"])
         if not status_result.strip():
@@ -30,7 +32,7 @@ def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=
     sanitize_signing_config()
 
     if not skip_staging:
-        run_command(["git", "add", "."], loading_msg="Staging files...")
+        run_command(["git", "add", "."], loading_msg="Staging files...", ok_text="Files staged.")
 
     clean_message = commit_message.strip('"\'')
 
@@ -61,6 +63,8 @@ def git_init(ok_text=None):
 
 
 def git_push(branch, ok_text=None):
+    if not ok_text:
+        ok_text = f"Pushed to remote branch '{branch}'."
     try:
         remote_url = run_command(["git", "remote", "get-url", "origin"]).strip()
     except GitCommandError:

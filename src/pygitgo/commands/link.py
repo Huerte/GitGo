@@ -73,11 +73,11 @@ def link_core(repo_url, commit_message="Initial commit", silent=False, already_i
         main_branch = get_default_branch()
 
         if current_branch != main_branch:
-            run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch}' to '{main_branch}'...")
+            run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch}' to '{main_branch}'...", ok_text=f"Branch renamed to '{main_branch}'.")
             current_branch = main_branch
 
         try:
-            remote_refs = run_command(["git", "ls-remote", "--heads", "origin", main_branch], loading_msg="Checking remote branches...")
+            remote_refs = run_command(["git", "ls-remote", "--heads", "origin", main_branch], loading_msg="Checking remote branches...", ok_text="Remote branches checked.")
         except GitCommandError:
             remote_refs = None
 

@@ -43,6 +43,7 @@ def pull_operation(args):
             run_command(
                 ["git", "ls-remote", "--heads", "origin", branch],
                 loading_msg=f"Checking if '{branch}' exists on remote...",
+                ok_text=f"Branch '{branch}' found on remote.",
                 err_text=f"Branch '{branch}' does not exist on the remote."
             )
         except GitCommandError:

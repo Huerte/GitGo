@@ -28,7 +28,7 @@ def undo_changes():
 
     reset_done = False
     try:
-        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
+        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...", ok_text="Edits discarded.")
         reset_done = True
         run_command(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
 
@@ -74,7 +74,7 @@ def undo_push():
         return
 
     try:
-        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...")
+        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...", ok_text="Last commit reverted locally.")
     except GitCommandError as e:
         raise GitGoError(f"Undo failed — no previous commit to revert. Details: {e}")
 

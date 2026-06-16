@@ -115,12 +115,12 @@ def logout():
             os.remove(pub_key_path)
 
         try:
-            run_command(["git", "config", "--global", "--unset-all", "user.name"])
+            run_command(["git", "config", "--global", "--unset-all", "user.name"], loading_msg="Clearing Git username...", ok_text="Git username cleared.")
         except GitCommandError:
             pass
         
         try:
-            run_command(["git", "config", "--global", "--unset-all", "user.email"])
+            run_command(["git", "config", "--global", "--unset-all", "user.email"], loading_msg="Clearing Git email...", ok_text="Git email cleared.")
         except GitCommandError:
             pass
 

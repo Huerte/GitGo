@@ -13,7 +13,7 @@ def test_git_stash_push_success(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "push", "-u", "-m", "GitGo Auto-Stash"],
         loading_msg="Saving your changes...",
-        ok_text=None
+        ok_text="Changes saved."
     )
 
 
@@ -39,7 +39,7 @@ def test_git_stash_pop_success(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "pop"],
         loading_msg="Restoring your saved changes...",
-        ok_text=None
+        ok_text="Changes restored."
     )
 
 
@@ -59,7 +59,7 @@ def test_git_stash_apply_success_no_id(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "apply"],
         loading_msg="Applying saved changes...",
-        ok_text=None
+        ok_text="Changes applied."
     )
 
 
@@ -70,7 +70,7 @@ def test_git_stash_apply_success_with_id(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "apply", "stash@{2}"],
         loading_msg="Applying saved changes...",
-        ok_text=None
+        ok_text="Changes applied."
     )
 
 
@@ -90,7 +90,7 @@ def test_git_stash_drop_success_no_id(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "drop"],
         loading_msg="Cleaning up stash...",
-        ok_text=None
+        ok_text="Stash cleaned up."
     )
 
 
@@ -101,7 +101,7 @@ def test_git_stash_drop_success_with_id(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "drop", "stash@{1}"],
         loading_msg="Cleaning up stash...",
-        ok_text=None
+        ok_text="Stash cleaned up."
     )
 
 
@@ -126,7 +126,7 @@ def test_git_stash_list_success(mocker):
             "--pretty=%gd||%cd||%s"
         ],
         loading_msg="Fetching stash list...",
-        ok_text=None
+        ok_text="Stash list fetched."
     )
 
 
@@ -146,7 +146,7 @@ def test_git_stash_clear_success(mocker):
     fake_run.assert_called_once_with(
         ["git", "stash", "clear"],
         loading_msg="Clearing all stashes...",
-        ok_text=None
+        ok_text="All stashes cleared."
     )
 
 

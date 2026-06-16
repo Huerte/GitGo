@@ -141,6 +141,6 @@ def test_logout_success(mocker):
 
     assert result is True
     assert fake_remove.call_count == 2
-    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.name"])
-    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.email"])
+    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.name"], loading_msg="Clearing Git username...", ok_text="Git username cleared.")
+    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.email"], loading_msg="Clearing Git email...", ok_text="Git email cleared.")
     fake_success.assert_called_once_with("User successfully logout")

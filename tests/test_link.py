@@ -45,8 +45,8 @@ def test_link_new_repo_no_remote_refs(mocker):
 
     fake_commit.assert_called_once_with("Initial commit", loading_msg="Creating initial commit...", ok_text="Initial commit created.")
     fake_add_remote.assert_called_once_with("git@github.com:user/repo.git")
-    fake_run.assert_any_call(["git", "branch", "-m", "main"], loading_msg="Renaming branch 'master' to 'main'...")
-    fake_run.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"], loading_msg="Checking remote branches...")
+    fake_run.assert_any_call(["git", "branch", "-m", "main"], loading_msg="Renaming branch 'master' to 'main'...", ok_text="Branch renamed to 'main'.")
+    fake_run.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"], loading_msg="Checking remote branches...", ok_text="Remote branches checked.")
     fake_push.assert_called_once_with("main")
 
 

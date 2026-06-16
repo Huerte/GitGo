@@ -16,7 +16,8 @@ def test_undo_jump_operation_no_stash(mocker):
 
     fake_run.assert_any_call(
         ["git", "reset", "--hard", "HEAD"],
-        loading_msg="Canceling... Putting your files back exactly how they were..."
+        loading_msg="Canceling... Putting your files back exactly how they were...",
+        ok_text="Files restored to original state."
     )
     fake_run.assert_any_call(
         ['git', 'checkout', "original_branch"],
@@ -34,7 +35,8 @@ def test_undo_jump_operation_with_stash(mocker):
 
     fake_run.assert_any_call(
         ["git", "reset", "--hard", "HEAD"],
-        loading_msg="Canceling... Putting your files back exactly how they were..."
+        loading_msg="Canceling... Putting your files back exactly how they were...",
+        ok_text="Files restored to original state."
     )
     fake_run.assert_any_call(
         ['git', 'checkout', "original_branch"],
