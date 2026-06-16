@@ -24,7 +24,7 @@ def login():
     already_logged_in = key_path.exists()
     ok_text = "Already logged in via GitGo." if already_logged_in else "GitHub connection verified."
 
-    if ssh_utils.check_connection(ok_text=ok_text):
+    if ssh_utils.check_connection(ok_text=ok_text, fail_text="Not connected to GitHub."):
         if already_logged_in:
             _configure_ssh_signing(key_path)
             ensure_user_configure(default_username=ssh_utils.get_github_username())
@@ -63,9 +63,9 @@ def login():
     print()
 
     info("Copy the key above, then add it TWICE on GitHub:")
-    info("  1. Authentication Key  — for pushing and pulling")
-    info("  2. Signing Key         — for Verified commits")
-    info("Same key text for both.")
+    info("  1. Authentication Key  (for pushing and pulling)")
+    info("  2. Signing Key         (for Verified commits)")
+    info("Same key text for both entries.")
 
     input("\nOnce you've copied the key, press Enter to open GitHub...")
 
@@ -75,8 +75,6 @@ def login():
         "\nAfter adding both keys on GitHub,\n"
         "come back here and press Enter to verify the connection..."
     )
-
-    ssh_utils.ensure_ssh_agent(ssh_utils.get_ssh_key_path())
 
     ssh_utils.clear_ssh_cache()
 
@@ -117,12 +115,12 @@ def logout():
             os.remove(pub_key_path)
 
         try:
-            run_command(["git", "config", "--global", "--unset-all", "user.name"])
+            run_command(["git", "config", "--global", "--unset-all", "user.name"], loading_msg="Clearing Git username...", ok_text="Git username cleared.")
         except GitCommandError:
             pass
         
         try:
-            run_command(["git", "config", "--global", "--unset-all", "user.email"])
+            run_command(["git", "config", "--global", "--unset-all", "user.email"], loading_msg="Clearing Git email...", ok_text="Git email cleared.")
         except GitCommandError:
             pass
 

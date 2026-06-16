@@ -9,8 +9,12 @@ from argparse import Namespace
 @patch("pygitgo.commands.undo.success")
 def test_undo_commit_success(mock_success, mock_run_command):
     undo_commit()
-    mock_run_command.assert_called_once_with(["git", "reset", "--soft", "HEAD~"])
-    mock_success.assert_called_once()
+    mock_run_command.assert_called_once_with(
+        ["git", "reset", "--soft", "HEAD~"],
+        loading_msg="Undoing last commit...",
+        ok_text="Last commit undone. Files are untouched."
+    )
+    mock_success.assert_not_called()
 
 
 @patch("pygitgo.commands.undo.run_command")
@@ -25,8 +29,12 @@ def test_undo_commit_failure(mock_run_command):
 @patch("pygitgo.commands.undo.success")
 def test_undo_add_success(mock_success, mock_run_command):
     undo_add()
-    mock_run_command.assert_called_once_with(["git", "reset", "HEAD"])
-    mock_success.assert_called_once()
+    mock_run_command.assert_called_once_with(
+        ["git", "reset", "HEAD"],
+        loading_msg="Clearing staging area...",
+        ok_text="Staging cleared. Files are back to unstaged."
+    )
+    mock_success.assert_not_called()
 
 
 @patch("pygitgo.commands.undo.run_command")
@@ -44,7 +52,7 @@ def test_undo_changes_success(mock_input, mock_success, mock_run_command):
     undo_changes()
     mock_input.assert_called_once()
     assert mock_run_command.call_count == 2
-    mock_run_command.assert_any_call(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
+    mock_run_command.assert_any_call(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...", ok_text="Edits discarded.")
     mock_run_command.assert_any_call(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
     mock_success.assert_not_called()
 
@@ -64,9 +72,17 @@ def test_undo_changes_abort(mock_input, mock_info, mock_run_command):
 @patch("pygitgo.commands.undo.success")
 def test_undo_link_success(mock_success, mock_run_command):
     undo_link()
-    mock_run_command.assert_any_call(["git", "remote", "remove", "origin"])
-    mock_run_command.assert_any_call(["git", "reset", "--soft", "HEAD~"])
-    assert mock_success.call_count == 2
+    mock_run_command.assert_any_call(
+        ["git", "remote", "remove", "origin"],
+        loading_msg="Removing remote 'origin'...",
+        ok_text="Remote 'origin' removed."
+    )
+    mock_run_command.assert_any_call(
+        ["git", "reset", "--soft", "HEAD~"],
+        loading_msg="Undoing initial commit...",
+        ok_text="Initial commit undone. Files are back to staged, ready to re-link."
+    )
+    mock_success.assert_not_called()
 
 
 @patch("pygitgo.commands.undo.run_command")
@@ -82,7 +98,12 @@ def test_undo_link_no_remote(mock_run_command):
 def test_undo_link_no_commit_to_reset(mock_info, mock_success, mock_run_command):
     mock_run_command.side_effect = [None, GitCommandError(["git", "reset"])]
     undo_link()
-    mock_success.assert_called_once_with("Remote 'origin' removed.")
+    mock_run_command.assert_any_call(
+        ["git", "remote", "remove", "origin"],
+        loading_msg="Removing remote 'origin'...",
+        ok_text="Remote 'origin' removed."
+    )
+    mock_success.assert_not_called()
     assert mock_info.call_count == 2
 
 
@@ -93,7 +114,7 @@ def test_undo_link_no_commit_to_reset(mock_info, mock_success, mock_run_command)
 @patch("pygitgo.commands.undo.input", return_value="y")
 def test_undo_push_success(mock_input, mock_success, mock_branch, mock_run_command):
     undo_push()
-    mock_run_command.assert_any_call(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...")
+    mock_run_command.assert_any_call(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...", ok_text="Last commit reverted locally.")
     mock_run_command.assert_any_call(["git", "push", "--force", "origin", "main"], loading_msg="Force-pushing reverted state to 'main'...", ok_text="Last push reverted. Remote 'main' is back to the previous commit.")
     mock_success.assert_not_called()
 

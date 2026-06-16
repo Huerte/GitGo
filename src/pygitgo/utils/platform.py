@@ -45,6 +45,6 @@ def open_url(url: str):
 
     if not opened:
         warning("Could not open browser automatically.")
-    info("\nIf the browser did not open, visit this URL manually:")
-    print(f"\n  {url}\n")
+        info("\nIf the browser did not open, visit this URL manually:")
+        print(f"\n  {url}\n")
 

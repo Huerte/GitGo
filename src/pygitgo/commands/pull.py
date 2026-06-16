@@ -40,7 +40,12 @@ def pull_operation(args):
 
     try:
         try:
-            run_command(["git", "ls-remote", "--heads", "origin", branch])
+            run_command(
+                ["git", "ls-remote", "--heads", "origin", branch],
+                loading_msg=f"Checking if '{branch}' exists on remote...",
+                ok_text=f"Branch '{branch}' found on remote.",
+                err_text=f"Branch '{branch}' does not exist on the remote."
+            )
         except GitCommandError:
             error(f"Branch '{branch}' does not exist on the remote.")
             info("Push your local branch first, or verify the branch name.")

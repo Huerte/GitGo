@@ -102,7 +102,7 @@ def test_check_and_sync_branch_equal_branch(mocker):
     fake_info.assert_called_once_with("Branch is already up to date.")
     
     assert fake_run.call_args_list == [
-        call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
+        call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date...", ok_text="Remote fetched."),
         call(["git", "rev-parse", branch]),
         call(["git", "rev-parse", f"origin/{branch}"])
     ]
@@ -123,7 +123,7 @@ def test_check_and_sync_branch_remote_ahead(mocker):
     fake_info.assert_called_once_with("Branch is up to date.")
     
     assert fake_run.call_args_list == [
-        call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
+        call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date...", ok_text="Remote fetched."),
         call(["git", "rev-parse", branch]),
         call(["git", "rev-parse", f"origin/{branch}"]),
         call(["git", "rev-list", "--count", f"{branch}..origin/{branch}"])
@@ -141,7 +141,7 @@ def test_check_and_sync_branch_need_sync(mocker):
     check_and_sync_branch(branch)
     
     assert fake_run.call_args_list == [
-        call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date..."),
+        call(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date...", ok_text="Remote fetched."),
         call(["git", "rev-parse", branch]),
         call(["git", "rev-parse", f"origin/{branch}"]),
         call(["git", "rev-list", "--count", f"{branch}..origin/{branch}"]),
@@ -163,7 +163,8 @@ def test_check_and_sync_branch_no_remote(mocker):
 
     fake_run.assert_called_with(
         ["git", "fetch", "origin"], 
-        loading_msg="Checking if branch is up to date..."
+        loading_msg="Checking if branch is up to date...",
+        ok_text="Remote fetched."
     )
 
 def test_check_and_sync_branch_remote_not_exist(mocker):
@@ -182,7 +183,8 @@ def test_check_and_sync_branch_remote_not_exist(mocker):
 
     fake_run.assert_any_call(
         ["git", "fetch", "origin"], 
-        loading_msg="Checking if branch is up to date..."
+        loading_msg="Checking if branch is up to date...",
+        ok_text="Remote fetched."
     )
 
     fake_run.assert_any_call(

@@ -31,7 +31,7 @@ def confirm_remote_link(ok_text=None):
 
 def check_and_sync_branch(branch):
     try:
-        run_command(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date...")
+        run_command(["git", "fetch", "origin"], loading_msg="Checking if branch is up to date...", ok_text="Remote fetched.")
 
         try:
             local_commit = run_command(["git", "rev-parse", branch])

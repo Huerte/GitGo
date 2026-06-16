@@ -20,7 +20,7 @@ def test_login_already_logged_in_with_managed_key(mocker):
     result = login()
 
     assert result is True
-    fake_check.assert_called_once_with(ok_text="Already logged in via GitGo.")
+    fake_check.assert_called_once_with(ok_text="Already logged in via GitGo.", fail_text="Not connected to GitHub.")
     fake_config_signing.assert_called_once_with(mock_key)
     fake_ensure.assert_called_once_with(default_username="GithubUser")
     fake_success.assert_not_called()
@@ -40,7 +40,7 @@ def test_login_already_logged_in_with_unmanaged_key(mocker):
     result = login()
 
     assert result is True
-    fake_check.assert_called_once_with(ok_text="GitHub connection verified.")
+    fake_check.assert_called_once_with(ok_text="GitHub connection verified.", fail_text="Not connected to GitHub.")
     assert fake_warning.call_count == 2
     assert fake_info.call_count == 2
 
@@ -65,7 +65,7 @@ def test_login_new_user_success(mocker):
     assert result is True
     fake_ensure.assert_called_once_with(default_email="test@example.com", default_username="GithubUser")
     fake_check.assert_has_calls([
-        call(ok_text="GitHub connection verified."),
+        call(ok_text="GitHub connection verified.", fail_text="Not connected to GitHub."),
         call(ok_text="Login successful. You are connected.", fail_text="SSH key not recognised by GitHub.")
     ])
 
@@ -89,7 +89,7 @@ def test_login_new_user_verification_fails(mocker):
 
     assert result is False
     fake_check.assert_has_calls([
-        call(ok_text="GitHub connection verified."),
+        call(ok_text="GitHub connection verified.", fail_text="Not connected to GitHub."),
         call(ok_text="Login successful. You are connected.", fail_text="SSH key not recognised by GitHub.")
     ])
 
@@ -113,7 +113,7 @@ def test_login_new_user_verification_fails_linux(mocker):
 
     assert result is False
     fake_check.assert_has_calls([
-        call(ok_text="GitHub connection verified."),
+        call(ok_text="GitHub connection verified.", fail_text="Not connected to GitHub."),
         call(ok_text="Login successful. You are connected.", fail_text="SSH key not recognised by GitHub.")
     ])
 
@@ -141,6 +141,6 @@ def test_logout_success(mocker):
 
     assert result is True
     assert fake_remove.call_count == 2
-    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.name"])
-    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.email"])
+    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.name"], loading_msg="Clearing Git username...", ok_text="Git username cleared.")
+    fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.email"], loading_msg="Clearing Git email...", ok_text="Git email cleared.")
     fake_success.assert_called_once_with("User successfully logout")

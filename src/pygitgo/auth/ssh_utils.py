@@ -135,7 +135,7 @@ def generate_ssh_key(email):
             f"Details: {e}"
         )
     
-    ensure_ssh_agent(key_path)
+    ensure_ssh_agent(key_path, quiet=True)
     
     return key_path
 
@@ -162,7 +162,7 @@ def _try_ssh_add(key_path):
     except (GitCommandError, OSError):
         return False
 
-def ensure_ssh_agent(key_path):
+def ensure_ssh_agent(key_path, quiet=False):
     if _try_ssh_add(key_path):
         return True
     
@@ -180,16 +180,16 @@ def ensure_ssh_agent(key_path):
         if _try_ssh_add(key_path):
             return True
         
-        warning("SSH agent is not running on this machine.")
-        info("To fix this permanently, run in PowerShell (as Administrator):")
-        info("  Set-Service ssh-agent -StartupType Automatic")
-        info("  Start-Service ssh-agent")
-        info("Then run 'gitgo user login' again.")
+        if not quiet:
+            warning("SSH agent is not running. Key may not persist across sessions.")
+            info("To fix this permanently, run in PowerShell (as Administrator):")
+            info("  Set-Service ssh-agent -StartupType Automatic")
+            info("  Start-Service ssh-agent")
 
     else:
-        warning("SSH agent is not running.")
-        info("Run:  eval $(ssh-agent) && ssh-add")
-        info("Then run 'gitgo user login' again.")
+        if not quiet:
+            warning("SSH agent is not running. Key may not persist across sessions.")
+            info("Run:  eval $(ssh-agent) && ssh-add")
 
     return False
     

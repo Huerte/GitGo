@@ -7,8 +7,7 @@ import sys
 
 def undo_commit():
     try:
-        run_command(["git", "reset", "--soft", "HEAD~"])
-        success("Last commit undone. Files are untouched.")
+        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Undoing last commit...", ok_text="Last commit undone. Files are untouched.")
     except GitCommandError as e:
         raise GitGoError(
             f"Undo failed — no previous commit to revert. Details: {e}"
@@ -16,8 +15,7 @@ def undo_commit():
 
 
 def undo_add():
-    run_command(["git", "reset", "HEAD"])
-    success("Staging cleared. Files are back to unstaged.")
+    run_command(["git", "reset", "HEAD"], loading_msg="Clearing staging area...", ok_text="Staging cleared. Files are back to unstaged.")
 
 
 def undo_changes():
@@ -30,7 +28,7 @@ def undo_changes():
 
     reset_done = False
     try:
-        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...")
+        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...", ok_text="Edits discarded.")
         reset_done = True
         run_command(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
 
@@ -49,16 +47,14 @@ def undo_changes():
 
 def undo_link():
     try:
-        run_command(["git", "remote", "remove", "origin"])
-        success("Remote 'origin' removed.")
+        run_command(["git", "remote", "remove", "origin"], loading_msg="Removing remote 'origin'...", ok_text="Remote 'origin' removed.")
     except GitCommandError as e:
         raise GitGoError(
             f"Could not remove remote 'origin'. Is one set? Details: {e}"
         )
 
     try:
-        run_command(["git", "reset", "--soft", "HEAD~"])
-        success("Initial commit undone. Files are back to staged, ready to re-link.")
+        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Undoing initial commit...", ok_text="Initial commit undone. Files are back to staged, ready to re-link.")
     except GitCommandError:
         info("Remote removed. Could not undo the commit (none or multiple found).")
         info("Run 'gitgo undo commit' separately if needed.")
@@ -78,7 +74,7 @@ def undo_push():
         return
 
     try:
-        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...")
+        run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...", ok_text="Last commit reverted locally.")
     except GitCommandError as e:
         raise GitGoError(f"Undo failed — no previous commit to revert. Details: {e}")
 

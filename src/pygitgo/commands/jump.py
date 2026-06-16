@@ -19,7 +19,7 @@ def undo_jump_operation(original_branch, stashed_code, created_branch=None):
         except GitCommandError:
             warning(f"Could not delete branch '{created_branch}'. Remove it manually with: git branch -D {created_branch}")
     else:
-        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Canceling... Putting your files back exactly how they were...")
+        run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Canceling... Putting your files back exactly how they were...", ok_text="Files restored to original state.")
         ok_text = None if stashed_code else f"Canceled safely. Back on '{original_branch}'."
         run_command(['git', 'checkout', original_branch], loading_msg=f"Jumping you back to the original branch '{original_branch}'...", ok_text=ok_text)
 
@@ -31,7 +31,7 @@ def undo_jump_operation(original_branch, stashed_code, created_branch=None):
 
 def _jump_interrupt_cleanup(original_branch, stashed_code, created_branch):
     try:
-        run_command(["git", "rebase", "--abort"])
+        run_command(["git", "rebase", "--abort"], loading_msg="Aborting in-progress rebase...", ok_text="Rebase aborted.")
         info("In-progress rebase aborted.")
     except GitCommandError:
         pass
