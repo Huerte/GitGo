@@ -8,6 +8,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Fixed visual freezes by adding loading spinners to the network check in `gitgo pull` and local reset actions in `gitgo undo` commands.
+- Fixed the login flow UX by making the background `ssh-agent` check silent during key generation, preventing disjointed warning messages.
+- Fixed the fallback manual browser URL in the login flow printing unconditionally even when the browser opens successfully.
+
 ---
 
 ## [1.8.1] - 2026-06-16

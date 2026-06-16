@@ -31,7 +31,7 @@ def undo_jump_operation(original_branch, stashed_code, created_branch=None):
 
 def _jump_interrupt_cleanup(original_branch, stashed_code, created_branch):
     try:
-        run_command(["git", "rebase", "--abort"])
+        run_command(["git", "rebase", "--abort"], loading_msg="Aborting in-progress rebase...")
         info("In-progress rebase aborted.")
     except GitCommandError:
         pass

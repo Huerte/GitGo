@@ -18,7 +18,11 @@ def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_ru
     pull_operation(args)
     
     assert mock_run_command.call_count == 2
-    mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "main"])
+    mock_run_command.assert_any_call(
+        ["git", "ls-remote", "--heads", "origin", "main"],
+        loading_msg="Checking if 'main' exists on remote...",
+        err_text="Branch 'main' does not exist on the remote."
+    )
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "main"], 
         loading_msg="Downloading latest updates for 'main' (auto-saving your code)...",
@@ -38,7 +42,11 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
     pull_operation(args)
     
     assert mock_run_command.call_count == 2
-    mock_run_command.assert_any_call(["git", "ls-remote", "--heads", "origin", "feature/test"])
+    mock_run_command.assert_any_call(
+        ["git", "ls-remote", "--heads", "origin", "feature/test"],
+        loading_msg="Checking if 'feature/test' exists on remote...",
+        err_text="Branch 'feature/test' does not exist on the remote."
+    )
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "feature/test"], 
         loading_msg="Downloading latest updates for 'feature/test' (auto-saving your code)...",

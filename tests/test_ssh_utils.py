@@ -169,7 +169,7 @@ def test_ensure_ssh_agent_windows_failure(mocker):
     assert fake_try.call_count == 2
     fake_sub.assert_called_once_with(["sc", "start", "ssh-agent"], capture_output=True, timeout=5)
     assert fake_warning.call_count == 1
-    assert fake_info.call_count == 4
+    assert fake_info.call_count == 3
 
 
 def test_ensure_ssh_agent_linux_failure(mocker):
@@ -181,6 +181,6 @@ def test_ensure_ssh_agent_linux_failure(mocker):
     assert ensure_ssh_agent(Path("mock_key")) is False
     fake_try.assert_called_once_with(Path("mock_key"))
     assert fake_warning.call_count == 1
-    assert fake_info.call_count == 2
+    assert fake_info.call_count == 1
 
 
