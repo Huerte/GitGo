@@ -224,3 +224,86 @@ def test_load_state_keyboard_interrupt(mocker):
     fake_run.assert_called_once_with(["git", "checkout", "--", "."])
     fake_success.assert_called_once_with("Partial changes cleaned up. Your stash is still saved.")
 
+
+def _state_args(action=None, action_alias=None, identifier=None, all=False):
+    from argparse import Namespace
+    return Namespace(action=action, action_alias=action_alias, identifier=identifier, all=all)
+
+
+def test_state_operation_list(mocker):
+    from pygitgo.commands.state import state_operation
+    mock_list = mocker.patch("pygitgo.commands.state.state_list")
+
+    state_operation(_state_args(action="list"))
+
+    mock_list.assert_called_once()
+
+
+def test_state_operation_save_with_name(mocker):
+    from pygitgo.commands.state import state_operation
+    mock_save = mocker.patch("pygitgo.commands.state.save_state")
+
+    state_operation(_state_args(action="save", identifier="wip"))
+
+    mock_save.assert_called_once_with("wip")
+
+
+def test_state_operation_load_with_id(mocker):
+    from pygitgo.commands.state import state_operation
+    mock_load = mocker.patch("pygitgo.commands.state.load_state")
+
+    state_operation(_state_args(action="load", identifier="2"))
+
+    mock_load.assert_called_once_with("2")
+
+
+def test_state_operation_delete_with_id(mocker):
+    from pygitgo.commands.state import state_operation
+    mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
+
+    state_operation(_state_args(action="delete", identifier="1"))
+
+    mock_delete.assert_called_once_with("1")
+
+
+def test_state_operation_alias_list(mocker):
+    from pygitgo.commands.state import state_operation
+    mock_list = mocker.patch("pygitgo.commands.state.state_list")
+
+    state_operation(_state_args(action_alias="list"))
+
+    mock_list.assert_called_once()
+
+
+def test_state_operation_delete_all_via_flag(mocker):
+    from pygitgo.commands.state import state_operation
+    mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
+
+    state_operation(_state_args(action="delete", all=True))
+
+    mock_delete.assert_called_once_with("-a")
+
+
+def test_state_operation_conflicting_actions():
+    from pygitgo.commands.state import state_operation
+    from pygitgo.exceptions import GitGoError
+
+    with pytest.raises(GitGoError, match="Conflicting actions"):
+        state_operation(_state_args(action="list", action_alias="save"))
+
+
+def test_state_operation_all_flag_requires_delete():
+    from pygitgo.commands.state import state_operation
+    from pygitgo.exceptions import GitGoError
+
+    with pytest.raises(GitGoError, match="-a/--all flag is only valid"):
+        state_operation(_state_args(action="list", all=True))
+
+
+def test_state_operation_missing_action():
+    from pygitgo.commands.state import state_operation
+    from pygitgo.exceptions import GitGoError
+
+    with pytest.raises(GitGoError, match="Missing action"):
+        state_operation(_state_args())
+

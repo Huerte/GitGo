@@ -1,5 +1,5 @@
-from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.utils.cli_io import info, warning, error
 from pygitgo.utils.executor import run_command
 
 
@@ -15,18 +15,14 @@ def add_remote_origin(repo_url):
 
 
 def confirm_remote_link(ok_text=None):
+    if not ok_text:
+        ok_text = "Remote is reachable."
     try:
-        if not ok_text:
-            ok_text = "Remote is reachable."
         run_command(["git", "ls-remote", "origin"], loading_msg="Testing connection to remote...", ok_text=ok_text)
         return True
     except GitCommandError:
-        error("Connection failed — verify the URL and your SSH key.")
         info("Run:  git remote -v   to inspect your current remote.")
-        return False
-
-
-
+        raise GitGoError("Connection failed — verify the URL and your SSH key.")
 
 
 def check_and_sync_branch(branch):

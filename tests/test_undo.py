@@ -1,8 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock, call
 from pygitgo.commands.undo import undo_commit, undo_add, undo_changes, undo_link, undo_push, undo_operation
 from pygitgo.exceptions import GitGoError, GitCommandError
+from unittest.mock import patch
 from argparse import Namespace
+import pytest
 
 
 @patch("pygitgo.commands.undo.run_command")
@@ -47,10 +47,11 @@ def test_undo_add_failure(mock_run_command):
 
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.success")
-@patch("pygitgo.commands.undo.input", return_value="y")
-def test_undo_changes_success(mock_input, mock_success, mock_run_command):
+@patch("pygitgo.commands.undo.confirm", return_value=True)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_changes_success(mock_banner, mock_confirm, mock_success, mock_run_command):
     undo_changes()
-    mock_input.assert_called_once()
+    mock_confirm.assert_called_once()
     assert mock_run_command.call_count == 2
     mock_run_command.assert_any_call(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...", ok_text="Edits discarded.")
     mock_run_command.assert_any_call(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
@@ -59,13 +60,12 @@ def test_undo_changes_success(mock_input, mock_success, mock_run_command):
 
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.info")
-@patch("pygitgo.commands.undo.input", return_value="n")
-def test_undo_changes_abort(mock_input, mock_info, mock_run_command):
+@patch("pygitgo.commands.undo.confirm", return_value=False)
+def test_undo_changes_abort(mock_confirm, mock_info, mock_run_command):
     undo_changes()
-    mock_input.assert_called_once()
+    mock_confirm.assert_called_once()
     mock_info.assert_called_once()
     mock_run_command.assert_not_called()
-
 
 
 @patch("pygitgo.commands.undo.run_command")
@@ -107,12 +107,12 @@ def test_undo_link_no_commit_to_reset(mock_info, mock_success, mock_run_command)
     assert mock_info.call_count == 2
 
 
-
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.get_current_branch", return_value="main")
 @patch("pygitgo.commands.undo.success")
-@patch("pygitgo.commands.undo.input", return_value="y")
-def test_undo_push_success(mock_input, mock_success, mock_branch, mock_run_command):
+@patch("pygitgo.commands.undo.confirm", return_value=True)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_push_success(mock_banner, mock_confirm, mock_success, mock_branch, mock_run_command):
     undo_push()
     mock_run_command.assert_any_call(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...", ok_text="Last commit reverted locally.")
     mock_run_command.assert_any_call(["git", "push", "--force", "origin", "main"], loading_msg="Force-pushing reverted state to 'main'...", ok_text="Last push reverted. Remote 'main' is back to the previous commit.")
@@ -122,8 +122,8 @@ def test_undo_push_success(mock_input, mock_success, mock_branch, mock_run_comma
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.get_current_branch", return_value="main")
 @patch("pygitgo.commands.undo.info")
-@patch("pygitgo.commands.undo.input", return_value="n")
-def test_undo_push_abort(mock_input, mock_info, mock_branch, mock_run_command):
+@patch("pygitgo.commands.undo.confirm", return_value=False)
+def test_undo_push_abort(mock_confirm, mock_info, mock_branch, mock_run_command):
     undo_push()
     mock_run_command.assert_not_called()
     mock_info.assert_called_once_with("Canceled. Remote is unchanged.")
@@ -131,8 +131,8 @@ def test_undo_push_abort(mock_input, mock_info, mock_branch, mock_run_command):
 
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.get_current_branch", return_value="main")
-@patch("pygitgo.commands.undo.input", return_value="y")
-def test_undo_push_no_commit(mock_input, mock_branch, mock_run_command):
+@patch("pygitgo.commands.undo.confirm", return_value=True)
+def test_undo_push_no_commit(mock_confirm, mock_branch, mock_run_command):
     mock_run_command.side_effect = GitCommandError(["git", "reset"])
     with pytest.raises(GitGoError, match="Undo failed"):
         undo_push()
@@ -140,46 +140,58 @@ def test_undo_push_no_commit(mock_input, mock_branch, mock_run_command):
 
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.get_current_branch", return_value="main")
-@patch("pygitgo.commands.undo.input", return_value="y")
-def test_undo_push_force_push_fails(mock_input, mock_branch, mock_run_command):
+@patch("pygitgo.commands.undo.confirm", return_value=True)
+def test_undo_push_force_push_fails(mock_confirm, mock_branch, mock_run_command):
     mock_run_command.side_effect = [None, GitCommandError(["git", "push", "--force"])]
     with pytest.raises(GitGoError, match="Force-push failed"):
         undo_push()
 
 
-@patch("pygitgo.commands.undo.undo_commit")
-def test_undo_operation_commit(mock_undo_commit):
+@patch("pygitgo.commands.undo.undo_commit", return_value=True)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_operation_commit(mock_banner, mock_undo_commit):
     args = Namespace(action="commit")
     undo_operation(args)
     mock_undo_commit.assert_called_once()
+    mock_banner.assert_called_once()
 
 
-@patch("pygitgo.commands.undo.undo_add")
-def test_undo_operation_add(mock_undo_add):
+@patch("pygitgo.commands.undo.undo_add", return_value=True)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_operation_add(mock_banner, mock_undo_add):
     args = Namespace(action="add")
     undo_operation(args)
     mock_undo_add.assert_called_once()
+    mock_banner.assert_called_once()
 
 
-@patch("pygitgo.commands.undo.undo_changes")
-def test_undo_operation_changes(mock_undo_changes):
+@patch("pygitgo.commands.undo.undo_changes", return_value=False)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_operation_changes(mock_banner, mock_undo_changes):
     args = Namespace(action="changes")
     undo_operation(args)
     mock_undo_changes.assert_called_once()
+    # banner should NOT fire when user aborts (returns False)
+    mock_banner.assert_not_called()
 
 
-@patch("pygitgo.commands.undo.undo_link")
-def test_undo_operation_link(mock_undo_link):
+@patch("pygitgo.commands.undo.undo_link", return_value=True)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_operation_link(mock_banner, mock_undo_link):
     args = Namespace(action="link")
     undo_operation(args)
     mock_undo_link.assert_called_once()
+    mock_banner.assert_called_once()
 
 
-@patch("pygitgo.commands.undo.undo_push")
-def test_undo_operation_push(mock_undo_push):
+@patch("pygitgo.commands.undo.undo_push", return_value=False)
+@patch("pygitgo.commands.undo.banner")
+def test_undo_operation_push(mock_banner, mock_undo_push):
     args = Namespace(action="push")
     undo_operation(args)
     mock_undo_push.assert_called_once()
+    # banner should NOT fire when user aborts (returns False)
+    mock_banner.assert_not_called()
 
 
 def test_undo_operation_invalid():

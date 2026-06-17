@@ -1,5 +1,5 @@
+from pygitgo.utils.cli_io import success, warning, error, info
 from pygitgo.commands.git_branch import get_current_branch
-from pygitgo.utils.colors import success, warning, error, info
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 from pathlib import Path
@@ -56,6 +56,9 @@ def pull_operation(args):
             loading_msg=f"Downloading latest updates for '{branch}' (auto-saving your code)...",
             ok_text=f"Project is up to date with '{branch}'."
         )
+
+        from pygitgo.utils.cli_io import banner
+        banner("REMOTE SYNCHRONIZED. LATEST CHANGES ACQUIRED.", "LOCAL WORKSPACE UPDATED AND ALIGNED.")
 
     except KeyboardInterrupt:
         print()

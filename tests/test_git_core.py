@@ -1,8 +1,6 @@
 from pygitgo.commands.git_core import (
     git_commit, git_init, git_push
 )
-from unittest.mock import call
-import pytest
 
 
 def test_git_commit(mocker):
@@ -16,7 +14,7 @@ def test_git_commit(mocker):
 
     fake_run.assert_any_call(
         ['git', 'commit', '-S', '-m', 'Testing the commit feature'],
-        loading_msg="Commiting changes...",
+        loading_msg="Committing changes...",
         ok_text="Changes committed."
     )
 

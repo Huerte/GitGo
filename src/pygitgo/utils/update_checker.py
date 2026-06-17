@@ -1,11 +1,11 @@
-import json
-import threading
-import urllib.request
-import urllib.error
+from pygitgo.utils.cli_io import info, warning
 from datetime import datetime, timedelta
 from pathlib import Path
+import urllib.request
+import urllib.error
+import threading
+import json
 
-from pygitgo.utils.colors import info, warning
 
 
 CACHE_DIR = Path.home() / ".gitgo"

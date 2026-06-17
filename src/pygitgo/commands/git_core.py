@@ -1,10 +1,10 @@
 from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection
-from pygitgo.utils.colors import info, success, warning, error
 from pygitgo.exceptions import GitGoError, GitCommandError
 from pygitgo.auth.account import sanitize_signing_config
 from pygitgo.commands.git_remote import handle_rebase
 from pygitgo.utils.config import get_default_branch
 from pygitgo.utils.executor import run_command
+from pygitgo.utils.cli_io import info, warning
 import os
 
 
@@ -19,7 +19,7 @@ def _get_signing_flags():
     ]
 
 
-def git_commit(commit_message, loading_msg="Commiting changes...", skip_staging=False, ok_text=None):
+def git_commit(commit_message, loading_msg="Committing changes...", skip_staging=False, ok_text=None):
     if not ok_text:
         ok_text = "Changes committed."
     try:

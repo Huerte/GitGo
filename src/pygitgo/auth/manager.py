@@ -1,4 +1,4 @@
-from pygitgo.utils.colors import info, success, warning, error
+from pygitgo.utils.cli_io import info, success, warning, error
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
@@ -124,7 +124,7 @@ def logout():
         except GitCommandError:
             pass
 
-        success("User successfully logout")
+        success("User successfully logged out.")
         return True
     
     except Exception as e:

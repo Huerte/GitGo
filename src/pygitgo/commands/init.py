@@ -1,6 +1,6 @@
 from pygitgo.commands.git_core import git_init
-from pygitgo.utils.colors import info, success
 from pygitgo.exceptions import GitGoError
+from pygitgo.utils.cli_io import info
 import urllib.request
 import urllib.error
 import zipfile
@@ -292,7 +292,7 @@ def _scaffold_language(lang, target_dir, name):
         info(f"Created {name}.csproj and Program.cs")
 
 
-def init_operation(args):
+def init_operation(args, standalone=False):
     target_dir = args.name
 
     if os.path.exists(target_dir) and os.listdir(target_dir):
@@ -311,7 +311,10 @@ def init_operation(args):
         os.chdir(target_dir)
         git_init(ok_text=f"Initialized empty Git repository in {os.path.abspath('.')}")
 
-        info("Next step: Create a remote repo with 'gitgo new <name>'")
+        if standalone:
+            from pygitgo.utils.cli_io import banner
+            banner("LOCAL SCAFFOLD CONSTRUCTED.", "PROJECT STRUCTURE AND REPOSITORY INITIALIZED.")
+            info(f"Next steps:\n  cd {target_dir}\n  gitgo repo\n  gitgo link <url>")
 
     except Exception as e:
         if os.path.exists(target_dir) and not os.listdir(target_dir):

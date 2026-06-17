@@ -1,6 +1,5 @@
-import pytest
-from pygitgo.exceptions import GitCommandError
 from pygitgo.auth.account import get_user, set_user, ensure_user_configure, sanitize_signing_config
+from pygitgo.exceptions import GitCommandError
 
 
 

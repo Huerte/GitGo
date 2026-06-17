@@ -1,6 +1,6 @@
+from pygitgo.utils.cli_io import info, warning, banner
 from pygitgo.auth.manager import login, logout
 from pygitgo.auth.account import get_user
-from pygitgo.utils.colors import info, warning
 from pygitgo.exceptions import GitGoError
 import shutil
 
@@ -28,7 +28,8 @@ def user_operation(args):
         return
     
     if action == 'login':
-        login()
+        if login():
+            banner("IDENTITY VERIFIED. ACCESS GRANTED.", "GITHUB SECURE KEYPAIR REGISTERED AND ENABLED.")
     elif action == 'logout':
         logout()
     else:

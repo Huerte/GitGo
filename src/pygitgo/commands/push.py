@@ -1,6 +1,6 @@
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist
-from pygitgo.utils.colors import info, warning, error, success, print_banner
+from pygitgo.utils.cli_io import info, warning, success, confirm, banner
 from pygitgo.commands.git_core import git_commit, git_push
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.jump import jump_operation
@@ -87,9 +87,12 @@ def push_operation(args):
             elif branch and is_branch_exist(branch):
                 current_branch = get_current_branch()
                 if current_branch != branch:
-                    info(f"Switching to target branch '{branch}'...")
-                    jump_operation(Namespace(branch=branch))
-                    auto_switched_from = current_branch
+                    if confirm(f"Branch '{branch}' already exists. Switch to it before pushing? (y/n): "):
+                        info(f"Switching to target branch '{branch}'...")
+                        jump_operation(Namespace(branch=branch, nested=True))
+                        auto_switched_from = current_branch
+                    else:
+                        raise GitGoError("Push aborted.")
 
             elif not branch:
                 branch = get_current_branch()
@@ -111,7 +114,7 @@ def push_operation(args):
                 return
 
             selective_stage(selected)
-            commit_made = git_commit(message, loading_msg="Commiting selected files...", skip_staging=True)
+            commit_made = git_commit(message, loading_msg="Committing selected files...", skip_staging=True)
 
             if commit_made:
                 git_push(branch)
@@ -139,7 +142,7 @@ def push_operation(args):
                     warning("Make some changes first or check your git remote configuration.")
                     return
 
-        print_banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.")
+        banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.", "REMOTE TARGETS ALIGNED WITH LOCAL EDITS.")
 
         print()
         if auto_switched_from:

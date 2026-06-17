@@ -4,7 +4,6 @@ from pygitgo.commands.repo import (
     _get_github_token,
     create_github_repo,
     repo_operation,
-    _clear_saved_token,
 )
 import urllib.error
 import pytest

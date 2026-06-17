@@ -1,4 +1,4 @@
-from pygitgo.utils.colors import success, error, info
+from pygitgo.utils.cli_io import success, error, info, confirm
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.config import get_config
@@ -44,9 +44,8 @@ def git_new_branch(branch, ok_text=None):
         if current == branch:
             info(f"Already on branch '{branch}'. Continuing...")
         else:
-            error(f"Failed to create branch '{branch}'! It may already exist.")
-            choice = input("\nWould you like to jump to the existing branch instead? (y/n): ").strip().lower()
-            if choice == "y":
+            error(f"Failed to create branch '{branch}'. It may already exist.")
+            if confirm(f"Switch to the existing branch '{branch}' instead? (y/n): "):
                 from pygitgo.commands.jump import jump_operation
                 jump_operation(Namespace(branch=branch))
             else:

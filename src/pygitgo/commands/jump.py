@@ -1,10 +1,10 @@
+from pygitgo.utils.cli_io import warning, info, success, error, confirm, banner
 from pygitgo.commands.git_branch import (
     is_branch_exist, get_current_branch, git_new_branch, get_main_branch,
 )
 from pygitgo.commands.stash import (
     git_stash_pop, git_stash_push, git_stash_apply, git_stash_drop
 )
-from pygitgo.utils.colors import warning, info, success, error
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 import sys
@@ -76,11 +76,10 @@ def jump_operation(args):
     try:
         if has_changes.strip():
             print()
-            info("You have unsaved changes here.")
-            user_input = input("Do you want to move these changes to your new branch? (y/n): ").strip().lower()
-            if user_input != 'y':
+            info("You have unsaved changes in this folder.")
+            if not confirm(f"Move your unsaved edits to branch '{target_branch}'? (y/n): "):
                 print()
-                warning("You cannot switch branches with unsaved changes. Jump canceled.")
+                warning("You cannot switch branches with unsaved edits. Jump canceled.")
                 return
             stash_result = git_stash_push(label="GitGo Jump Auto-Stash", loading_msg="Saving your changes before jumping...")
             if not stash_result:
@@ -93,9 +92,7 @@ def jump_operation(args):
         if not is_branch_exist(target_branch):
             print()
             warning(f"Branch '{target_branch}' does not exist.")
-            user_input = input("Do you want to create it and jump to it? (y/n): ").strip().lower()
-
-            if user_input != 'y':
+            if not confirm(f"Branch '{target_branch}' does not exist yet. Create it and switch to it? (y/n): "):
                 info("Exiting without jumping...")
                 if stashed_code:
                     pop_result = git_stash_pop(loading_msg="Putting your unsaved changes back...")
@@ -130,12 +127,10 @@ def jump_operation(args):
                 print()
                 error("MERGE CONFLICT — your changes clash with the target branch.")
                 print()
-                info("Option [Y]: Stay here and fix the conflict lines yourself.")
-                info("Option [N]: Cancel everything and go back to where you started.")
+                info("Option [Y]: Stay here and fix the conflict lines in your files.")
+                info("Option [N]: Undo the switch and go back to where you started.")
                 print()
-                conflict_choice = input("Do you want to fix it yourself? (y/n): ").strip().lower()
-
-                if conflict_choice != 'y':
+                if not confirm("Fix the conflicts yourself? (y = stay and fix / n = go back): "):
                     undo_jump_operation(original_branch, stashed_code, created_branch)
                     return
                 else:
@@ -148,9 +143,10 @@ def jump_operation(args):
                 drop_result = git_stash_drop(loading_msg="Cleaning up the temporary stash...", ok_text=f"On '{target_branch}'. Your changes came with you.")
                 if not drop_result:
                     warning("Could not clean up the temporary stash. Run 'gitgo state list' to remove it manually.")
-                return
-        else:
-            return
+
+        if not getattr(args, 'nested', False):
+            banner("WORKSPACE RE-POSITIONED. TARGET DEPLOYMENT SECURED.", "ON TARGET BRANCH WITH RE-APPLIED STATE.")
+        return
 
     except KeyboardInterrupt:
         print()

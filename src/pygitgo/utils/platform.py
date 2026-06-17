@@ -1,4 +1,4 @@
-from pygitgo.utils.colors import warning, info
+from pygitgo.utils.cli_io import warning, info
 import webbrowser
 import subprocess
 import platform

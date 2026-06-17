@@ -1,4 +1,4 @@
-from pygitgo.utils.colors import info, success, warning, error, highlight
+from pygitgo.utils.cli_io import info, success, warning, error, confirm, banner
 from pygitgo.commands.stash import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
@@ -51,7 +51,7 @@ def display_save_states(save_state=None):
     print("-" * 60)
 
     for state in save_states:
-        highlight(
+        print(
             f"{state['id']:>2} | {state['date']} | {state['message']}"
         )
 
@@ -130,6 +130,7 @@ def load_state(state_id=None):
             error(f"Failed to load state. There may be a conflict with your current changes.")
             raise GitGoError("Load failed — resolve conflicts first.")
         success(f"State '{selected_state['message']}' restored.")
+        banner("WORKSPACE SNAPSHOT RESTORED.", "SECURE VAULT WORKSPACE RE-APPLIED TO TREE.")
 
     except KeyboardInterrupt:
         print()
@@ -162,6 +163,7 @@ def save_state(state_name=None):
         error(f"Failed to save state '{state_name}'.")
     else:
         success(f"State '{state_name}' saved.")
+        banner("WORKSPACE SNAPSHOT CAPTURED.", "LOCAL EDITS PRESERVED IN GitGo SECURE VAULT.")
 
 
 def delete_state(identifier=None):
@@ -176,8 +178,7 @@ def delete_state(identifier=None):
             return
     else:
         if identifier == '-a':
-            confirm = input("\nAre you sure you want to delete all saved states? (y/n): ").strip().lower()
-            if confirm == 'y':
+            if confirm("Delete all saved states? This cannot be undone. (y/n): ", destructive=True):
                 clear_result = git_stash_clear()
                 if not clear_result:
                     error("Failed to delete all saved states.")

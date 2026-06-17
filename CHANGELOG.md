@@ -8,7 +8,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Nested Folder Guard:** Added a directory validation check to `gitgo new` that aborts the operation if you are already inside a folder with the same name, preventing accidental nested projects.
+- **SSH Key Guard:** Added an overwrite confirmation prompt during `gitgo user login` if an existing SSH key is detected.
+- **Orphan Repo Recovery:** `gitgo new` can delete the GitHub repo it just created if linking fails, so you're not left with a remote you didn't mean to keep.
+
+### Changed
+- **UI Architecture:** Centralized all terminal output logic into `pygitgo.utils.cli_io`. Removed old print wrappers from `colors.py`, which now strictly handles ANSI constants.
+- **Prompts:** Replaced raw `input()` calls across the codebase with a unified `cli_io.confirm()` helper for consistent yes/no gating.
+- **Copywriting:** Updated prompt text to be friendlier for beginners (e.g., "unsaved changes" is now "unsaved edits", and error messages use calmer punctuation). Fixed typo "Commiting" to "Committing".
+- **Success States:** Added prominent `banner()` printouts for successful completion of major workflows like `pull`, `jump`, `undo`, `init`, and `repo`.
+- **Undo Refactor:** Re-architected `undo.py` to return success flags so it prints exactly one success banner at the very end, preventing duplicate output spam.
+- **Error Handling:** Shifted manual `error()` print statements to raised `GitGoError` exceptions in `config.py` and `link.py` for better error propagation.
+- **Authentication Retry:** Added an automatic 3-retry limit for invalid tokens in `gitgo repo` before hard-failing.
+- **`gitgo init`:** Standalone init now points to `gitgo repo` and `gitgo link` instead of suggesting `gitgo new` again.
+
 ### Fixed
+- Fixed `gitgo new` showing a success banner when linking failed. Failures now exit with an error and skip the banner.
+- Fixed `confirm_remote_link` failing silently on existing repos. Connection errors now raise `GitGoError`.
+- Fixed `gitgo push` auto-switching branches without asking. It now confirms before calling `jump`.
 - Fixed visual freezes by adding loading spinners to the network check in `gitgo pull` and local reset actions in `gitgo undo` commands.
 - Fixed the login flow UX by making the background `ssh-agent` check silent during key generation, preventing disjointed warning messages.
 - Fixed the fallback manual browser URL in the login flow printing unconditionally even when the browser opens successfully.

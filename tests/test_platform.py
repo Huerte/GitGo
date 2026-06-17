@@ -1,5 +1,6 @@
 from pygitgo.utils.platform import get_platform
 
+
 def test_get_platform_on_windows(mocker):
     mocker.patch('platform.system', return_value='Windows')
 
@@ -59,4 +60,4 @@ def test_open_url_failure(mocker):
 
     from pygitgo.utils.platform import open_url
     open_url("https://example.com")
-    mock_warning.assert_called_once_with("Could not open browser automatically.")
+    mock_warning.assert_called_once_with("Could not open browser automatically.")
