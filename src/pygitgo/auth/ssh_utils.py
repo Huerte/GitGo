@@ -73,7 +73,7 @@ def check_connection(ok_text=None, fail_text=None):
     
     ensure_github_known_host()
 
-    kwargs = {"text": ok_text or "Verifying GitHub connection..."}
+    kwargs = {"text": "Verifying GitHub connection..."}
     if sys.stdout.isatty():
         kwargs["color"] = "cyan"
     spinner = yaspin(**kwargs)
@@ -83,12 +83,10 @@ def check_connection(ok_text=None, fail_text=None):
     connected = output is not None and "successfully authenticated" in output
 
     if connected:
-        if ok_text:
-            spinner.text = ok_text
+        spinner.text = ok_text or "GitHub connection verified."
         spinner.ok("✔")
     else:
-        if fail_text:
-            spinner.text = fail_text
+        spinner.text = fail_text or "Could not connect to GitHub."
         spinner.fail("✖")
 
     return connected
