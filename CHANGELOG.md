@@ -8,6 +8,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Fixed the connection check spinner displaying the success message while it was still loading in login flow.
+
 ---
 
 ## [1.8.2] - 2026-06-17
