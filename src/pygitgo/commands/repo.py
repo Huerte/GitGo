@@ -1,5 +1,5 @@
-from pygitgo.utils.colors import info, success, warning
 from pygitgo.utils.config import get_config, set_config
+from pygitgo.utils.cli_io import info, warning, banner
 from pygitgo.utils.platform import open_url
 from pygitgo.exceptions import GitGoError
 import subprocess
@@ -64,7 +64,7 @@ def _get_github_token():
     return _prompt_for_token()
 
 
-def create_github_repo(name, private=False, description="", token=None):
+def create_github_repo(name, private=False, description="", token=None, retry_count=0):
     
     if not token:
         token = _get_github_token()
@@ -94,11 +94,13 @@ def create_github_repo(name, private=False, description="", token=None):
         if e.code == 422:
             raise GitGoError(f"Repository '{name}' already exists on GitHub.")
         elif e.code == 401:
+            if retry_count >= 3:
+                raise GitGoError("GitHub authentication failed. Please check your GitHub token.")
             warning("Token is invalid or expired. Clearing saved token...")
             _clear_saved_token()
             warning("Please create a new token. Opening GitHub now...")
             new_token = _prompt_for_token()
-            return create_github_repo(name, private=private, description=description, token=new_token)
+            return create_github_repo(name, private=private, description=description, token=new_token, retry_count=retry_count + 1)
 
         body = e.read().decode("utf-8", errors="replace")
         try:
@@ -143,6 +145,42 @@ def repo_operation(args, silent=False):
         raise e
 
     if not silent:
+        banner("REMOTE TARGET ESTABLISHED. REPOSITORY READY.", "GITHUB TARGET CREATION CONFIRMED.")
         info(f"\nTo connect and push your local code, run:\n  gitgo link {repo_url}")
     return repo_url
+
+
+def parse_repo_fullname(url):
+    s = url.strip()
+    if s.endswith(".git"):
+        s = s[:-4]
+    if "github.com/" in s:
+        parts = s.split("github.com/")
+        if len(parts) > 1:
+            return parts[1]
+    elif "github.com:" in s:
+        parts = s.split("github.com:")
+        if len(parts) > 1:
+            return parts[1]
+    return None
+
+
+def delete_github_repo(full_name, token=None):
+    if not token:
+        token = _get_github_token()
+    req = urllib.request.Request(
+        f"{GITHUB_API}/repos/{full_name}",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "GitGo-CLI"
+        }, method="DELETE",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return True
+    except Exception as e:
+        raise GitGoError(f"Failed to delete repository from GitHub: {str(e)}")
+
 

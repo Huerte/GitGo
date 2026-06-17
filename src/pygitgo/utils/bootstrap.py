@@ -1,5 +1,5 @@
+from pygitgo.utils.cli_io import error, info
 from pygitgo.exceptions import GitGoError
-from pygitgo.utils.colors import error, info
 import shutil
 
 

@@ -1,5 +1,5 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.colors import info, success, warning
+from pygitgo.utils.cli_io import info, success, warning
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pathlib import Path
@@ -115,6 +115,9 @@ def generate_ssh_key(email):
         key_path.parent.mkdir(parents=True)
     
     if key_path.exists():
+        from pygitgo.utils.cli_io import confirm
+        if not confirm(f"SSH key {key_path} already exists. Overwrite it? (y/n): ", destructive=True):
+            raise GitGoError("SSH key generation aborted. Please back up your existing key or configure it manually.")
         os.remove(key_path)
     if (key_path.parent / f"{key_path.name}.pub").exists():
         os.remove(key_path.parent / f"{key_path.name}.pub")

@@ -1,4 +1,4 @@
-from pygitgo.utils.colors import error, info, success, warning
+from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger
 from pygitgo.exceptions import GitCommandError
 from yaspin import yaspin
 import subprocess
@@ -47,17 +47,15 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
             stderr = f"Command not found or execution failed: {str(e)}"
 
         if "detected dubious ownership" in stderr:
-            error(f"SECURITY ALERT: {stderr}")
-            warning("This is a known Git security feature in shared environments (like Termux).")
-            info("GitGo can fix this by adding this directory to your safe list.")
+            danger("Git blocked this folder for security reasons (dubious ownership).")
+            warning("This usually happens in shared environments like Termux or network drives.")
+            info("GitGo can add this folder to Git's trusted list so commands work here.")
 
             path_match = re.search(r"repository at '(.+)'", stderr)
             repo_path = path_match.group(1) if path_match else os.getcwd()
 
-            info(f"Directory to trust: {repo_path}")
-            confirm = input("\nDo you want GitGo to add this directory as an exception? (y/n): ").strip().lower()
-
-            if confirm == 'y':
+            info(f"Folder to trust: {repo_path}")
+            if confirm("Trust this folder and allow Git commands to run in it? (y/n): "):
                 info("Running security fix...")
                 fix_command = ["git", "config", "--global", "--add", "safe.directory", repo_path]
                 try:

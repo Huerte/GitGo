@@ -1,7 +1,7 @@
 from pygitgo.auth.ssh_utils import (
     ensure_github_known_host, check_connection, get_github_username,
     generate_ssh_key, convert_https_to_ssh, is_ssh_url,
-    _try_ssh_add, ensure_ssh_agent, clear_ssh_cache
+    _try_ssh_add, ensure_ssh_agent
 )
 from pygitgo.exceptions import GitGoError
 from pathlib import Path
@@ -182,5 +182,39 @@ def test_ensure_ssh_agent_linux_failure(mocker):
     fake_try.assert_called_once_with(Path("mock_key"))
     assert fake_warning.call_count == 1
     assert fake_info.call_count == 1
+
+
+def test_generate_ssh_key_exists_and_declined(mocker):
+    mocker.patch("pygitgo.auth.ssh_utils.get_ssh_key_path", return_value=Path("mock_key"))
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("pathlib.Path.mkdir")
+    mocker.patch("pygitgo.utils.cli_io.confirm", return_value=False)
+
+    with pytest.raises(GitGoError) as exc_info:
+        generate_ssh_key("test@example.com")
+    assert "SSH key generation aborted" in str(exc_info.value)
+
+
+def test_generate_ssh_key_exists_and_accepted(mocker):
+    mocker.patch("pygitgo.auth.ssh_utils.get_ssh_key_path", return_value=Path("mock_key"))
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("pathlib.Path.mkdir")
+    mocker.patch("pygitgo.utils.cli_io.confirm", return_value=True)
+    mock_remove = mocker.patch("os.remove")
+    fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command")
+
+    key_path = generate_ssh_key("test@example.com")
+    assert key_path == Path("mock_key")
+    assert mock_remove.call_count == 2
+    fake_run.assert_any_call(
+        command=[
+            "ssh-keygen",
+            "-t", "ed25519",
+            "-C", "test@example.com",
+            "-f", "mock_key",
+            "-N", ""
+        ]
+    )
+
 
 

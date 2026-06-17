@@ -23,20 +23,22 @@ def test_confirm_remote_link_success(mocker):
     )
 
 def test_confirm_remote_link_fallback(mocker):
-    from pygitgo.exceptions import GitCommandError
+    from pygitgo.exceptions import GitCommandError, GitGoError
     fake_run = mocker.patch(
         'pygitgo.commands.git_remote.run_command',
         side_effect=GitCommandError(["git", "ls-remote"])
     )
+    fake_info = mocker.patch('pygitgo.commands.git_remote.info')
 
-    result = confirm_remote_link()
-    assert result == False
+    with pytest.raises(GitGoError, match="Connection failed"):
+        confirm_remote_link()
 
     fake_run.assert_called_once_with(
-        ["git", "ls-remote", "origin"], 
+        ["git", "ls-remote", "origin"],
         loading_msg="Testing connection to remote...",
         ok_text="Remote is reachable."
     )
+    fake_info.assert_called_once_with("Run:  git remote -v   to inspect your current remote.")
 
 def test_handle_rebase(mocker):
     from pygitgo.exceptions import GitGoError

@@ -1,5 +1,5 @@
 from pygitgo.commands.jump import undo_jump_operation, jump_operation
-from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.exceptions import GitCommandError
 from conftest import capture_system_exit_code
 from argparse import Namespace
 import pytest
@@ -90,7 +90,7 @@ def test_jump_operation_has_changes_exit(mocker):
     mocker.patch('pygitgo.commands.jump.run_command', return_value='M file.txt')
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 0
-    fake_warning.assert_any_call("You cannot switch branches with unsaved changes. Jump canceled.")
+    fake_warning.assert_any_call("You cannot switch branches with unsaved edits. Jump canceled.")
 
 
 def test_jump_operation_has_changes_moves_to_branch(mocker):
@@ -257,3 +257,51 @@ def test_jump_operation_merge_conflict_stay(mocker):
     fake_warning.assert_any_call("Open your editor and fix the conflict lines.")
     fake_info.assert_any_call("Your stash backup is still saved. Run 'gitgo state list' to see it.")
     fake_drop.assert_not_called()
+
+
+def test_jump_keyboard_interrupt_during_checkout(mocker):
+    mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='main')
+    mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
+    mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
+    mock_warning = mocker.patch('pygitgo.commands.jump.warning')
+    mock_cleanup = mocker.patch('pygitgo.commands.jump._jump_interrupt_cleanup')
+
+    def side_effect(cmd, *args, **kwargs):
+        if cmd == ['git', 'status', '--porcelain']:
+            return ''
+        if cmd == ['git', 'checkout', 'feature']:
+            raise KeyboardInterrupt()
+        return 'ok'
+
+    mocker.patch('pygitgo.commands.jump.run_command', side_effect=side_effect)
+
+    with pytest.raises(SystemExit) as exc_info:
+        jump_operation(make_args('feature'))
+
+    assert exc_info.value.code == 130
+    mock_warning.assert_called_with("Jump interrupted (Ctrl+C).")
+    mock_cleanup.assert_called_once_with('main', False, None)
+
+
+def test_jump_keyboard_interrupt_after_stash(mocker):
+    mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='main')
+    mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
+    mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
+    mocker.patch('pygitgo.commands.jump.confirm', return_value=True)
+    mocker.patch('pygitgo.commands.jump.git_stash_push', return_value=True)
+    mock_cleanup = mocker.patch('pygitgo.commands.jump._jump_interrupt_cleanup')
+
+    def side_effect(cmd, *args, **kwargs):
+        if cmd == ['git', 'status', '--porcelain']:
+            return 'M file.txt'
+        if cmd[0] == 'git' and cmd[1] == 'checkout':
+            raise KeyboardInterrupt()
+        return 'ok'
+
+    mocker.patch('pygitgo.commands.jump.run_command', side_effect=side_effect)
+
+    with pytest.raises(SystemExit) as exc_info:
+        jump_operation(make_args('feature'))
+
+    assert exc_info.value.code == 130
+    mock_cleanup.assert_called_once_with('main', True, None)

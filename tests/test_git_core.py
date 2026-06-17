@@ -16,7 +16,7 @@ def test_git_commit(mocker):
 
     fake_run.assert_any_call(
         ['git', 'commit', '-S', '-m', 'Testing the commit feature'],
-        loading_msg="Commiting changes...",
+        loading_msg="Committing changes...",
         ok_text="Changes committed."
     )
 

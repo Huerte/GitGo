@@ -4,26 +4,23 @@ from argparse import Namespace
 import pytest
 
 
-def test_config_operation_not_valid_keys(mocker):
-    fake_error = mocker.patch('pygitgo.commands.config.error')
-    fake_warning = mocker.patch('pygitgo.commands.config.warning')
-    
-    VALID_KEYS = ["default-branch", "default-message"]
+from pygitgo.exceptions import GitGoError
 
+
+def test_config_operation_not_valid_keys(mocker):
+    VALID_KEYS = ["default-branch", "default-message"]
     key = "not-valid"
     value = "true"
     args = Namespace(key=key, action="set", value=value)
 
-    assert capture_system_exit_code(lambda: config_operation(args)) == 0
+    with pytest.raises(GitGoError, match="Invalid configuration key"):
+        config_operation(args)
 
-    fake_error.assert_called_with(f"\nInvalid configuration key: '{key}'")
-    fake_warning.assert_called_with(f"Valid keys are: {', '.join(VALID_KEYS)}\n")
 
 def test_config_operation_set_no_value(mocker):
-    fake_error = mocker.patch('pygitgo.commands.config.error')
     args = Namespace(key="default-branch", action="set")
-    config_operation(args)
-    fake_error.assert_called_with("\nYou must provide a value to set!\n")
+    with pytest.raises(GitGoError, match="You must provide a value to set"):
+        config_operation(args)
 
 def test_config_operation_set_ok(mocker):
     fake_set = mocker.patch('pygitgo.commands.config.set_config')

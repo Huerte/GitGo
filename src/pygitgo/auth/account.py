@@ -1,6 +1,7 @@
-from pygitgo.utils.colors import info, success, warning, error, BLUE, RESET
+from pygitgo.utils.cli_io import info, success, warning, error
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
+from pygitgo.utils.colors import BLUE, RESET
 
 
 def get_user():
@@ -24,7 +25,7 @@ def get_user():
 def set_user(name, email):
     run_command(["git", "config", "--global", "user.name", name])
     run_command(["git", "config", "--global", "user.email", email])
-    success(f"\nGit user configured Successfully")
+    success("\nGit user configured successfully.")
     print(f"{BLUE}Username{RESET} : {name}")
     print(f"{BLUE}Email    {RESET}: {email}")
 

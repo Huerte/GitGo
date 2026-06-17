@@ -1,14 +1,14 @@
-import pytest
-from argparse import Namespace
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.link import link_operation
+from argparse import Namespace
+import pytest
 
 
 def test_link_invalid_url():
     args = Namespace(url="invalid-url", message="Initial commit")
     with pytest.raises(GitGoError) as exc_info:
         link_operation(args)
-    assert "Invalid repository URL!" in str(exc_info.value)
+    assert "Invalid remote repository URL:" in str(exc_info.value)
 
 
 def test_link_existing_repo(mocker):
@@ -101,7 +101,96 @@ def test_link_new_repo_with_remote_refs_pull_failure(mocker):
     )
 
     args = Namespace(url="git@github.com:user/repo.git", message="Initial commit")
-    link_operation(args)
+    with pytest.raises(GitGoError):
+        link_operation(args)
 
     fake_error.assert_called_once_with("Failed to merge remote content. You may need to resolve conflicts manually.")
     fake_warning.assert_any_call("Run: git pull origin main --allow-unrelated-histories")
+
+
+def test_link_core_already_initialized_commits_and_pushes(mocker):
+    from pygitgo.commands.link import link_core
+
+    mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    fake_init = mocker.patch("pygitgo.commands.link.git_init")
+    fake_commit = mocker.patch("pygitgo.commands.link.git_commit", return_value=True)
+    fake_add_remote = mocker.patch("pygitgo.commands.link.add_remote_origin")
+    mocker.patch("pygitgo.commands.link.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.link.get_default_branch", return_value="main")
+    mocker.patch("pygitgo.commands.link.run_command", return_value="")
+    fake_push = mocker.patch("pygitgo.commands.link.git_push")
+
+    link_core(
+        "https://github.com/user/repo.git",
+        "Initial commit",
+        silent=True,
+        already_initialized=True,
+    )
+
+    fake_init.assert_not_called()
+    fake_commit.assert_called_once_with(
+        "Initial commit",
+        loading_msg="Creating initial commit...",
+        ok_text="Initial commit created.",
+    )
+    fake_add_remote.assert_called_once_with("https://github.com/user/repo.git")
+    fake_push.assert_called_once_with("main")
+
+
+def test_link_keyboard_interrupt_during_commit(mocker):
+    from pygitgo.commands.link import link_core
+
+    mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    mocker.patch("pygitgo.commands.link.git_init", return_value=True)
+    mocker.patch("pygitgo.commands.link.git_commit", side_effect=KeyboardInterrupt())
+    mock_warning = mocker.patch("pygitgo.commands.link.warning")
+    mock_cleanup = mocker.patch("pygitgo.commands.link._link_interrupt_cleanup")
+
+    with pytest.raises(SystemExit) as exc_info:
+        link_core("https://github.com/user/repo.git", "Initial commit")
+
+    assert exc_info.value.code == 130
+    mock_warning.assert_called_once_with("Link interrupted (Ctrl+C).")
+    mock_cleanup.assert_called_once_with(
+        "https://github.com/user/repo.git",
+        True,
+        False,
+        False,
+    )
+
+
+def test_link_keyboard_interrupt_after_remote_added(mocker):
+    from pygitgo.commands.link import link_core
+
+    mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    mocker.patch("pygitgo.commands.link.git_init", return_value=True)
+    mocker.patch("pygitgo.commands.link.git_commit", return_value=True)
+    mocker.patch("pygitgo.commands.link.add_remote_origin")
+    mocker.patch("pygitgo.commands.link.get_current_branch", side_effect=KeyboardInterrupt())
+    mock_cleanup = mocker.patch("pygitgo.commands.link._link_interrupt_cleanup")
+
+    with pytest.raises(SystemExit) as exc_info:
+        link_core("https://github.com/user/repo.git", "Initial commit")
+
+    assert exc_info.value.code == 130
+    mock_cleanup.assert_called_once_with(
+        "https://github.com/user/repo.git",
+        True,
+        True,
+        True,
+    )
+
+
+def test_link_existing_repo_failure(mocker):
+    mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    mocker.patch("pygitgo.commands.link.git_init", return_value=False)
+    fake_add_remote = mocker.patch("pygitgo.commands.link.add_remote_origin")
+    fake_confirm = mocker.patch("pygitgo.commands.link.confirm_remote_link", side_effect=GitGoError("Connection failed"))
+
+    args = Namespace(url="git@github.com:user/repo.git", message="Initial commit")
+    with pytest.raises(GitGoError) as exc_info:
+        link_operation(args)
+    
+    assert "Connection failed" in str(exc_info.value)
+    fake_add_remote.assert_called_once_with("git@github.com:user/repo.git")
+    fake_confirm.assert_called_once_with(ok_text="Remote linked to existing repository.")

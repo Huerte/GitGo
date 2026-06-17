@@ -1,5 +1,5 @@
+from pygitgo.utils.cli_io import success, warning, info, confirm, danger, banner
 from pygitgo.commands.git_branch import get_current_branch
-from pygitgo.utils.colors import success, warning, info, error
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 import sys
@@ -12,25 +12,27 @@ def undo_commit():
         raise GitGoError(
             f"Undo failed — no previous commit to revert. Details: {e}"
         )
+    return True
 
 
 def undo_add():
     run_command(["git", "reset", "HEAD"], loading_msg="Clearing staging area...", ok_text="Staging cleared. Files are back to unstaged.")
+    return True
 
 
 def undo_changes():
-    error("DANGER: This will permanently delete all your new edits and new files!")
-    warning("This action cannot be undone.")
-    confirm = input("Are you sure you want to throw away all changes? (y/n): ")
-    if confirm.lower() != "y":
+    danger("This will permanently delete all your unsaved edits and new files.")
+    warning("There is no way to recover them after this step.")
+    if not confirm("Delete all unsaved changes? Type 'y' to confirm: ", destructive=True):
         info("Canceled. Your files are safe.")
-        return
+        return False
 
     reset_done = False
     try:
         run_command(["git", "reset", "--hard", "HEAD"], loading_msg="Throwing away edits...", ok_text="Edits discarded.")
         reset_done = True
         run_command(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
+        return True
 
     except KeyboardInterrupt:
         print()
@@ -58,6 +60,7 @@ def undo_link():
     except GitCommandError:
         info("Remote removed. Could not undo the commit (none or multiple found).")
         info("Run 'gitgo undo commit' separately if needed.")
+    return True
 
 
 def undo_push():
@@ -66,12 +69,12 @@ def undo_push():
     except GitCommandError as e:
         raise GitGoError(f"Could not determine the current branch: {e}")
 
-    error("DANGER: This force-pushes to the remote. Other collaborators will be affected.")
-    warning("Only use this if no one else has pulled the commit you are reverting.")
-    confirm = input("Are you sure you want to undo the last push? (y/n): ")
-    if confirm.lower() != "y":
+    danger("This will remove your last upload from GitHub using a force-push.")
+    warning("If anyone else already downloaded that commit, this will cause problems for them.")
+    warning("Only continue if you are the only person working on this branch.")
+    if not confirm("Remove the last push from GitHub? Type 'y' to confirm: ", destructive=True):
         info("Canceled. Remote is unchanged.")
-        return
+        return False
 
     try:
         run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...", ok_text="Last commit reverted locally.")
@@ -85,24 +88,30 @@ def undo_push():
             ok_text=f"Last push reverted. Remote '{branch}' is back to the previous commit."
         )
         info("Your files are still staged locally. Edit and push again when ready.")
+        return True
     except GitCommandError as e:
-        warning("Local commit was undone, but the force-push failed.")
-        warning(f"Run manually: git push --force origin {branch}")
+        warning("Local and remote have diverged!")
+        warning("The local commit was reverted, but force-pushing to the remote failed.")
+        warning(f"To recover, run manually: git push --force origin {branch}")
         raise GitGoError(f"Force-push failed: {e}")
 
 
 def undo_operation(args):
     action = args.action
 
+    success_flag = False
     if action == "commit":
-        undo_commit()
+        success_flag = undo_commit()
     elif action == "add":
-        undo_add()
+        success_flag = undo_add()
     elif action == "changes":
-        undo_changes()
+        success_flag = undo_changes()
     elif action == "link":
-        undo_link()
+        success_flag = undo_link()
     elif action == "push":
-        undo_push()
+        success_flag = undo_push()
     else:
         raise GitGoError(f"Unknown undo operation: {action}")
+
+    if success_flag:
+        banner("ACTION ROLLBACK. WORKSPACE RESTORED.", "PREVIOUS STATE RE-ESTABLISHED SUCCESSFULLY.")

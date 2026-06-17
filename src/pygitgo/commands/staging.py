@@ -1,6 +1,6 @@
-from pygitgo.utils.colors import success, warning, error
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
+from pygitgo.utils.cli_io import success
 from pick import pick
 
 

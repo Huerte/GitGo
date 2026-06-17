@@ -1,5 +1,6 @@
 from pygitgo.utils.config import get_config, set_config
-from pygitgo.utils.colors import error, warning, info
+from pygitgo.utils.cli_io import warning, info
+from pygitgo.exceptions import GitGoError
 
 
 def config_operation(args):
@@ -10,14 +11,11 @@ def config_operation(args):
 
     VALID_KEYS = ["default-branch", "default-message"]
     if key not in VALID_KEYS:
-        error(f"\nInvalid configuration key: '{key}'")
-        warning(f"Valid keys are: {', '.join(VALID_KEYS)}\n")
-        return
+        raise GitGoError(f"Invalid configuration key: '{key}'. Valid keys are: {', '.join(VALID_KEYS)}")
 
     if action == 'set':
         if not value:
-            error("\nYou must provide a value to set!\n")
-            return
+            raise GitGoError("You must provide a value to set!")
         set_config(key, value)
     elif action == 'get':
         current_value = get_config(key, None)

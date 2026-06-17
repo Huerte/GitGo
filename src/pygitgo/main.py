@@ -1,6 +1,6 @@
 from pygitgo.utils.update_checker import check_for_updates_background, check_for_updates
 from pygitgo.utils.bootstrap import ensure_first_run_setup
-from pygitgo.utils.colors import info, warning, error
+from pygitgo.utils.cli_io import info, warning, error
 from pygitgo.commands.config import config_operation
 from pygitgo.commands.state import state_operation
 from pygitgo.commands.undo import undo_operation
@@ -294,7 +294,7 @@ def main():
         elif args.command == "new":
             new_operation(args)
         elif args.command == "init":
-            init_operation(args)
+            init_operation(args, standalone=True)
     except GitGoError as e:
         error(f"{e}")
         sys.exit(1)

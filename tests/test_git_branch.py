@@ -30,7 +30,7 @@ def test_git_branch_exists_jump_yes(mocker):
     result = git_new_branch(branch_name)
 
     assert result == "existing-branch"
-    fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
+    fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'. It may already exist.")
 
     args = fake_jump.call_args[0][0]
     assert args.branch == branch_name
@@ -48,7 +48,7 @@ def test_git_branch_exists_jump_no(mocker):
 
     with pytest.raises(GitGoError):
         git_new_branch(branch_name)
-    fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'! It may already exist.")
+    fake_error.assert_called_once_with(f"Failed to create branch '{branch_name}'. It may already exist.")
     fake_jump.assert_not_called()
 
 

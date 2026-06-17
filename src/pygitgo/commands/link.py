@@ -1,5 +1,5 @@
 from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
-from pygitgo.utils.colors import success, warning, error, info, print_banner
+from pygitgo.utils.cli_io import success, warning, error, info, banner
 from pygitgo.commands.git_core import git_init, git_commit, git_push
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
@@ -23,29 +23,34 @@ def _link_interrupt_cleanup(repo_url, initialized, committed, remote_added):
     if committed:
         info("Initial commit was created. Your files are safe.")
         info("Run 'gitgo push' when ready to push to the remote.")
-    elif initialized:
-        info("Git repository was initialized. Your files are safe.")
-        info("Run 'gitgo link <url>' again to complete the setup.")
+        return
+
+    if initialized:
+        try:
+            import shutil
+            import os
+            shutil.rmtree(".git")
+            success("Local Git repository config removed. Files are untouched.")
+        except Exception:
+            warning("Could not auto-remove '.git' folder.")
+            warning("Run: rmdir /s /q .git  (Windows) or  rm -rf .git  (Mac/Linux)")
     else:
-        success("No git state was changed.")
+        success("No Git state was changed. Your files are safe.")
 
 
-def link_core(repo_url, commit_message="Initial commit", silent=False, already_initialized=False):
+def link_core(repo_url, commit_message, silent=False, already_initialized=False):
     if not validate_repo_url(repo_url):
-        raise GitGoError(
-            "\nInvalid repository URL!\n"
-            "Expected format: https://github.com/username/repo.git"
-            "             or: git@github.com:username/repo.git\n"
-        )
+        raise GitGoError(f"Invalid remote repository URL: '{repo_url}'")
 
     initialized = False
     committed = False
     remote_added = False
 
     try:
+        main_branch = get_default_branch()
+
         if already_initialized:
             is_new_repo = True
-            initialized = True
         else:
             is_new_repo = git_init()
             if is_new_repo:
@@ -55,8 +60,8 @@ def link_core(repo_url, commit_message="Initial commit", silent=False, already_i
             add_remote_origin(repo_url)
             remote_added = True
 
-            if confirm_remote_link(ok_text="Remote linked to existing repository."):
-                info("Ready to push with: gitgo push <branch> 'your message'")
+            confirm_remote_link(ok_text="Remote linked to existing repository.")
+            info("Ready to push with: gitgo push <branch> 'your message'")
             return
 
         commit_made = git_commit(commit_message, loading_msg="Creating initial commit...", ok_text="Initial commit created.")
@@ -66,11 +71,10 @@ def link_core(repo_url, commit_message="Initial commit", silent=False, already_i
         add_remote_origin(repo_url)
         remote_added = True
 
-        if not confirm_remote_link():
-            return
-
-        current_branch = get_current_branch()
-        main_branch = get_default_branch()
+        try:
+            current_branch = get_current_branch()
+        except GitCommandError as e:
+            raise GitGoError(f"Could not determine the current branch: {e}")
 
         if current_branch != main_branch:
             run_command(["git", "branch", "-m", main_branch], loading_msg=f"Renaming branch '{current_branch}' to '{main_branch}'...", ok_text=f"Branch renamed to '{main_branch}'.")
@@ -88,16 +92,16 @@ def link_core(repo_url, commit_message="Initial commit", silent=False, already_i
                     loading_msg="Pulling and merging remote content...",
                     ok_text="Remote content merged."
                 )
-            except GitCommandError:
+            except GitCommandError as e:
                 error("Failed to merge remote content. You may need to resolve conflicts manually.")
                 warning(f"Run: git pull origin {main_branch} --allow-unrelated-histories")
                 warning(f"Then: gitgo push {main_branch} 'your message'\n")
-                return
+                raise GitGoError(f"Failed to merge remote content: {e.stderr}" if e.stderr else "Failed to merge remote content.")
 
         git_push(current_branch)
 
         if not silent:
-            print_banner("REPOSITORY INITIALIZED AND DEPLOYED.")
+            banner("REPOSITORY INITIALIZED AND DEPLOYED.", "LOCAL REPOSITORY CONNECTED TO REMOTE ORIGIN.")
             print()
             info("Run 'gitgo undo link' to remove the remote and undo the initial commit.")
 

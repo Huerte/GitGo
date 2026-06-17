@@ -15,7 +15,7 @@ def test_push_new_branch_success(mocker):
     fake_new_branch = mocker.patch("pygitgo.commands.push.git_new_branch")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
-    mocker.patch("pygitgo.commands.push.print_banner")
+    mocker.patch("pygitgo.commands.push.banner")
 
     args = Namespace(branch="feature-branch", message="Init commit", new=True, select=False)
     push_operation(args)
@@ -28,11 +28,12 @@ def test_push_new_branch_success(mocker):
 def test_push_wrong_branch_auto_switch(mocker):
     mocker.patch("pygitgo.commands.push.is_branch_exist", return_value=True)
     mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.push.confirm", return_value=True)
     fake_info = mocker.patch("pygitgo.commands.push.info")
     fake_jump = mocker.patch("pygitgo.commands.push.jump_operation")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
-    mocker.patch("pygitgo.commands.push.print_banner")
+    mocker.patch("pygitgo.commands.push.banner")
 
     args = Namespace(branch="feature-branch", message="Init commit", new=False, select=False)
     push_operation(args)
@@ -46,13 +47,26 @@ def test_push_wrong_branch_auto_switch(mocker):
     fake_push.assert_called_once_with("feature-branch")
 
 
+def test_push_wrong_branch_auto_switch_refused(mocker):
+    mocker.patch("pygitgo.commands.push.is_branch_exist", return_value=True)
+    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.push.confirm", return_value=False)
+    fake_jump = mocker.patch("pygitgo.commands.push.jump_operation")
+
+    args = Namespace(branch="feature-branch", message="Init commit", new=False, select=False)
+    with pytest.raises(GitGoError, match="Push aborted"):
+        push_operation(args)
+
+    fake_jump.assert_not_called()
+
+
 def test_push_default_branch_and_msg(mocker):
     mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
     mocker.patch("pygitgo.commands.push.get_config", return_value="Default Msg")
     mocker.patch("pygitgo.commands.push.info")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
-    mocker.patch("pygitgo.commands.push.print_banner")
+    mocker.patch("pygitgo.commands.push.banner")
 
     args = Namespace(branch=None, message=None, new=False, select=False)
     push_operation(args)
@@ -93,13 +107,13 @@ def test_push_select_success(mocker):
     fake_stage = mocker.patch("pygitgo.commands.push.selective_stage")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
-    mocker.patch("pygitgo.commands.push.print_banner")
+    mocker.patch("pygitgo.commands.push.banner")
 
     args = Namespace(branch=None, message="Selective push", new=False, select=True)
     push_operation(args)
 
     fake_stage.assert_called_once_with(["file1.txt"])
-    fake_commit.assert_called_once_with("Selective push", loading_msg="Commiting selected files...", skip_staging=True)
+    fake_commit.assert_called_once_with("Selective push", loading_msg="Committing selected files...", skip_staging=True)
     fake_push.assert_called_once_with("main")
 
 
@@ -109,7 +123,7 @@ def test_push_clean_but_unpushed_commits(mocker):
     fake_run = mocker.patch("pygitgo.commands.push.run_command", return_value="abc1234 Unpushed commit message\n")
     fake_warning = mocker.patch("pygitgo.commands.push.warning")
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
-    mocker.patch("pygitgo.commands.push.print_banner")
+    mocker.patch("pygitgo.commands.push.banner")
 
     args = Namespace(branch=None, message="Commit message", new=False, select=False)
     push_operation(args)
