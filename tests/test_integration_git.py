@@ -1,14 +1,23 @@
+import os
 import subprocess
 from pathlib import Path
 
 
 def _git(cwd, *args):
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    }
     return subprocess.run(
         ["git", *args],
         cwd=cwd,
         check=True,
         capture_output=True,
         text=True,
+        env=env,
     )
 
 
