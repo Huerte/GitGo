@@ -1,10 +1,9 @@
 from pygitgo.utils.update_checker import (
     read_cache, write_cache, should_check, get_latest_version,
-    parse_version, check_for_updates, check_for_updates_background,
-    CACHE_FILE
+    parse_version, check_for_updates, check_for_updates_background
 )
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 import json
 
 

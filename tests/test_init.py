@@ -6,7 +6,6 @@ from pygitgo.commands.init import (
     init_operation,
 )
 import pytest
-import os
 
 
 SAMPLE_AVAILABLE = {

@@ -1,7 +1,7 @@
-import sys
-import pytest
 from pygitgo.exceptions import GitGoError
 from pygitgo.main import main
+import pytest
+import sys
 
 
 @pytest.fixture

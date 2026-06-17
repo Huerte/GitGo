@@ -1,8 +1,6 @@
-import pytest
-from unittest.mock import patch, MagicMock
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
-from argparse import Namespace
-import subprocess
+from unittest.mock import patch
+
 
 @patch("pygitgo.commands.staging.run_command")
 def test_get_changed_files_with_changes(mock_run_command):

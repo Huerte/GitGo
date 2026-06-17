@@ -1,8 +1,6 @@
 from pygitgo.commands.git_core import (
     git_commit, git_init, git_push
 )
-from unittest.mock import call
-import pytest
 
 
 def test_git_commit(mocker):

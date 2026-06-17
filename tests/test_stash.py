@@ -1,4 +1,3 @@
-import pytest
 from pygitgo.exceptions import GitCommandError
 from pygitgo.commands.stash import (
     git_stash_push, git_stash_pop, git_stash_apply,

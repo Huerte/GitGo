@@ -1,9 +1,9 @@
-from unittest.mock import patch, MagicMock
-from pygitgo.commands.pull import pull_operation
 from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.commands.pull import pull_operation
+from unittest.mock import patch, MagicMock
 from argparse import Namespace
-import subprocess
 import pytest
+
 
 @patch("pygitgo.commands.pull.run_command")
 @patch("pygitgo.commands.pull.success")

@@ -1,5 +1,4 @@
 from pygitgo.commands.config import config_operation
-from conftest import capture_system_exit_code
 from argparse import Namespace
 import pytest
 

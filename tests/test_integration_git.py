@@ -1,6 +1,5 @@
-import os
 import subprocess
-from pathlib import Path
+import os
 
 
 def _git(cwd, *args):

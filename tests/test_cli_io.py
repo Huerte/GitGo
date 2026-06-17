@@ -1,6 +1,5 @@
 from pygitgo.utils.cli_io import confirm, danger, warning, error, info, success, banner
 from pygitgo.utils.colors import RED, GREEN, YELLOW, BLUE, RESET
-import pytest
 import os
 
 def test_confirm_yes(mocker):

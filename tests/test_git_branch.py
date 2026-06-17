@@ -1,7 +1,6 @@
 from pygitgo.commands.git_branch import (
     git_new_branch, get_current_branch, is_branch_exist
 )
-from unittest.mock import call
 import pytest
 
 
