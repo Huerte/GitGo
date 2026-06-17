@@ -120,6 +120,8 @@ pytest tests/ --cov=pygitgo --cov-report=term-missing
 
 Tests use `pytest` and `pytest-mock`. No real Git repos are created during tests. Mock `subprocess.run` and `run_command` where needed.
 
+Note: The codebase now includes tests for the CLI helpers (`tests/test_cli_io.py`) and relies on additional dev dependencies such as `yaspin` and `pick`. Ensure these are installed in your development environment (see `pyproject.toml`).
+
 ### Writing Tests
 
 - Place new test files in `tests/` named `test_<module>.py`.
@@ -165,8 +167,17 @@ git commit -m "update"
 ### Error Handling
 
 - Raise `GitGoError` subclasses (`GitCommandError`) instead of calling `sys.exit()` inside command modules.
-- Only `main.py` should call `sys.exit()`. Command functions should raise or return.
+- Only `main.py` should call `sys.exit()`. Command functions should raise errors and may return a boolean success flag (`True`/`False`) to indicate operation outcome.
+- Prefer raising a `GitGoError` for recoverable/user-facing failures instead of printing and returning silently.
 - Never swallow exceptions silently with empty `except` blocks.
+
+### CLI output & UX
+
+- Centralize interactive and formatted CLI output through `pygitgo.utils.cli_io`.
+- Use the helpers: `info`, `warning`, `error`, `success`, `confirm`, `danger`, and `banner` for consistent prompts and messaging.
+- Avoid using `pygitgo.utils.colors` as print wrappers; `colors.py` now only exposes ANSI constants.
+- Use `confirm(..., destructive=True)` for irreversible actions so prompts clearly indicate risk.
+- Command implementations should avoid raw `input()` or ad-hoc `print()`; prefer the `cli_io` helpers for testability.
 
 ---
 
