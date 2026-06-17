@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.8.2] - 2026-06-17
+
 ### Added
 - **Nested Folder Guard:** Added a directory validation check to `gitgo new` that aborts the operation if you are already inside a folder with the same name, preventing accidental nested projects.
 - **SSH Key Guard:** Added an overwrite confirmation prompt during `gitgo user login` if an existing SSH key is detected.
