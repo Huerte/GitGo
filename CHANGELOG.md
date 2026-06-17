@@ -10,6 +10,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed the connection check spinner displaying the success message while it was still loading in login flow.
+- Fixed the CLI freezing on remote operations by passing DEVNULL to stdin in the command executor.
+- Fixed `gitgo link` failing on new SSH connections by adding a GitHub known host check.
 
 ---
 
