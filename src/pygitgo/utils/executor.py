@@ -22,7 +22,8 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
             command,
             check=True,
             capture_output=True,
-            text=True
+            text=True,
+            stdin=subprocess.DEVNULL,
         )
 
         if spinner:

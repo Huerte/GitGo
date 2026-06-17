@@ -2,6 +2,7 @@ from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
 from pygitgo.utils.cli_io import success, warning, error, info, banner
 from pygitgo.commands.git_core import git_init, git_commit, git_push
 from pygitgo.commands.git_branch import get_current_branch
+from pygitgo.auth.ssh_utils import ensure_github_known_host
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.validators import validate_repo_url
 from pygitgo.utils.config import get_default_branch
@@ -41,6 +42,8 @@ def _link_interrupt_cleanup(repo_url, initialized, committed, remote_added):
 def link_core(repo_url, commit_message, silent=False, already_initialized=False):
     if not validate_repo_url(repo_url):
         raise GitGoError(f"Invalid remote repository URL: '{repo_url}'")
+    
+    ensure_github_known_host()
 
     initialized = False
     committed = False
