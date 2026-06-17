@@ -11,7 +11,7 @@ def test_run_command_success(mocker):
 
     res = run_command(["echo", "hello"])
     assert res == "hello world"
-    mock_run.assert_called_once_with(["echo", "hello"], check=True, capture_output=True, text=True)
+    mock_run.assert_called_once_with(["echo", "hello"], check=True, capture_output=True, text=True, stdin=subprocess.DEVNULL)
 
 def test_run_command_success_complete(mocker):
     mock_run = mocker.patch("subprocess.run")
