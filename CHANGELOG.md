@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.8.3] - 2026-06-18
+
 ### Fixed
 - Fixed the connection check spinner displaying the success message while it was still loading in login flow.
 - Fixed the CLI freezing and terminal output corruption on remote operations by disabling Git interactive prompts (`GIT_TERMINAL_PROMPT=0`) and SSH passphrase prompts (`BatchMode=yes`) in the command executor. The existing `stdin=DEVNULL` only blocked stdin; Git bypassed it by writing directly to the terminal device.
