@@ -20,7 +20,8 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
     try:
         env = os.environ.copy()
         env["GIT_TERMINAL_PROMPT"] = "0"
-        env["GIT_SSH_COMMAND"] = "ssh -o BatchMode=yes"
+        base_ssh_cmd = env.get("GIT_SSH_COMMAND", "ssh")
+        env["GIT_SSH_COMMAND"] = f"{base_ssh_cmd} -o BatchMode=yes"
 
         result = subprocess.run(
             command,

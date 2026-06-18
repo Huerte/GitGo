@@ -2,7 +2,7 @@ from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
 from pygitgo.utils.cli_io import success, warning, error, info, banner
 from pygitgo.commands.git_core import git_init, git_commit, git_push
 from pygitgo.commands.git_branch import get_current_branch
-from pygitgo.auth.ssh_utils import ensure_github_known_host
+from pygitgo.auth.ssh_utils import ensure_github_known_host, convert_https_to_ssh, is_ssh_url, check_connection
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.validators import validate_repo_url
 from pygitgo.utils.config import get_default_branch
@@ -44,6 +44,12 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
         raise GitGoError(f"Invalid remote repository URL: '{repo_url}'")
     
     ensure_github_known_host()
+
+    if not is_ssh_url(repo_url):
+        if check_connection(ok_text="GitHub connection verified.", fail_text=None):
+            ssh_url = convert_https_to_ssh(repo_url)
+            if ssh_url:
+                repo_url = ssh_url
 
     initialized = False
     committed = False
@@ -101,7 +107,16 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
                 warning(f"Then: gitgo push {main_branch} 'your message'\n")
                 raise GitGoError(f"Failed to merge remote content: {e.stderr}" if e.stderr else "Failed to merge remote content.")
 
-        git_push(current_branch)
+        try:
+            run_command(["git", "rev-parse", "HEAD"])
+            has_commits = True
+        except GitCommandError:
+            has_commits = False
+
+        if has_commits:
+            git_push(current_branch)
+        else:
+            info("Repository is currently empty. Add files and run 'gitgo push' to upload.")
 
         if not silent:
             banner("REPOSITORY INITIALIZED AND DEPLOYED.", "LOCAL REPOSITORY CONNECTED TO REMOTE ORIGIN.")
