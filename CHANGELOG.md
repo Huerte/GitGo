@@ -10,8 +10,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed the connection check spinner displaying the success message while it was still loading in login flow.
-- Fixed the CLI freezing on remote operations by passing DEVNULL to stdin in the command executor.
+- Fixed the CLI freezing and terminal output corruption on remote operations by disabling Git interactive prompts (`GIT_TERMINAL_PROMPT=0`) and SSH passphrase prompts (`BatchMode=yes`) in the command executor. The existing `stdin=DEVNULL` only blocked stdin; Git bypassed it by writing directly to the terminal device.
 - Fixed `gitgo link` failing on new SSH connections by adding a GitHub known host check.
+- Fixed `gitgo link <https-url>` failing to push when the remote had existing content. HTTPS-to-SSH conversion now happens at the start of `link_core`, before `ls-remote` runs, so the remote branch check succeeds and the required `--allow-unrelated-histories` pull is performed correctly.
+- Fixed `gitgo link` crashing with a confusing push error on a completely empty local folder linked to an empty remote. The executor now checks for local commits with `git rev-parse HEAD` before attempting a push, and prints an actionable message if there is nothing to push.
+- Fixed the command executor silently overwriting a user-defined `GIT_SSH_COMMAND` environment variable. It now appends `-o BatchMode=yes` to the existing value instead of replacing it, preserving custom identity files and proxy commands.
 
 ---
 

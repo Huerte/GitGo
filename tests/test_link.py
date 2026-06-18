@@ -38,7 +38,14 @@ def test_link_new_repo_no_remote_refs(mocker):
     mocker.patch("pygitgo.commands.link.get_default_branch", return_value="main")
     fake_push = mocker.patch("pygitgo.commands.link.git_push")
 
-    fake_run = mocker.patch("pygitgo.commands.link.run_command", return_value="")
+    fake_run = mocker.patch(
+        "pygitgo.commands.link.run_command",
+        side_effect=[
+            "",       # git branch -m main (branch rename)
+            "",       # git ls-remote (no remote refs)
+            "abc123", # git rev-parse HEAD (has local commits)
+        ]
+    )
 
     args = Namespace(url="git@github.com:user/repo.git", message="Initial commit")
     link_operation(args)
@@ -65,7 +72,8 @@ def test_link_new_repo_with_remote_refs_pull_success(mocker):
         "pygitgo.commands.link.run_command",
         side_effect=[
             "1234567890abcdef refs/heads/main",  # remote_refs check
-            "Successfully pulled"                 # git pull
+            "Successfully pulled",                # git pull
+            "123456"                              # git rev-parse HEAD
         ]
     )
 
@@ -96,7 +104,8 @@ def test_link_new_repo_with_remote_refs_pull_failure(mocker):
         "pygitgo.commands.link.run_command",
         side_effect=[
             "1234567890abcdef refs/heads/main",  # remote_refs check
-            GitCommandError(["git", "pull"])     # git pull fails
+            GitCommandError(["git", "pull"]),    # git pull fails
+            "123456"                             # git rev-parse HEAD (if reached)
         ]
     )
 
@@ -112,12 +121,14 @@ def test_link_core_already_initialized_commits_and_pushes(mocker):
     from pygitgo.commands.link import link_core
 
     mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    mocker.patch("pygitgo.commands.link.check_connection", return_value=True)
+    mocker.patch("pygitgo.commands.link.convert_https_to_ssh", return_value="git@github.com:user/repo.git")
     fake_init = mocker.patch("pygitgo.commands.link.git_init")
     fake_commit = mocker.patch("pygitgo.commands.link.git_commit", return_value=True)
     fake_add_remote = mocker.patch("pygitgo.commands.link.add_remote_origin")
     mocker.patch("pygitgo.commands.link.get_current_branch", return_value="main")
     mocker.patch("pygitgo.commands.link.get_default_branch", return_value="main")
-    mocker.patch("pygitgo.commands.link.run_command", return_value="")
+    mocker.patch("pygitgo.commands.link.run_command", return_value="123456")
     fake_push = mocker.patch("pygitgo.commands.link.git_push")
 
     link_core(
@@ -133,7 +144,7 @@ def test_link_core_already_initialized_commits_and_pushes(mocker):
         loading_msg="Creating initial commit...",
         ok_text="Initial commit created.",
     )
-    fake_add_remote.assert_called_once_with("https://github.com/user/repo.git")
+    fake_add_remote.assert_called_once_with("git@github.com:user/repo.git")
     fake_push.assert_called_once_with("main")
 
 
@@ -141,6 +152,8 @@ def test_link_keyboard_interrupt_during_commit(mocker):
     from pygitgo.commands.link import link_core
 
     mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    # Return False so no URL conversion happens; the cleanup URL stays as HTTPS.
+    mocker.patch("pygitgo.commands.link.check_connection", return_value=False)
     mocker.patch("pygitgo.commands.link.git_init", return_value=True)
     mocker.patch("pygitgo.commands.link.git_commit", side_effect=KeyboardInterrupt())
     mock_warning = mocker.patch("pygitgo.commands.link.warning")
@@ -163,6 +176,8 @@ def test_link_keyboard_interrupt_after_remote_added(mocker):
     from pygitgo.commands.link import link_core
 
     mocker.patch("pygitgo.commands.link.validate_repo_url", return_value=True)
+    # Return False so no URL conversion happens; the cleanup URL stays as HTTPS.
+    mocker.patch("pygitgo.commands.link.check_connection", return_value=False)
     mocker.patch("pygitgo.commands.link.git_init", return_value=True)
     mocker.patch("pygitgo.commands.link.git_commit", return_value=True)
     mocker.patch("pygitgo.commands.link.add_remote_origin")
