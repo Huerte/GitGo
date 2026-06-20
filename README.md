@@ -363,7 +363,7 @@ gitgo config get <key>
 | Key | Description | Default |
 |-----|-------------|---------|
 | `default-branch` | The branch used for push/link | `main` |
-| `default-message` | The commit message used for push | `New Project Update` |
+| `default-message` | The commit message used for push | `chore: new changes applied` |
 
 ### Global Flags
 
