@@ -8,6 +8,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Default-message:** Updated the default msg from "New Project Update" to "chore: new changes applied".
+
 ---
 
 ## [1.8.3] - 2026-06-18

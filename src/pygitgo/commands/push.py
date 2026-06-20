@@ -98,7 +98,7 @@ def push_operation(args):
                 branch = get_current_branch()
 
         if not message:
-            message = get_config("default-message", "New Project Update")
+            message = get_config("default-message", "chore: new changes applied")
             info(f"No commit message provided. Using default: '{message}'\n")
 
         if select:
