@@ -104,13 +104,9 @@ You have two places to find something to work on.
 
 The [Good First Issues](../CONTRIBUTING.md#good-first-issues) table is curated directly in the repo. Each entry has a difficulty rating, a starting file, and a clear description of what to build. This is the best place to start if you want a task that's already been thought through.
 
-![Good First Issues table in CONTRIBUTING.md](../assets/guides/first-contribution/step-4-1.png)
-
 **Option B: The GitHub Issues tab**
 
 You can also browse the [open issues](https://github.com/Huerte/GitGo/issues) on GitHub. Filter by the `good first issue` label to narrow it down.
-
-![GitHub Issues tab filtered by good first issue label](../assets/guides/first-contribution/step-4-2.png)
 
 **Claiming the issue**
 
