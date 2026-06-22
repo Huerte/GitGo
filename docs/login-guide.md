@@ -200,6 +200,8 @@ A working connection responds with: `Hi username! You've successfully authentica
 
 ---
 
+For other common errors like `gitgo command not found`, Python version issues, port 22 timeouts, or Windows Credential Manager conflicts, see the [Troubleshooting Guide](troubleshooting.md).
+
 ## Commit Signing Sanitization
 
 If you have global Git commit signing enabled (`commit.gpgsign` is `true`) but no active GPG configuration, commits can fail silently.
@@ -218,4 +220,4 @@ gitgo user logout
 
 ---
 
-*Back to [README](../README.md)*
+*Back to [README](../README.md) | [Troubleshooting](troubleshooting.md)*

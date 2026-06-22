@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Docs**: Added a step-by-step first contribution guide in `docs/first-contribution.md`.
+- **Docs**: Added a comprehensive troubleshooting guide in `docs/troubleshooting.md` for common environment and Git issues.
+
 ### Changed
 - **Default-message:** Updated the default msg from "New Project Update" to "chore: new changes applied".
 
