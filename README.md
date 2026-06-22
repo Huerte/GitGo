@@ -51,6 +51,8 @@ gitgo new my-app python
 - [License](#license)
 - [Changelog](CHANGELOG.md)
 - [Contributing Guide](CONTRIBUTING.md)
+- [First Contribution Walkthrough](docs/first-contribution.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ---
 
@@ -389,6 +391,8 @@ gitgo -r        # verify GitGo is ready
 ## Contributing
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including project structure, test instructions, commit conventions, and a [Good First Issues](CONTRIBUTING.md#good-first-issues) table if you're not sure where to start.
+
+If this is your first time contributing to an open-source project, follow our step-by-step [First Contribution Walkthrough](docs/first-contribution.md) guide.
 
 ---
 
