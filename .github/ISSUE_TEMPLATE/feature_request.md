@@ -6,25 +6,18 @@ labels: enhancement
 assignees: ''
 ---
 
-<!-- Note: You do not need to delete these hidden comments. GitHub will automatically hide them when you submit! -->
+## What do you want GitGo to do?
 
-## What problem does this solve?
+<!-- A sentence is enough. You don't need a full spec. -->
 
-<!-- What do you currently have to do manually that this would handle? -->
+## Why would this be useful?
 
-## Proposed Solution
+<!-- What are you doing manually right now that this would replace? -->
 
-<!-- What should the command or behavior look like? -->
+## Any ideas on how it should work?
+
+<!-- Don't worry if you're not sure. This is just a starting point. -->
 
 ```bash
-# Stash uncommitted changes before pulling, then restore them after
-gitgo sync --stash
+gitgo magic-command --force
 ```
-
-## Alternatives Considered
-
-<!-- Did you look at other ways to solve this? If so, what were they? -->
-
-## Additional Context
-
-<!-- Is there anything else that would help explain or support this request? -->

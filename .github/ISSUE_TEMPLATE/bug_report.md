@@ -1,41 +1,39 @@
 ---
 name: Bug Report
-about: Something is broken or behaving unexpectedly
+about: Something is not working right
 title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
-<!-- Note: You do not need to delete these hidden comments. GitHub will automatically hide them when you submit! -->
+## What went wrong?
 
-## What happened?
+<!-- Check docs/troubleshooting.md first. What were you doing and what happened? A sentence or two is fine. -->
 
-<!-- What were you trying to do when this happened? -->
+## Steps to reproduce
 
-## Steps to Reproduce
+<!-- Add or remove steps as needed. -->
 
-1. Run `gitgo commit -m "fix: update config"` *(replace with the command you ran)*
-2. Run `gitgo push` *(add or remove steps as needed)*
+1. Run `gitgo new`
+2. Run `gitgo push`
 
-## Expected Behavior
+## What should have happened instead?
 
-<!-- What did you expect GitGo to do? -->
+<!-- Skip this if it's obvious. -->
 
-## Actual Behavior
+## Error output
 
-<!-- What did GitGo do instead? Paste the full error output in the block below. -->
+<!-- Paste the full terminal output if there is any. -->
 
-```
-paste error output here
+```text
+paste output here
 ```
 
 ## Environment
 
-- **OS:** (e.g. Windows 11, Ubuntu 22.04, Termux on Android 14)
-- **Python version:** (run `python --version`)
-- **GitGo version:** (run `gitgo -v`)
-- **Git version:** (run `git --version`)
+<!-- GitGo runs on Windows, macOS, Linux, and Termux (Android) so this helps a lot. -->
 
-## Additional Context
-
-<!-- Is there anything about your setup or repo state that might be relevant? -->
+- OS: 
+- Python version (`python --version`): 
+- GitGo version (`gitgo -v`): 
+- Git version (`git --version`): 
