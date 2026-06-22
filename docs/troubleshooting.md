@@ -986,22 +986,11 @@ On Windows, double-check that the config file has no `.txt` extension. On all pl
 
 ## Nothing worked
 
-If you've gone through the relevant section and still have the same problem, open an issue and include the following information. More detail means a faster fix.
+If you've gone through the relevant section and still have the same problem, open a Bug Report on GitHub. The issue template will prompt you for your environment details (like your OS and Python version) and the exact error output. 
 
-**Collect this before opening an issue:**
-
-1. Your OS and version
-   - Windows: run `ver`
-   - macOS/Linux/Termux: run `uname -a`
-2. Your Python version: `python --version` or `python3 --version`
-3. Your GitGo version: `gitgo -r`
-4. Your Git version: `git --version`
-5. The exact command you ran
-6. The full error output, starting from the very first line
+More detail means a faster fix. Don't just paste the last error line in the issue body. The lines before it often show the real cause.
 
 **Open an issue here:** [github.com/Huerte/GitGo/issues](https://github.com/Huerte/GitGo/issues)
-
-Paste all of that in the issue body. Don't just paste the last error line. The lines before it often show the real cause.
 
 ---
 
