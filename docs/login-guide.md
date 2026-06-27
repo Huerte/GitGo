@@ -46,7 +46,7 @@ GitGo first checks if your computer is already connected to GitHub via SSH.
 **Already logged in via a GitGo-managed key:**
 GitGo confirms the connection, configures SSH commit signing, and sets up your Git identity. No further steps needed.
 
-![Already logged in message](../assets/guides/login/step-1-already-logged-in.png)
+<img src="../assets/guides/login/step-1-already-logged-in.png" alt="Already logged in message" height="170">
 
 **Connected via a key GitGo did not create:**
 GitGo warns you that it cannot manage this connection. To get SSH signing and verified commits through GitGo, you need to log out first:
@@ -69,7 +69,7 @@ GitGo asks for your GitHub email address.
 Enter your email for GitHub:
 ```
 
-![Email prompt](../assets/guides/login/step-2-email-prompt.png)
+<img src="../assets/guides/login/step-2-email-prompt.png" alt="Email prompt" height="170">
 
 Type the email you used when you signed up on GitHub, then press Enter. GitGo validates the format before moving on. If it doesn't look like a valid email, it will ask again.
 
@@ -79,7 +79,7 @@ Type the email you used when you signed up on GitHub, then press Enter. GitGo va
 
 After generating your SSH key, GitGo prints:
 
-![SSH key output](../assets/guides/login/step-3-key-output.png)
+<img src="../assets/guides/login/step-3-key-output.png" alt="SSH key output" height="250">
 
 Select and copy the entire line starting with `ssh-ed25519`. Include the email at the end. That single line is your complete public key.
 
@@ -116,7 +116,7 @@ Fill in the form like this:
 
 Then click **Add SSH key**.
 
-![Authentication key form filled](../assets/guides/login/step-4-auth-key-form.png)
+<img src="../assets/guides/login/step-4-auth-key-form.png" alt="Authentication key form filled" height="380">
 > *Make sure Key type is set to Authentication Key before clicking Add SSH key.*
 
 ---
@@ -135,19 +135,19 @@ Click **New SSH key** on the GitHub SSH settings page again.
 
 Then click **Add SSH key**.
 
-![Signing key form filled](../assets/guides/login/step-5-signing-key-form.png)
+<img src="../assets/guides/login/step-5-signing-key-form.png" alt="Signing key form filled" height="380">
 > *Key type is Signing Key this time. Same key text, different purpose.*
 
 When both are added, your GitHub SSH keys list will show two entries with the same fingerprint. That is expected.
 
-![Both keys added on GitHub](../assets/guides/login/step-5-both-keys-visible.png)
+<img src="../assets/guides/login/step-5-both-keys-visible.png" alt="Both keys added on GitHub" height="380">
 
 ---
 
 ### Step 7: Return to the terminal and press Enter
 
 Switch back to your terminal. GitGo is waiting with this prompt:
-![Terminal waiting for Enter](../assets/guides/login/step-6-enter-waiting.png)
+<img src="../assets/guides/login/step-6-enter-waiting.png" alt="Terminal waiting for Enter" height="170">
 
 Once both keys are added on GitHub, press **Enter**.
 
@@ -157,7 +157,7 @@ Once both keys are added on GitHub, press **Enter**.
 
 GitGo tests the SSH connection. If everything is correct, you will see:
 
-![Login success message](../assets/guides/login/step-7-success.png)
+<img src="../assets/guides/login/step-7-success.png" alt="Login success message" height="170">
 
 GitGo then sets up your Git identity (name and email) using your GitHub account details. You are ready to use `gitgo link`, `gitgo push`, and all other commands.
 
