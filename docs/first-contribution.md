@@ -112,7 +112,7 @@ You can also browse the [open issues](https://github.com/Huerte/GitGo/issues) on
 
 Once you pick an issue from the table or the Issues tab, click its title to open the full issue page on GitHub. Scroll to the very bottom to find the comment box. Leave a short comment to let others know you're working on it. Something like "I would like to work on this!" is enough.
 
-<img src="../assets/guides/first-contribution/step-4-3.png" alt="Claiming a GitHub issue with a comment" height="380">
+<img src="../assets/guides/first-contribution/step-4-1.png" alt="Claiming a GitHub issue with a comment" height="380">
 
 ## Step 5: Create a Branch
 
