@@ -22,15 +22,15 @@ A fork is your own personal copy of the GitGo repository on GitHub. You need it 
 
 This is the main project page. Look for the **Fork** button near the top right.
 
-![GitGo repository page on GitHub](../assets/guides/first-contribution/step-1-1.png)
+<img src="../assets/guides/first-contribution/step-1-1.png" alt="GitGo repository page on GitHub" height="380">
 
 **2.** Click the **Fork** button. It's in the top-right area of the page, next to the Star and Watch buttons.
 
-![Fork button location on GitHub](../assets/guides/first-contribution/step-1-2.png)
+<img src="../assets/guides/first-contribution/step-1-2.png" alt="Fork button location on GitHub" height="380">
 
 **3.** GitHub will show a short form asking where to put the fork. You don't need to change anything. The owner should already be set to your own username. Click **Create fork**.
 
-![Create fork confirmation screen](../assets/guides/first-contribution/step-1-3.png)
+<img src="../assets/guides/first-contribution/step-1-3.png" alt="Create fork confirmation screen" height="380">
 
 After a few seconds, GitHub redirects you to your own copy of the repo. You can tell it's yours because the URL and the top-left heading will say `YOUR_USERNAME/GitGo`, not `Huerte/GitGo`. Keep this page open. You'll use it in the next step.
 
@@ -40,13 +40,13 @@ Cloning downloads the repository from GitHub to your local machine so you can ed
 
 **1.** On your fork page, click the green **Code** button. It opens a small dropdown with a URL.
 
-![Code button on fork page](../assets/guides/first-contribution/step-2-1.png)
+<img src="../assets/guides/first-contribution/step-2-1.png" alt="Code button on fork page" height="300">
 
 **2.** Copy the HTTPS URL shown there. It'll look like `https://github.com/YOUR_USERNAME/GitGo.git`.
 
 Make sure you're copying from **your fork**, not from the original `Huerte/GitGo` repo.
 
-![Copy the HTTPS clone URL from the dropdown](../assets/guides/first-contribution/step-2-2.png)
+<img src="../assets/guides/first-contribution/step-2-2.png" alt="Copy the HTTPS clone URL from the dropdown" height="380">
 
 **3.** Open your terminal and run:
 
@@ -56,7 +56,7 @@ git clone https://github.com/YOUR_USERNAME/GitGo.git
 
 Replace `YOUR_USERNAME` with your actual GitHub username.
 
-![Terminal showing git clone running](../assets/guides/first-contribution/step-2-3.png)
+<img src="../assets/guides/first-contribution/step-2-3.png" alt="Terminal showing git clone running" height="250">
 
 **4.** Move into the folder that was just created:
 
@@ -64,7 +64,7 @@ Replace `YOUR_USERNAME` with your actual GitHub username.
 cd GitGo
 ```
 
-![Terminal after cd into GitGo](../assets/guides/first-contribution/step-2-4.png)
+<img src="../assets/guides/first-contribution/step-2-4.png" alt="Terminal after cd into GitGo" height="250">
 
 **5.** Add the original repository as the upstream remote. This lets you pull in future updates from the main project without affecting your fork.
 
@@ -90,7 +90,7 @@ Then verify it worked:
 gitgo -r
 ```
 
-![GitGo is working](../assets/guides/first-contribution/step-3-1.png)
+<img src="../assets/guides/first-contribution/step-3-1.png" alt="GitGo is working" height="250">
 
 The `-r` flag checks that GitGo is ready to run. You should see a short status message with no errors.
 
@@ -112,7 +112,7 @@ You can also browse the [open issues](https://github.com/Huerte/GitGo/issues) on
 
 Once you pick an issue from the table or the Issues tab, click its title to open the full issue page on GitHub. Scroll to the very bottom to find the comment box. Leave a short comment to let others know you're working on it. Something like "I would like to work on this!" is enough.
 
-![Claiming a GitHub issue with a comment](../assets/guides/first-contribution/step-4-3.png)
+<img src="../assets/guides/first-contribution/step-4-3.png" alt="Claiming a GitHub issue with a comment" height="380">
 
 ## Step 5: Create a Branch
 
@@ -126,7 +126,7 @@ git checkout -b feat/your-feature-name
 
 Name it using one of our prefixes (`feat/`, `fix/`, `docs/`, or `chore/`) based on what you're doing. For example: `feat/log-command`, `fix/readme-typo`, or `docs/first-contribution`.
 
-![Terminal showing git checkout -b command](../assets/guides/first-contribution/step-5-1.png)
+<img src="../assets/guides/first-contribution/step-5-1.png" alt="Terminal showing git checkout -b command" height="250">
 
 ## Step 6: Make Your Change
 
@@ -140,7 +140,7 @@ git status
 
 Modified files show up in red. Staged files show up in green. (If your terminal doesn't show colors, look for the file names under "Changes not staged for commit" or "Changes to be committed".)
 
-![git status output showing changed files](../assets/guides/first-contribution/step-6-1.png)
+<img src="../assets/guides/first-contribution/step-6-1.png" alt="git status output showing changed files" height="250">
 
 ## Step 7: Commit and Push
 
@@ -164,7 +164,7 @@ git commit -m "fix: corrected the spelling in README"
 git push -u origin feat/your-feature-name
 ```
 
-![Terminal showing all three commands completed](../assets/guides/first-contribution/step-7-1.png)
+<img src="../assets/guides/first-contribution/step-7-1.png" alt="Terminal showing all three commands completed" height="300">
 
 > [!TIP]
 > **The GitGo Advantage**
@@ -175,7 +175,7 @@ git push -u origin feat/your-feature-name
 > ```
 > GitGo stages, commits, and pushes in one shot.
 >
-> ![Terminal showing gitgo push command execution](../assets/guides/first-contribution/step-7-2.png)
+> <img src="../assets/guides/first-contribution/step-7-2.png" alt="Terminal showing gitgo push command execution" height="300">
 
 ## Step 8: Open a Pull Request
 
@@ -183,11 +183,11 @@ A pull request (PR) is how you ask the maintainer to merge your changes into the
 
 **1.** Go back to your fork page on GitHub. You'll see a yellow banner at the top that appeared after you pushed your branch.
 
-![Fork page on GitHub showing the yellow push banner](../assets/guides/first-contribution/step-8-1.png)
+<img src="../assets/guides/first-contribution/step-8-1.png" alt="Fork page on GitHub showing the yellow push banner" height="380">
 
 **2.** Click the **Compare & pull request** button on that banner.
 
-![Compare and pull request button on the yellow banner](../assets/guides/first-contribution/step-8-2.png)
+<img src="../assets/guides/first-contribution/step-8-2.png" alt="Compare and pull request button on the yellow banner" height="380">
 
 **3.** Fill in the title and description. Our repository uses a Pull Request template that automatically appears in the text box. Fill it out by putting an `x` inside the brackets for the checkboxes (like `[x]`), and writing `Closes #75` (use the actual issue number) to link it to the issue you claimed.
 
@@ -195,11 +195,11 @@ In the Changes section, list what you added or fixed as bullet points. For examp
 
 Keep the title short and direct, like `feat: add basic git tag wrapper`.
 
-![Pull request form with the template filled in](../assets/guides/first-contribution/step-8-3.png)
+<img src="../assets/guides/first-contribution/step-8-3.png" alt="Pull request form with the template filled in" height="380">
 
 **4.** Click the green **Create pull request** button.
 
-![Create pull request button at the bottom of the form](../assets/guides/first-contribution/step-8-4.png)
+<img src="../assets/guides/first-contribution/step-8-4.png" alt="Create pull request button at the bottom of the form" height="380">
 
 ## Step 9: What Happens Next
 
