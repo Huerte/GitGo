@@ -68,7 +68,8 @@ gitgo new my-app python
 - **Quickstart with `new`:** One command to scaffold your project, create the GitHub repo, and push it. No switching tabs, no manual steps.
 - **Project scaffolding with `init`:** Generates a language-specific project structure with a `.gitignore` from GitHub's official templates. Supports Python, Node, Rust, Go, C#, and more.
 - **Remote repo creation with `repo`:** Creates a GitHub repo directly from the terminal without touching a browser.
-- **Undo:** Roll back commits, unstage files, discard local changes, or revert pushes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`, `undo link`, `undo push`.
+- **Undo:** Roll back commits, unstage files, discard local changes, or revert pushes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`, `undo link`, `undo push`, `undo pull`.
+- **Conflict resolution with `resolve`:** Finish a pull after fixing a merge conflict. Verifies the conflict markers are actually gone before staging and completing it. Back out anytime with `resolve --abort`.
 - **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
 - **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
 - **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
@@ -203,9 +204,24 @@ gitgo undo add       # Unstage files
 gitgo undo changes   # DANGER: permanently discard all uncommitted edits
 gitgo undo link      # Remove remote and undo initial commit
 gitgo undo push      # DANGER: Revert last push with a force-push
+gitgo undo pull      # Revert the branch to its state before the last pull
 ```
 
-### 7. Save Your Work-in-Progress
+### 7. Resolve a Merge Conflict
+
+If `gitgo pull` hits a merge conflict, fix the conflict markers in your editor, then run:
+
+```bash
+gitgo resolve
+```
+
+GitGo checks that the conflicts are actually resolved, then stages the files and finishes the pull. Changed your mind mid-conflict?
+
+```bash
+gitgo resolve --abort
+```
+
+### 8. Save Your Work-in-Progress
 
 ```bash
 gitgo state save "halfway through refactor"
@@ -213,7 +229,7 @@ gitgo state list
 gitgo state load 1
 ```
 
-### 8. Custom Defaults
+### 9. Custom Defaults
 
 ```bash
 gitgo config set default-branch develop
@@ -329,6 +345,7 @@ gitgo undo add       # Unstage files
 gitgo undo changes   # Permanently discard all new files and uncommitted edits
 gitgo undo link      # Remove the remote and undo the initial commit
 gitgo undo push      # DANGER: Revert the last push with a force-push
+gitgo undo pull      # Revert the branch to its state before the last pull
 ```
 
 ### `gitgo state`

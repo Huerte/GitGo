@@ -7,7 +7,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 ## [Unreleased]
- 
+
+---
+
+## [1.9.0] - 2026-07-14
+
 ### Added
 - **Resolve Conflict:** Added a new command `gitgo resolve`. If you get a merge conflict, this command helps you finish it easily. It stages your fixed files and finishes the sync so you don't get stuck in the Vim editor. You can also run `gitgo resolve --abort` to cancel the conflict and go back to normal.
 - **Undo Pull:** Added `gitgo undo pull` to undo a pull. It puts your branch back to how it looked before you pulled. It does the same thing as `gitgo resolve --abort`.
