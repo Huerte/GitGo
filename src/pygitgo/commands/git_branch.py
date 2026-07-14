@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import success, error, info, confirm
+from pygitgo.utils.cli_io import warning, error, info, confirm
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.config import get_config
