@@ -95,4 +95,9 @@ def sanitize_signing_config():
     except GitCommandError:
         pass
     
+    try:
+        run_command(["git", "config", "--global", "--unset", "commit.gpgsign"])
+    except GitCommandError:
+        pass
+    
 

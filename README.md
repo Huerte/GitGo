@@ -387,7 +387,7 @@ gitgo config get <key>
 ### Global Flags
 
 ```bash
-gitgo help      # show complete manual
+gitgo --help      # show complete manual
 gitgo <cmd> -h  # show help for a specific command
 gitgo -v        # version
 gitgo -r        # verify GitGo is ready

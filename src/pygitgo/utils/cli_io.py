@@ -7,7 +7,7 @@ def confirm(prompt, destructive=False):
     if destructive:
         prefix = f"{RED}DANGER: {RESET}"
     user_input = input(f"{prefix}{prompt}").strip().lower()
-    return user_input == 'y'
+    return user_input in ('y', 'yes')
 
 def danger(msg):
     print(f"{RED}DANGER: {msg.strip()}{RESET}")
