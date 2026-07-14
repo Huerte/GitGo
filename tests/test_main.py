@@ -55,6 +55,7 @@ def test_main_no_command_prints_help(mocker, capsys, _patch_startup):
     ("repo", "repo_operation"),
     ("new", "new_operation"),
     ("init", "init_operation"),
+    ("log", "log_operation"),
 ])
 def test_main_dispatches_command(mocker, _patch_startup, command, handler):
     mocker.patch.object(sys, "argv", ["gitgo", command] + _argv_tail(command))
@@ -78,6 +79,7 @@ def _argv_tail(command):
         "repo": [],
         "new": ["my-app"],
         "init": ["my-app"],
+        "log": [],
     }
     return tails[command]
 

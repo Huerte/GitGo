@@ -1,10 +1,11 @@
-from pygitgo.utils.cli_io import info, success, warning, error
+from pygitgo.utils.cli_io import info, success, warning, error, write
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.platform import open_url
 from . import ssh_utils
 import os
+
 
 
 def _configure_ssh_signing(key_path):
@@ -61,11 +62,11 @@ def login():
 
     success("SSH Key generated successfully!")
 
-    print()
-    print("  Your SSH public key:")
-    print()
-    print(f"  {pub_key.strip()}")
-    print()
+    write()
+    write("  Your SSH public key:")
+    write()
+    write(f"  {pub_key.strip()}")
+    write()
 
     info("Copy the key above, then add it TWICE on GitHub:")
     info("  1. Authentication Key  (for pushing and pulling)")

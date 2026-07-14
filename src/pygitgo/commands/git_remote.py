@@ -1,5 +1,5 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.cli_io import info, warning, error
+from pygitgo.utils.cli_io import info, warning, error, write
 from pygitgo.utils.executor import run_command
 
 
@@ -49,7 +49,7 @@ def check_and_sync_branch(branch):
                     warning(f"Local branch is behind remote by {behind_check} commit(s). Pulling changes...")
                     output = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Synced with remote.")
                     if output:
-                        print(output)
+                        write(output)
                 else:
                     info("Branch is up to date.")
             else:

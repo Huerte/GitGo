@@ -1,5 +1,5 @@
 from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
-from pygitgo.utils.cli_io import success, warning, error, info, banner
+from pygitgo.utils.cli_io import success, warning, error, info, banner, write
 from pygitgo.commands.git_core import git_init, git_commit, git_push
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.auth.ssh_utils import ensure_github_known_host, convert_https_to_ssh, is_ssh_url, check_connection
@@ -126,11 +126,11 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
 
         if not silent:
             banner("REPOSITORY INITIALIZED AND DEPLOYED.", "LOCAL REPOSITORY CONNECTED TO REMOTE ORIGIN.")
-            print()
+            write()
             info("Run 'gitgo undo link' to remove the remote and undo the initial commit.")
 
     except KeyboardInterrupt:
-        print()
+        write()
         warning("Link interrupted (Ctrl+C).")
         _link_interrupt_cleanup(repo_url, initialized, committed, remote_added)
         sys.exit(130)

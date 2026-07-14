@@ -206,7 +206,6 @@ Before picking one, clone the repo and read through the [Project Structure](#pro
 
 | Task | Difficulty | Where to start | What to do |
 |------|------------|----------------|------------|
-| `gitgo log` | ⭐ | `utils/colors.py` | Wrap `git log --oneline --color` and format the output using the existing color helpers. |
 | `gitgo amend` | ⭐ | New command file | Wrap `git commit --amend -m "<message>"`. Add a confirmation prompt before it runs, because amend rewrites history, so the user should opt in. |
 | `gitgo diff` | ⭐ | New command file | Wrap `git diff` and `git diff --staged`. Add a `-s` / `--staged` flag to toggle between unstaged and staged output. |
 | GitLab & Bitbucket SSH | ⭐⭐ | `auth/ssh_utils.py` | The host regex only matches `github.com`. Extend it to cover `gitlab.com` and `bitbucket.org`. |

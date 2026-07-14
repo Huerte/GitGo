@@ -1,6 +1,6 @@
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist
-from pygitgo.utils.cli_io import info, warning, success, confirm, banner
+from pygitgo.utils.cli_io import info, warning, success, confirm, banner, write
 from pygitgo.commands.git_core import git_commit, git_push
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.jump import jump_operation
@@ -148,7 +148,7 @@ def push_operation(args):
 
         banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.", "REMOTE TARGETS ALIGNED WITH LOCAL EDITS.")
 
-        print()
+        write()
         if auto_switched_from:
             info(f"Switched from '{auto_switched_from}' to '{branch}' automatically.")
             info(f"Run 'gitgo undo push' to revert the push, then 'gitgo jump {auto_switched_from}' to return.")
@@ -156,7 +156,7 @@ def push_operation(args):
             info("Run 'gitgo undo push' to revert this push if it was unintended.")
 
     except KeyboardInterrupt:
-        print()
+        write()
         warning("Push interrupted (Ctrl+C).")
         _push_interrupt_cleanup(original_branch, original_head, created_branch)
         sys.exit(130)

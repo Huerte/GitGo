@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import info, error, warning, confirm, success, banner
+from pygitgo.utils.cli_io import info, error, warning, confirm, success, banner, write
 from pygitgo.commands.init import init_operation
 from pygitgo.commands.repo import repo_operation
 from pygitgo.utils.platform import get_platform
@@ -61,6 +61,6 @@ def new_operation(args):
 
     banner("PROJECT LAUNCHED. SCAFFOLDED, CREATED, AND DEPLOYED.", "LOCAL STRUCTURE ESTABLISHED AND REMOTE SYNCED.")
 
-    print()
+    write()
     info("Run 'gitgo undo link' to remove the remote and undo the initial commit.")
 

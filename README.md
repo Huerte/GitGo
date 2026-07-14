@@ -70,6 +70,7 @@ gitgo new my-app python
 - **Remote repo creation with `repo`:** Creates a GitHub repo directly from the terminal without touching a browser.
 - **Undo:** Roll back commits, unstage files, discard local changes, or revert pushes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`, `undo link`, `undo push`, `undo pull`.
 - **Conflict resolution with `resolve`:** Finish a pull after fixing a merge conflict. Verifies the conflict markers are actually gone before staging and completing it. Back out anytime with `resolve --abort`.
+- **Commit history with `log`:** View a beautifully color-coded and structured commit history.
 - **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
 - **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
 - **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
@@ -361,6 +362,16 @@ gitgo state delete -a         # delete all saved states
 ```
 
 *Short aliases:* `-l`, `-s`, `-o`, `-d`
+
+### `gitgo log`
+
+Show commit history with a color-coded output.
+
+```bash
+gitgo log                  # show last 5 commits for current branch
+gitgo log -n 10            # show last 10 commits
+gitgo log -b main          # show commits for the main branch
+```
 
 ### `gitgo user`
 

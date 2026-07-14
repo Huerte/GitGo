@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import info, success, warning, error
+from pygitgo.utils.cli_io import info, success, warning, error, write
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
 from pygitgo.utils.colors import BLUE, RESET
@@ -26,8 +26,8 @@ def set_user(name, email):
     run_command(["git", "config", "--global", "user.name", name])
     run_command(["git", "config", "--global", "user.email", email])
     success("\nGit user configured successfully.")
-    print(f"{BLUE}Username{RESET} : {name}")
-    print(f"{BLUE}Email    {RESET}: {email}")
+    write(f"{BLUE}Username{RESET} : {name}")
+    write(f"{BLUE}Email    {RESET}: {email}")
 
 def ensure_user_configure(default_email=None, default_username=None):
 
@@ -41,12 +41,12 @@ def ensure_user_configure(default_email=None, default_username=None):
         set_user(default_username, default_email)
         return True
     
-    print()
-    print("  Git Identity Setup")
-    print("  " + "-" * 36)
+    write()
+    write("  Git Identity Setup")
+    write("  " + "-" * 36)
     warning("Git user identity is not configured.")
     info("Needed so your commits are attributed to the right account.")
-    print()
+    write()
 
     if default_username:
         new_username = default_username
