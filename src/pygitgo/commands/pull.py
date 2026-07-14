@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import success, warning, error, info
+from pygitgo.utils.cli_io import success, warning, error, info, write
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
@@ -61,7 +61,7 @@ def pull_operation(args):
         banner("REMOTE SYNCHRONIZED. LATEST CHANGES ACQUIRED.", "LOCAL WORKSPACE UPDATED AND ALIGNED.")
 
     except KeyboardInterrupt:
-        print()
+        write()
         warning("Pull interrupted (Ctrl+C).")
         _pull_interrupt_cleanup()
         sys.exit(130)
@@ -70,15 +70,15 @@ def pull_operation(args):
         error_msg = str(e).lower()
         if "conflict" in error_msg or "rebase in progress" in error_msg:
             error("MERGE CONFLICT DETECTED!")
-            print()
+            write()
             info("1. Open your code editor.")
             info("2. Fix the conflict lines in your files.")
             info("3. Save the files.")
             info("4. Run:  gitgo resolve")
-            print()
+            write()
             info("Or, to cancel the pull and go back to how things were:")
             info("Run:  gitgo resolve --abort")
-            print()
+            write()
             raise GitGoError("Pull failed — resolve conflicts to continue.")
         else:
             raise GitGoError(f"Failed to pull from remote: {e}")

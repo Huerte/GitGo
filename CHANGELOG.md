@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Log:** Added `gitgo log` command to view commit history with a color-coded and structured output.
+- **CLI Docs:** Improved help documentation (`-h`) across all commands (like `resolve`, `push`, `undo`, `jump`, `link`, `user`) by adding examples and consistent formatting.
+
 ### Changed
 - **Safety:** Changed `gitgo undo push` to use `--force-with-lease` to prevent accidentally overwriting remote changes.
 - **UX:** Updated the confirm prompt to accept "yes" as a valid input.

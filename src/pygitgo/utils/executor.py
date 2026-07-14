@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger
+from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger, _QUIET, _VERBOSE
 from pygitgo.exceptions import GitCommandError
 from yaspin import yaspin
 import subprocess
@@ -12,7 +12,7 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
     kwargs = {"text": loading_msg}
     if sys.stdout.isatty():
         kwargs["color"] = "cyan"
-    spinner = yaspin(**kwargs) if loading_msg else None
+    spinner = yaspin(**kwargs) if (loading_msg and not _QUIET) else None
 
     if spinner:
         spinner.start()
@@ -26,6 +26,10 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
         if extra_env:
             env.update(extra_env)
 
+        if _VERBOSE:
+            cmd_str = " ".join(command) if isinstance(command, list) else command
+            print(f"[DEBUG] Running command: {cmd_str}")
+
         result = subprocess.run(
             command,
             check=True,
@@ -34,6 +38,12 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
             stdin=subprocess.DEVNULL,
             env=env,
         )
+
+        if _VERBOSE:
+            if result.stdout.strip():
+                print(f"[DEBUG] stdout:\n{result.stdout.strip()}")
+            if result.stderr.strip():
+                print(f"[DEBUG] stderr:\n{result.stderr.strip()}")
 
         if spinner:
             if ok_text:
@@ -62,6 +72,12 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
                 )
             else:
                 stderr = f"Failed to run '{cmd_name}': {e}"
+
+        if _VERBOSE:
+            print(f"[DEBUG] Command failed with exit code: {returncode}")
+            if stderr:
+                print(f"[DEBUG] stderr:\n{stderr}")
+
 
         if "detected dubious ownership" in stderr:
             danger("Git blocked this folder for security reasons (dubious ownership).")

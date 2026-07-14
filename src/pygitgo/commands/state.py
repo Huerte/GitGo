@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import info, success, warning, error, confirm, banner
+from pygitgo.utils.cli_io import info, success, warning, error, confirm, banner, write
 from pygitgo.commands.stash import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
@@ -47,16 +47,16 @@ def display_save_states(save_state=None):
         info("No saved states found.")
         return
 
-    print("\nID | Date                | Saved State")
-    print("-" * 60)
+    write("\nID | Date                | Saved State")
+    write("-" * 60)
 
     for state in save_states:
-        print(
+        write(
             f"{state['id']:>2} | {state['date']} | {state['message']}"
         )
 
-    print("-" * 60)
-    print()
+    write("-" * 60)
+    write()
 
 
 def is_number(value):
@@ -84,7 +84,7 @@ def ask_state_id(save_states):
     state_id = None
 
     display_save_states(save_states)
-    print("Enter the ID (or 'q' to cancel):")
+    write("Enter the ID (or 'q' to cancel):")
 
     while not proceed:
         state_id = input(">> ").strip().lower()
@@ -136,7 +136,7 @@ def load_state(state_id=None):
         banner("WORKSPACE SNAPSHOT RESTORED.", "SECURE VAULT WORKSPACE RE-APPLIED TO TREE.")
 
     except KeyboardInterrupt:
-        print()
+        write()
         warning("State load interrupted (Ctrl+C).")
         try:
             run_command(["git", "checkout", "--", "."])

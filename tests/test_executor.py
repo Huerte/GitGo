@@ -90,3 +90,22 @@ def test_run_command_dubious_ownership_decline(mocker):
     
     mock_confirm.assert_called_once()
     mock_warning.assert_called_with("Fix declined. Operations in this directory will continue to fail.")
+
+def test_run_command_verbose(mocker):
+    mocker.patch("pygitgo.utils.executor._VERBOSE", True)
+    mock_print = mocker.patch("builtins.print")
+    
+    mock_run = mocker.patch("subprocess.run")
+    mock_result = mocker.MagicMock()
+    mock_result.stdout = "hello stdout"
+    mock_result.stderr = "hello stderr"
+    mock_run.return_value = mock_result
+    
+    res = run_command(["echo", "hello"])
+    assert res == "hello stdout"
+    
+    # Check that print was called with debugging info
+    mock_print.assert_any_call("[DEBUG] Running command: echo hello")
+    mock_print.assert_any_call("[DEBUG] stdout:\nhello stdout")
+    mock_print.assert_any_call("[DEBUG] stderr:\nhello stderr")
+

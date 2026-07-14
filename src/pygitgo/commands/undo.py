@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import success, warning, info, confirm, danger, banner
+from pygitgo.utils.cli_io import success, warning, info, confirm, danger, banner, write
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
@@ -36,7 +36,7 @@ def undo_changes():
         return True
 
     except KeyboardInterrupt:
-        print()
+        write()
         if reset_done:
             warning("Interrupted during file removal. Finishing cleanup...")
             try:

@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import info, warning
+from pygitgo.utils.cli_io import info, warning, write
 from datetime import datetime, timedelta
 from pathlib import Path
 import urllib.request
@@ -81,10 +81,10 @@ def check_for_updates(current_version):
         latest_parts = parse_version(latest_version)
 
         if latest_parts > current_parts:
-            print()
+            write()
             warning(f"GitGo update available: {current_version} -> {latest_version}")
             info("Run: pip install --upgrade pygitgo")
-            print()
+            write()
 
             cache["notified_version"] = latest_version
             write_cache(cache)

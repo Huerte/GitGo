@@ -49,3 +49,31 @@ def test_banner(mocker):
     
     # Check that print was called to output the banner
     assert mock_print.call_count >= 4
+
+def test_quiet_mode(mocker):
+    from pygitgo.utils.cli_io import set_verbosity, write
+    mock_print = mocker.patch("builtins.print")
+    
+    # Enable quiet mode
+    set_verbosity(quiet=True)
+    try:
+        info("quiet info")
+        success("quiet success")
+        warning("quiet warning")
+        banner("quiet banner")
+        write("quiet write")
+        
+        # None of these should call print
+        assert mock_print.call_count == 0
+        
+        # But error and danger should still print
+        error("quiet error")
+        assert mock_print.call_count == 1
+        
+        danger("quiet danger")
+        assert mock_print.call_count == 2
+    finally:
+        # Reset verbosity
+        set_verbosity(quiet=False)
+
+

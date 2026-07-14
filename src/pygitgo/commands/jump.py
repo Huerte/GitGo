@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import warning, info, success, error, confirm, banner
+from pygitgo.utils.cli_io import warning, info, success, error, confirm, banner, write
 from pygitgo.commands.git_branch import (
     is_branch_exist, get_current_branch, git_new_branch, get_main_branch,
 )
@@ -95,7 +95,7 @@ def jump_operation(args):
             stashed_code = True
 
         if not is_branch_exist(target_branch):
-            print()
+            write()
             warning(f"Branch '{target_branch}' does not exist.")
             if not confirm(f"Create '{target_branch}' and switch to it? (y/n): "):
                 info("Jump canceled.")
@@ -134,17 +134,17 @@ def jump_operation(args):
         if stashed_code:
             apply_result = git_stash_apply(loading_msg="Restoring your local changes...")
             if not apply_result:
-                print()
+                write()
                 error("CONFLICT: Your local changes clash with the target branch.")
-                print()
+                write()
                 info("Option [Y]: Stay here and fix the conflict lines in your files.")
                 info("Option [N]: Undo the switch and go back to where you started.")
-                print()
+                write()
                 if not confirm("Fix the conflicts yourself? (y = stay / n = go back): "):
                     undo_jump_operation(original_branch, stashed_code, created_branch)
                     return
                 else:
-                    print()
+                    write()
                     success(f"On '{target_branch}'. Fix the conflict markers in your files.")
                     warning("Your stash backup is still saved. Run 'gitgo state list' to see it.")
                     return
@@ -158,7 +158,7 @@ def jump_operation(args):
         return
 
     except KeyboardInterrupt:
-        print()
+        write()
         warning("Jump interrupted (Ctrl+C).")
         _jump_interrupt_cleanup(original_branch, stashed_code, created_branch)
         sys.exit(130)

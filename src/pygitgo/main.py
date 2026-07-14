@@ -1,6 +1,6 @@
 from pygitgo.utils.update_checker import check_for_updates_background, check_for_updates
 from pygitgo.utils.bootstrap import ensure_first_run_setup
-from pygitgo.utils.cli_io import info, warning, error
+from pygitgo.utils.cli_io import info, warning, error, write
 from pygitgo.commands.config import config_operation
 from pygitgo.commands.state import state_operation
 from pygitgo.commands.undo import undo_operation
@@ -11,7 +11,9 @@ from pygitgo.commands.push import push_operation
 from pygitgo.commands.user import user_operation
 from pygitgo.commands.repo import repo_operation
 from pygitgo.commands.init import init_operation
+from pygitgo.commands.log import log_operation
 from pygitgo.commands.new import new_operation
+from pygitgo.utils.cli_io import set_verbosity
 from pygitgo.commands.resolve import resolve_operation
 from pygitgo.exceptions import GitGoError
 import argparse
@@ -37,13 +39,33 @@ def main():
     parser.add_argument("-v", "-V", "--version", action="store_true", help="show program's version number and exit")
     parser.add_argument("-r", "--ready", action="store_true", help="Check tool readiness")
 
+    parser.add_argument("-q", "--quiet", action="store_true", help="Hide all non-error output")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose debug output")
+
     subparsers = parser.add_subparsers(title="Commands", dest="command")
     subparsers.required = False
 
-    jump_parser = subparsers.add_parser("jump", help="Safely switch branches with try-and-revert")
+    jump_parser = subparsers.add_parser(
+        "jump", 
+        help="Safely switch branches with try-and-revert",
+        epilog=(
+            "Examples:\n"
+            "  gitgo jump feature/login          Switch to 'feature/login' branch"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     jump_parser.add_argument("branch", help="The name of the branch to jump to")
 
-    link_parser = subparsers.add_parser("link", help="Init, commit, and link to a remote repo")
+    link_parser = subparsers.add_parser(
+        "link", 
+        help="Init, commit, and link to a remote repo",
+        epilog=(
+            "Examples:\n"
+            "  gitgo link https://github.com/user/repo.git               Link to a remote repo\n"
+            "  gitgo link https://github.com/user/repo.git 'First commit' Link with custom commit message"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     link_parser.add_argument("url", help="The GitHub repository URL to link")
     link_parser.add_argument("message", nargs="?", default="Initial commit", help="Custom commit message")
 
@@ -104,7 +126,16 @@ def main():
         help="Apply action to all states (e.g., delete all)"
     )
     
-    user_parser = subparsers.add_parser("user", help="Manage Git user identity")
+    user_parser = subparsers.add_parser(
+        "user", 
+        help="Manage Git user identity",
+        epilog=(
+            "Examples:\n"
+            "  gitgo user login                  Authenticate with Git provider\n"
+            "  gitgo user logout                 Remove authentication credentials"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     user_parser.add_argument("action", nargs="?", choices=["login", "logout"], default=None, help="login or logout")
 
     config_parser = subparsers.add_parser("config",
@@ -153,7 +184,13 @@ def main():
 
     resolve_parser = subparsers.add_parser("resolve", 
         help="Resolve a paused sync after fixing a merge conflict",
-        description="Automatically stages your resolved files and finishes the active merge conflict, bypassing the text editor."
+        description="Automatically stages your resolved files and finishes the active merge conflict, bypassing the text editor.",
+        epilog=(
+            "Examples:\n"
+            "  gitgo resolve                     Finish merge conflict after fixing files\n"
+            "  gitgo resolve --abort             Cancel the merge/rebase and revert to pre-pull state"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     resolve_parser.add_argument("--abort", action="store_true", help="Abort the current merge/rebase and revert to the pre-pull state")
 
@@ -259,7 +296,36 @@ def main():
         help="Short repository description shown on GitHub."
     )
 
+    log_parser = subparsers.add_parser(
+        "log",
+        help="Show commit history",
+        epilog=(
+            "Examples:\n"
+            "  gitgo log                         Show last 5 commits for current branch\n"
+            "  gitgo log -n 10                   Show last 10 commits\n"
+            "  gitgo log -b main                 Show commits for the 'main' branch\n"
+            "  gitgo log -b feature -n 3         Show last 3 commits for 'feature' branch"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    log_parser.add_argument(
+        "-n", "--number",
+        dest="number",
+        type=int,
+        default=5,
+        metavar="NUMBER",
+        help="Number of commits to show."
+    )
+    log_parser.add_argument(
+        "-b", "--branch",
+        default=None,
+        metavar="BRANCH",
+        help="Branch to show commits for."
+    )
+
     args = parser.parse_args()
+
+    set_verbosity(quiet=args.quiet, verbose=getattr(args, 'verbose', False))
 
     if getattr(args, 'version', False):
         current_v = get_version()
@@ -280,36 +346,31 @@ def main():
     ensure_first_run_setup()
     check_for_updates_background(get_version())
 
+    COMMANDS = {
+        "push": push_operation,
+        "link": link_operation,
+        "jump": jump_operation,
+        "state": state_operation,
+        "user": user_operation,
+        "resolve": resolve_operation,
+        "config": config_operation,
+        "undo": undo_operation,
+        "pull": pull_operation,
+        "repo": repo_operation,
+        "new": new_operation,
+        "init": lambda a: init_operation(a, standalone=True),
+        "log": log_operation,
+    }
+
     try:
-        if args.command == "jump":
-            jump_operation(args)
-        elif args.command == "link":
-            link_operation(args)
-        elif args.command == "push":
-            push_operation(args)
-        elif args.command == "state":
-            state_operation(args)
-        elif args.command == "user":
-            user_operation(args)
-        elif args.command == "resolve":
-            resolve_operation(args)
-        elif args.command == "config":
-            config_operation(args)
-        elif args.command == "undo":
-            undo_operation(args)
-        elif args.command == "pull":
-            pull_operation(args)
-        elif args.command == "repo":
-            repo_operation(args)
-        elif args.command == "new":
-            new_operation(args)
-        elif args.command == "init":
-            init_operation(args, standalone=True)
+        handler = COMMANDS.get(args.command)
+        if handler:
+            handler(args)
     except GitGoError as e:
         error(f"{e}")
         sys.exit(1)
     except KeyboardInterrupt:
-        print()
+        write()
         warning("Operation canceled.")
         sys.exit(130)
     except Exception as e:
