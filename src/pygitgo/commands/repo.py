@@ -180,7 +180,23 @@ def delete_github_repo(full_name, token=None):
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             return True
+    except urllib.error.HTTPError as e:
+        if e.code == 403:
+            raise GitGoError(
+                "Delete failed: your token does not have 'delete_repo' scope. "
+                "Generate a new token at https://github.com/settings/tokens with that scope."
+            )
+        elif e.code == 404:
+            raise GitGoError(f"Delete failed: repository '{full_name}' not found on GitHub.")
+        body = e.read().decode("utf-8", errors="replace")
+        try:
+            msg = json.loads(body).get("message", body)
+        except Exception:
+            msg = body
+        raise GitGoError(f"GitHub API error {e.code} while deleting repo: {msg}")
+    except urllib.error.URLError as e:
+        raise GitGoError(f"Network error deleting repo: {e.reason}")
     except Exception as e:
-        raise GitGoError(f"Failed to delete repository from GitHub: {str(e)}")
+        raise GitGoError(f"Unexpected error deleting repo: {e}")
 
 

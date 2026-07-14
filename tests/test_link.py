@@ -163,7 +163,7 @@ def test_link_keyboard_interrupt_during_commit(mocker):
         link_core("https://github.com/user/repo.git", "Initial commit")
 
     assert exc_info.value.code == 130
-    mock_warning.assert_called_once_with("Link interrupted (Ctrl+C).")
+    mock_warning.assert_any_call("Link interrupted (Ctrl+C).")
     mock_cleanup.assert_called_once_with(
         "https://github.com/user/repo.git",
         True,

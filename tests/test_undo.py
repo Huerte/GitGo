@@ -16,13 +16,20 @@ def test_undo_commit_success(mock_success, mock_run_command):
     )
     mock_success.assert_not_called()
 
+@patch("pygitgo.commands.undo.run_command")
+@patch("pygitgo.commands.undo.success")
+def test_undo_commit_initial_fallback(mock_success, mock_run_command):
+    mock_run_command.side_effect = [GitCommandError(["git", "reset"]), None]
+    undo_commit()
+    assert mock_run_command.call_count == 2
+    mock_run_command.assert_any_call(["git", "update-ref", "-d", "HEAD"], loading_msg="Undoing initial commit...", ok_text="Initial commit undone. Files are back to staged.")
 
 @patch("pygitgo.commands.undo.run_command")
-def test_undo_commit_failure(mock_run_command):
-    mock_run_command.side_effect = GitCommandError(["git", "reset", "--soft", "HEAD~"])
+def test_undo_commit_total_failure(mock_run_command):
+    mock_run_command.side_effect = [GitCommandError(["git", "reset"]), GitCommandError(["git", "update-ref"])]
     with pytest.raises(GitGoError):
         undo_commit()
-    mock_run_command.assert_called_once()
+    assert mock_run_command.call_count == 2
 
 
 @patch("pygitgo.commands.undo.run_command")

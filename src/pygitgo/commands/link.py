@@ -46,10 +46,16 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
     ensure_github_known_host()
 
     if not is_ssh_url(repo_url):
-        if check_connection(ok_text="GitHub connection verified.", fail_text=None):
+        ssh_ok = check_connection(
+            ok_text="GitHub SSH verified. Switching to SSH URL.",
+            fail_text="SSH unavailable. Keeping HTTPS URL."
+        )
+        if ssh_ok:
             ssh_url = convert_https_to_ssh(repo_url)
             if ssh_url:
                 repo_url = ssh_url
+        else:
+            warning("SSH check failed. Using HTTPS — you may be prompted for credentials on push.")
 
     initialized = False
     committed = False
@@ -81,7 +87,7 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
         remote_added = True
 
         try:
-            current_branch = get_current_branch()
+            current_branch = get_current_branch(safe=True)
         except GitCommandError as e:
             raise GitGoError(f"Could not determine the current branch: {e}")
 

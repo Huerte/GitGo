@@ -12,6 +12,7 @@ from pygitgo.commands.user import user_operation
 from pygitgo.commands.repo import repo_operation
 from pygitgo.commands.init import init_operation
 from pygitgo.commands.new import new_operation
+from pygitgo.commands.resolve import resolve_operation
 from pygitgo.exceptions import GitGoError
 import argparse
 import sys
@@ -128,14 +129,15 @@ def main():
             "  gitgo undo add          Undo 'git add' (files are no longer ready to commit)\n"
             "  gitgo undo changes      DANGER: Throw away all new changes and start fresh\n"
             "  gitgo undo link         Remove the remote and undo the initial commit\n"
-            "  gitgo undo push         DANGER: Revert the last push with a force-push"
+            "  gitgo undo push         DANGER: Revert the last push with a force-push\n"
+            "  gitgo undo pull         Revert the branch to its state before the last pull"
         ), 
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     undo_parser.add_argument(
         "action", 
-        choices=["commit", "add", "changes", "link", "push"], 
-        help="What to undo: 'commit', 'add', 'changes', 'link', or 'push'"
+        choices=["commit", "add", "changes", "link", "push", "pull"], 
+        help="What to undo: 'commit', 'add', 'changes', 'link', 'push', or 'pull'"
     )
 
     pull_parser = subparsers.add_parser("pull", 
@@ -148,6 +150,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
+
+    resolve_parser = subparsers.add_parser("resolve", 
+        help="Resolve a paused sync after fixing a merge conflict",
+        description="Automatically stages your resolved files and finishes the active merge conflict, bypassing the text editor."
+    )
+    resolve_parser.add_argument("--abort", action="store_true", help="Abort the current merge/rebase and revert to the pre-pull state")
 
     init_parser = subparsers.add_parser(
         "init",
@@ -283,6 +291,8 @@ def main():
             state_operation(args)
         elif args.command == "user":
             user_operation(args)
+        elif args.command == "resolve":
+            resolve_operation(args)
         elif args.command == "config":
             config_operation(args)
         elif args.command == "undo":
@@ -302,6 +312,10 @@ def main():
         print()
         warning("Operation canceled.")
         sys.exit(130)
+    except Exception as e:
+        error(f"Unexpected error ({type(e).__name__}): {e}")
+        info("If this keeps happening, report it: https://github.com/Huerte/GitGo/issues")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

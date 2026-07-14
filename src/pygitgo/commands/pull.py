@@ -35,7 +35,7 @@ def pull_operation(args):
     branch = args.branch
 
     if not branch:
-        branch = get_current_branch()
+        branch = get_current_branch(safe=True)
         info(f"No branch provided. Pulling latest updates for '{branch}'...")
 
     try:
@@ -74,7 +74,10 @@ def pull_operation(args):
             info("1. Open your code editor.")
             info("2. Fix the conflict lines in your files.")
             info("3. Save the files.")
-            info("4. Run:  git rebase --continue")
+            info("4. Run:  gitgo resolve")
+            print()
+            info("Or, to cancel the pull and go back to how things were:")
+            info("Run:  gitgo resolve --abort")
             print()
             raise GitGoError("Pull failed — resolve conflicts to continue.")
         else:

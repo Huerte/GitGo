@@ -41,9 +41,13 @@ def ensure_user_configure(default_email=None, default_username=None):
         set_user(default_username, default_email)
         return True
     
-    warning("\nGit user identity is not configured!")
-    info("This is required for your commits to be attributed correctly.")
-    
+    print()
+    print("  Git Identity Setup")
+    print("  " + "-" * 36)
+    warning("Git user identity is not configured.")
+    info("Needed so your commits are attributed to the right account.")
+    print()
+
     if default_username:
         new_username = default_username
         info(f"Using GitHub username: {new_username}")

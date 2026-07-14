@@ -26,8 +26,11 @@ def git_commit(commit_message, loading_msg="Committing changes...", skip_staging
         status_result = run_command(["git", "status", "--porcelain"])
         if not status_result.strip():
             return False
-    except GitCommandError:
-        return False
+    except GitCommandError as e:
+        stderr = getattr(e, "stderr", str(e))
+        if "not a git repository" in stderr.lower():
+            raise GitGoError("Not inside a git repository. Run 'gitgo init' or 'gitgo link' first.")
+        raise GitGoError(f"Could not check repository status: {stderr}")
     
     sanitize_signing_config()
 
@@ -78,8 +81,81 @@ def git_push(branch, ok_text=None):
     try:
         run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...", ok_text=ok_text, err_text="Push failed: verify your remote URL and SSH key, then try again.")
     except (GitCommandError, OSError) as e:
-        info("Run:  git remote -v   to inspect your current remote.")
-        if "rebase in progress" in str(e):
+        stderr = getattr(e, "stderr", str(e))
+        if "rebase in progress" in stderr.lower():
             handle_rebase()
+        elif "non-fast-forward" in stderr.lower() or "rejected" in stderr.lower():
+            info("The remote has commits you don't have locally.")
+            info("Run 'gitgo pull' first, then push again.")
+            raise GitGoError("Push rejected: pull the latest changes first.")
+        elif "repository not found" in stderr.lower() or "does not exist" in stderr.lower():
+            info("Run:  git remote -v   to verify the remote URL.")
+            raise GitGoError("Push failed: remote repository not found.")
+        elif "permission denied" in stderr.lower():
+            info("Check that your SSH key is added to GitHub.")
+            info("Run:  gitgo user login   to re-authenticate.")
+            raise GitGoError("Push failed: permission denied.")
         else:
-            raise GitGoError("Push failed - see above.")
+            info("Run:  git remote -v   to inspect your current remote.")
+            raise GitGoError(f"Push failed: {stderr}" if stderr else "Push failed — check the output above.")
+
+
+def abort_pull_conflict():
+    from pathlib import Path
+    from pygitgo.utils.cli_io import warning, info, confirm
+    from pygitgo.exceptions import GitCommandError, GitGoError
+    from pygitgo.utils.executor import run_command
+    from pygitgo.commands.git_branch import get_current_branch
+    
+    rebase_in_progress = Path(".git/rebase-merge").exists() or Path(".git/rebase-apply").exists()
+    
+    if rebase_in_progress:
+        warning("A sync or jump hit a merge conflict and is paused.")
+        if not confirm("Cancel the sync and discard any conflict fixes? (y/n): ", destructive=True):
+            info("Canceled. The conflict is still active.")
+            return False
+            
+        try:
+            run_command(["git", "rebase", "--abort"], loading_msg="Aborting sync...", ok_text="Sync aborted. Branch is back to how it was before the conflict.")
+            return True
+        except GitCommandError as e:
+            raise GitGoError(f"Abort failed: {getattr(e, 'stderr', str(e))}")
+
+    try:
+        run_command(["git", "rev-parse", "ORIG_HEAD"])
+    except GitCommandError:
+        raise GitGoError(
+            "No pull to undo. ORIG_HEAD not found — this means no pull has been run yet."
+        )
+
+    try:
+        branch = get_current_branch(safe=True)
+    except GitCommandError as e:
+        raise GitGoError(f"Could not determine the current branch: {e}")
+
+    warning("This will reset your branch to the state before the last pull.")
+    warning("Any commits that arrived in the pull will be removed locally.")
+    if not confirm("Undo the last pull? Type 'y' to confirm: ", destructive=True):
+        info("Canceled. Branch is unchanged.")
+        return False
+
+    try:
+        run_command(
+            ["git", "reset", "--hard", "ORIG_HEAD"],
+            loading_msg="Reverting to pre-pull state...",
+            ok_text="Branch reset to its state before the last pull."
+        )
+    except GitCommandError as e:
+        raise GitGoError(f"Undo failed: {getattr(e, 'stderr', str(e))}")
+
+    try:
+        behind = run_command(["git", "rev-list", "--count", f"HEAD..origin/{branch}"]).strip()
+        if behind and int(behind) > 0:
+            warning(f"Your local branch is now {behind} commit(s) behind remote '{branch}'.")
+            info("The remote still has the pulled commits. Your local copy has been reset.")
+            info(f"To push your undo to the remote: git push --force origin {branch}")
+            info("Only do this if you are the only person working on this branch.")
+    except (GitCommandError, ValueError):
+        pass
+
+    return True

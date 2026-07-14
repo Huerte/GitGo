@@ -1,6 +1,6 @@
 from pygitgo.commands.git_core import git_init
 from pygitgo.exceptions import GitGoError
-from pygitgo.utils.cli_io import info
+from pygitgo.utils.cli_io import info, warning
 import urllib.request
 import urllib.error
 import zipfile
@@ -320,8 +320,9 @@ def init_operation(args, standalone=False):
         if os.path.exists(target_dir) and not os.listdir(target_dir):
             try:
                 os.rmdir(target_dir)
-            except Exception:
-                pass
+            except Exception as cleanup_err:
+                warning(f"Could not remove empty folder '{target_dir}': {cleanup_err}")
+                warning(f"Delete it manually before running this command again.")
         raise e
     finally:
         os.chdir(orig_cwd)

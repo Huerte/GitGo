@@ -1,7 +1,7 @@
 from pygitgo.utils.cli_io import info, success, warning, error
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
-from pygitgo.exceptions import GitCommandError
+from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.platform import open_url
 from . import ssh_utils
 import os
@@ -44,7 +44,12 @@ def login():
         else:
             error("Please enter a valid email address.")
 
-    key_path = ssh_utils.generate_ssh_key(email=email)
+    try:
+        key_path = ssh_utils.generate_ssh_key(email=email)
+    except GitGoError as e:
+        error(str(e))
+        return False
+
     pub_key_path = str(key_path) + ".pub"
 
     with open(pub_key_path, "r") as f:
@@ -82,21 +87,23 @@ def login():
         github_username = ssh_utils.get_github_username()
         ensure_user_configure(default_email=email, default_username=github_username)
         return True
-    
-    error("Login Failed. The SSH key may not have been added to GitHub correctly.")
-    info("Possible causes:")
-    info("  1. The key was not pasted on GitHub")
 
-    if get_platform() == "windows":
-        info("  2. SSH agent is not running — run in PowerShell (as Administrator):")
-        info("       Set-Service ssh-agent -StartupType Automatic")
-        info("       Start-Service ssh-agent")
-        info("     Then run 'gitgo user login' again.")
-    else:
-        info("  2. SSH agent is not running (try: eval $(ssh-agent) && ssh-add)")
-        
-    info("  3. Network or firewall is blocking SSH connections")
-    info("Need help? Full guide: https://github.com/Huerte/GitGo/blob/main/docs/login-guide.md")
+    raw_output, timed_out, os_error = ssh_utils._get_cached_ssh_response()
+    cause = ssh_utils.classify_connection_error(raw_output, timed_out, os_error)
+
+    error("Login failed. GitHub did not accept the SSH key.")
+    info(f"Reason: {cause}")
+
+    if get_platform() == "windows" and not timed_out:
+        info("")
+        info("If the key was added correctly but still fails, the SSH agent may not be running.")
+        info("Fix (run PowerShell as Administrator):")
+        info("  Set-Service ssh-agent -StartupType Automatic")
+        info("  Start-Service ssh-agent")
+        info("Then run 'gitgo user login' again.")
+
+    info("")
+    info("Full guide: https://github.com/Huerte/GitGo/blob/main/docs/login-guide.md")
     return False
 
  

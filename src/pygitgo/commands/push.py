@@ -63,7 +63,7 @@ def push_operation(args):
     message = args.message
     select = args.select if hasattr(args, 'select') else False
 
-    original_branch = get_current_branch()
+    original_branch = get_current_branch(safe=True)
     try:
         original_head = run_command(["git", "rev-parse", "HEAD"]).strip()
     except GitCommandError:
@@ -137,9 +137,13 @@ def push_operation(args):
                         info("\nWorking tree is clean and everything is up to date.")
                         warning("Make some changes first before using GitGo to commit and push.")
                         return
-                except (GitCommandError, Exception):
-                    warning("\nNo changes to commit. Cannot verify remote status.")
-                    warning("Make some changes first or check your git remote configuration.")
+                except GitCommandError as e:
+                    stderr = getattr(e, "stderr", str(e))
+                    if "unknown revision" in stderr or "bad revision" in stderr:
+                        warning("\nBranch has no upstream yet. Push first to set it: 'gitgo push'.")
+                    else:
+                        warning(f"\nCould not verify remote status: {stderr or 'unknown error'}")
+                        info("Check your remote with:  git remote -v")
                     return
 
         banner("MISSION COMPLETE. ALL TARGETS COMMITTED AND PUSHED.", "REMOTE TARGETS ALIGNED WITH LOCAL EDITS.")

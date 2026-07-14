@@ -37,7 +37,7 @@ def test_ensure_github_known_host_not_exists(mocker):
 
 def test_check_connection_success(mocker):
     mocker.patch("pygitgo.auth.ssh_utils.ensure_github_known_host")
-    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value="Hi user! You've successfully authenticated.")
+    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value=("Hi user! You've successfully authenticated.", False, None))
 
     mock_spinner = mocker.MagicMock()
     mocker.patch("yaspin.yaspin", return_value=mock_spinner)
@@ -50,7 +50,7 @@ def test_check_connection_success(mocker):
 
 def test_check_connection_failure(mocker):
     mocker.patch("pygitgo.auth.ssh_utils.ensure_github_known_host")
-    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value="Permission denied.")
+    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value=("Permission denied.", False, None))
 
     mock_spinner = mocker.MagicMock()
     mocker.patch("yaspin.yaspin", return_value=mock_spinner)
@@ -62,12 +62,12 @@ def test_check_connection_failure(mocker):
 
 
 def test_get_github_username_success(mocker):
-    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value="Hi Alice! You've successfully authenticated.")
+    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value=("Hi Alice! You've successfully authenticated.", False, None))
     assert get_github_username() == "Alice"
 
 
 def test_get_github_username_failure(mocker):
-    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value="Permission denied.")
+    mocker.patch("pygitgo.auth.ssh_utils._get_github_ssh_response", return_value=("Permission denied.", False, None))
     assert get_github_username() is None
 
 

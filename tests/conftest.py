@@ -1,11 +1,11 @@
-from pygitgo.exceptions import GitGoError
-from pathlib import Path
-import pytest
 import sys
-
+from pathlib import Path
 
 src_dir = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_dir))
+
+import pytest
+from pygitgo.exceptions import GitGoError
 
 
 def capture_system_exit_code(function):
