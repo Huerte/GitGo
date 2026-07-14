@@ -20,9 +20,17 @@ def confirm_remote_link(ok_text=None):
     try:
         run_command(["git", "ls-remote", "origin"], loading_msg="Testing connection to remote...", ok_text=ok_text)
         return True
-    except GitCommandError:
+    except GitCommandError as e:
+        stderr = getattr(e, "stderr", str(e))
         info("Run:  git remote -v   to inspect your current remote.")
-        raise GitGoError("Connection failed — verify the URL and your SSH key.")
+        if "could not resolve" in stderr.lower():
+            raise GitGoError("Connection failed: DNS lookup failed for the remote host. Check your internet.")
+        elif "permission denied" in stderr.lower():
+            raise GitGoError("Connection failed: SSH key not accepted. Run 'gitgo user login' to re-authenticate.")
+        elif stderr:
+            raise GitGoError(f"Connection failed: {stderr}")
+        else:
+            raise GitGoError("Connection failed — verify the URL and your SSH key.")
 
 
 def check_and_sync_branch(branch):
@@ -56,6 +64,6 @@ def handle_rebase():
     warning("Conflict detected during rebase.")
     info("Resolve conflicts manually, then run:")
     info("    git add <files>")
-    info("    git rebase --continue")
+    info("    gitgo resolve")
     info("When finished, run 'gitgo push <branch> <message>' again.")
     raise GitGoError("Push aborted — rebase conflict in progress.")

@@ -127,8 +127,11 @@ def load_state(state_id=None):
     try:
         apply_result = git_stash_apply(stash_id=str(selected_state["stash_index"]))
         if not apply_result:
-            error(f"Failed to load state. There may be a conflict with your current changes.")
-            raise GitGoError("Load failed — resolve conflicts first.")
+            error("Failed to restore this state.")
+            info("Your current working tree may have conflicting or uncommitted changes.")
+            info("Run 'git status' to see the current state of your files.")
+            info("Your stash entries are still safe. Run 'gitgo state list' to see them.")
+            raise GitGoError("State load failed — resolve any conflicts first, then try again.")
         success(f"State '{selected_state['message']}' restored.")
         banner("WORKSPACE SNAPSHOT RESTORED.", "SECURE VAULT WORKSPACE RE-APPLIED TO TREE.")
 

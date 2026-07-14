@@ -48,9 +48,12 @@ def _get_github_ssh_response():
             capture_output=True, text=True,
             timeout=SSH_TIMEOUT_SECONDS, stdin=subprocess.DEVNULL,
         )
-        return (result.stderr or "") + (result.stdout or "")
-    except (subprocess.TimeoutExpired, OSError):
-        return None
+        combined = (result.stderr or "") + (result.stdout or "")
+        return combined, False, None
+    except subprocess.TimeoutExpired:
+        return "", True, None
+    except OSError as e:
+        return "", False, str(e)
 
 
 def _get_cached_ssh_response():
@@ -58,7 +61,7 @@ def _get_cached_ssh_response():
     if not _cache_populated:
         _cached_ssh_response = _get_github_ssh_response()
         _cache_populated = True
-    return _cached_ssh_response
+    return _cached_ssh_response  # (raw_output, timed_out, os_error)
 
 
 def clear_ssh_cache():
@@ -67,10 +70,30 @@ def clear_ssh_cache():
     _cache_populated = False
 
 
+def classify_connection_error(raw_output: str, timed_out: bool, os_error: str | None) -> str:
+    """Return a specific, human-readable cause string based on the SSH response."""
+    if timed_out:
+        return "Connection timed out. GitHub SSH port (22) may be blocked by your network or firewall."
+    if os_error:
+        return f"Could not launch the SSH client: {os_error}"
+    if not raw_output:
+        return "No response from GitHub. Check your internet connection."
+    if "Permission denied" in raw_output:
+        return "Permission denied. The SSH key has not been added to your GitHub account, or it was added incorrectly."
+    if "Connection refused" in raw_output:
+        return "Connection refused on port 22. Try a network without strict firewall rules."
+    if "Host key verification failed" in raw_output:
+        return "Host key verification failed. Run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+    if "Could not resolve hostname" in raw_output:
+        return "DNS lookup failed. You may be offline or behind a restrictive proxy."
+    # Return the raw SSH message so users see the actual problem.
+    return raw_output.strip() or "Unknown SSH error."
+
+
 def check_connection(ok_text=None, fail_text=None):
     from yaspin import yaspin
     import sys
-    
+
     ensure_github_known_host()
 
     kwargs = {"text": "Verifying GitHub connection..."}
@@ -79,8 +102,8 @@ def check_connection(ok_text=None, fail_text=None):
     spinner = yaspin(**kwargs)
     spinner.start()
 
-    output = _get_cached_ssh_response()
-    connected = output is not None and "successfully authenticated" in output
+    raw_output, timed_out, os_error = _get_cached_ssh_response()
+    connected = not timed_out and not os_error and "successfully authenticated" in raw_output
 
     if connected:
         spinner.text = ok_text or "GitHub connection verified."
@@ -93,10 +116,10 @@ def check_connection(ok_text=None, fail_text=None):
 
 
 def get_github_username():
-    output = _get_cached_ssh_response()
-    if output and "Hi " in output and "!" in output:
+    raw_output, _timed_out, _os_error = _get_cached_ssh_response()
+    if raw_output and "Hi " in raw_output and "!" in raw_output:
         try:
-            return output.split("Hi ")[1].split("!")[0]
+            return raw_output.split("Hi ")[1].split("!")[0]
         except (IndexError, ValueError):
             pass
     return None

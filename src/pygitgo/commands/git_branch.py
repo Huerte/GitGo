@@ -5,10 +5,23 @@ from pygitgo.utils.config import get_config
 from argparse import Namespace
 
 
-def get_current_branch():
+def get_current_branch(safe=False):
     branch = run_command(["git", "branch", "--show-current"]).strip()
     if not branch:
-        branch = run_command(["git", "rev-parse", "--short", "HEAD"]).strip()
+        # We are in a detached HEAD state.
+        commit_hash = run_command(["git", "rev-parse", "--short", "HEAD"]).strip()
+        
+        if safe:
+            warning("You are in a 'detached HEAD' state (not on any branch).")
+            warning("If you switch away now, your current commits could be lost.")
+            if confirm("Would you like to create a new branch here to save your work? (y/n): "):
+                new_branch = input("Enter a name for the new branch: ").strip()
+                if new_branch:
+                    run_command(["git", "checkout", "-b", new_branch])
+                    return new_branch
+            raise GitGoError("Operation aborted to prevent data loss in detached HEAD state.")
+            
+        return commit_hash
     return branch
 
 

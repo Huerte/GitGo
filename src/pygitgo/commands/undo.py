@@ -8,10 +8,11 @@ import sys
 def undo_commit():
     try:
         run_command(["git", "reset", "--soft", "HEAD~"], loading_msg="Undoing last commit...", ok_text="Last commit undone. Files are untouched.")
-    except GitCommandError as e:
-        raise GitGoError(
-            f"Undo failed — no previous commit to revert. Details: {e}"
-        )
+    except GitCommandError:
+        try:
+            run_command(["git", "update-ref", "-d", "HEAD"], loading_msg="Undoing initial commit...", ok_text="Initial commit undone. Files are back to staged.")
+        except GitCommandError as e:
+            raise GitGoError(f"Undo failed. Details: {e}")
     return True
 
 
@@ -63,9 +64,14 @@ def undo_link():
     return True
 
 
+def undo_pull():
+    from pygitgo.commands.git_core import abort_pull_conflict
+    return abort_pull_conflict()
+
+
 def undo_push():
     try:
-        branch = get_current_branch()
+        branch = get_current_branch(safe=True)
     except GitCommandError as e:
         raise GitGoError(f"Could not determine the current branch: {e}")
 
@@ -110,8 +116,10 @@ def undo_operation(args):
         success_flag = undo_link()
     elif action == "push":
         success_flag = undo_push()
+    elif action == "pull":
+        success_flag = undo_pull()
     else:
         raise GitGoError(f"Unknown undo operation: {action}")
 
     if success_flag:
-        banner("ACTION ROLLBACK. WORKSPACE RESTORED.", "PREVIOUS STATE RE-ESTABLISHED SUCCESSFULLY.")
+        banner("ACTION ROLLBACK. WORKSPACE RESTORED.", "PREVIOUS STATE RE-ESTABLISHED SUCCESSFULLY.")

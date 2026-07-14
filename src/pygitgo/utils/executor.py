@@ -51,7 +51,14 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
             stderr = e.stderr.strip() if e.stderr else ""
             returncode = e.returncode
         else:
-            stderr = f"Command not found or execution failed: {str(e)}"
+            cmd_name = command[0] if isinstance(command, list) else str(command).split()[0]
+            if "cannot find the file" in str(e) or "No such file or directory" in str(e):
+                stderr = (
+                    f"'{cmd_name}' is not installed or not on your PATH. "
+                    "Install it and make sure it is accessible from your terminal."
+                )
+            else:
+                stderr = f"Failed to run '{cmd_name}': {e}"
 
         if "detected dubious ownership" in stderr:
             danger("Git blocked this folder for security reasons (dubious ownership).")

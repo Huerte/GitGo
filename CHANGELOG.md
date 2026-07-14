@@ -9,12 +9,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
  
 ### Added
-- **Docs**: Added a step-by-step first contribution guide in `docs/first-contribution.md`.
-- **Docs**: Added a comprehensive troubleshooting guide in `docs/troubleshooting.md` for common environment and Git issues.
-- **Templates**: Added GitHub issue templates for bug reports, feature requests, documentation, and questions.
+- **Resolve Conflict:** Added a new command `gitgo resolve`. If you get a merge conflict, this command helps you finish it easily. It stages your fixed files and finishes the sync so you don't get stuck in the Vim editor. You can also run `gitgo resolve --abort` to cancel the conflict and go back to normal.
+- **Undo Pull:** Added `gitgo undo pull` to undo a pull. It puts your branch back to how it looked before you pulled. It does the same thing as `gitgo resolve --abort`.
+- **Docs**: Added a step-by-step guide for first time contributors in `docs/first-contribution.md`.
+- **Docs**: Added a troubleshooting guide for common git errors in `docs/troubleshooting.md`.
+- **Templates**: Added GitHub issue templates for bug reports and questions.
 
 ### Changed
-- **Default-message:** Updated the default msg from "New Project Update" to "chore: new changes applied".
+- **Jump command update:** Changed how `gitgo jump` works. It now auto-saves your changes automatically without asking. It also pulls better and warns you if git is locked or stuck.
+- **Better Error Messages:** Checked all commands and fixed 11 bad error messages. Now, if push or link fails, it tells you exactly why (like internet problem, or wrong password) instead of giving a generic error.
+- **Default-message:** Changed the default commit message from "New Project Update" to "chore: new changes applied".
 
 ---
 
