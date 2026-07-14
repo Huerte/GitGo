@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Software Development :: Version Control :: Git",
 ]
 dependencies = [
-    "yaspin>=3.0",
+    "yaspin>=2.0",
     "pick>=2.0",
 ]
 
