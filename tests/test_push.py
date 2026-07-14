@@ -1,8 +1,8 @@
 from pygitgo.commands.push import push_operation
 from pygitgo.exceptions import GitGoError
+from pygitgo.utils.cli_io import warning
 from argparse import Namespace
 import pytest
-
 
 def test_push_new_branch_flag_no_name():
     args = Namespace(branch=None, message="Init commit", new=True, select=False)
