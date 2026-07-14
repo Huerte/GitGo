@@ -12,7 +12,7 @@ from pygitgo.commands.user import user_operation
 from pygitgo.commands.repo import repo_operation
 from pygitgo.commands.init import init_operation
 from pygitgo.commands.new import new_operation
-from pygitgo.commands.continue_sync import continue_operation
+from pygitgo.commands.resolve import resolve_operation
 from pygitgo.exceptions import GitGoError
 import argparse
 import sys

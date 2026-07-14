@@ -69,8 +69,8 @@ def clear_ssh_cache():
     _cached_ssh_response = None
     _cache_populated = False
 
-
-def classify_connection_error(raw_output: str, timed_out: bool, os_error: str | None) -> str:
+from typing import Optional
+def classify_connection_error(raw_output: str, timed_out: bool, os_error: Optional[str]) -> str:
     """Return a specific, human-readable cause string based on the SSH response."""
     if timed_out:
         return "Connection timed out. GitHub SSH port (22) may be blocked by your network or firewall."

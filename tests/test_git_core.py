@@ -173,3 +173,28 @@ def test_git_commit_default_runs_git_add(mocker):
     git_commit("my message")
     add_call = fake_run.call_args_list[1][0][0]
     assert add_call == ["git", "add", "."]
+
+
+def test_abort_pull_conflict_active_rebase(mocker):
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("pygitgo.utils.cli_io.confirm", return_value=True)
+    fake_run = mocker.patch("pygitgo.utils.executor.run_command")
+    
+    from pygitgo.commands.git_core import abort_pull_conflict
+    result = abort_pull_conflict()
+    
+    assert result is True
+    fake_run.assert_called_once_with(["git", "rebase", "--abort"], loading_msg="Aborting sync...", ok_text="Sync aborted. Branch is back to how it was before the conflict.")
+
+
+def test_abort_pull_conflict_no_rebase(mocker):
+    mocker.patch("pathlib.Path.exists", return_value=False)
+    mocker.patch("pygitgo.utils.cli_io.confirm", return_value=True)
+    mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="main")
+    fake_run = mocker.patch("pygitgo.utils.executor.run_command", side_effect=["", "", "0"])
+    
+    from pygitgo.commands.git_core import abort_pull_conflict
+    result = abort_pull_conflict()
+    
+    assert result is True
+    fake_run.assert_any_call(["git", "reset", "--hard", "ORIG_HEAD"], loading_msg="Reverting to pre-pull state...", ok_text="Branch reset to its state before the last pull.")

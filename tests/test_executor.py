@@ -54,7 +54,7 @@ def test_run_command_os_error(mocker):
         run_command(["cmd"])
     
     assert exc_info.value.returncode == 1
-    assert "Command not found or execution failed" in exc_info.value.stderr
+    assert "Failed to run 'cmd': file not found" in exc_info.value.stderr
 
 def test_run_command_dubious_ownership_confirm(mocker):
     mock_run = mocker.patch("subprocess.run")

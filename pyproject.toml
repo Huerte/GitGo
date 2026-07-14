@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pygitgo"
-version = "1.8.3"
+version = "1.9.0"
 description = "GitGo CLI - Your Fast Git Companion. Simplifies git push, link, stash, and user management."
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
@@ -45,3 +45,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=pygitgo --cov-report=term-missing"
+pythonpath = ["src"]
