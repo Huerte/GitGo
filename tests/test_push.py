@@ -4,7 +4,10 @@ from pygitgo.utils.cli_io import warning
 from argparse import Namespace
 import pytest
 
-def test_push_new_branch_flag_no_name():
+
+def test_push_new_branch_flag_no_name(mocker):
+    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
+
     args = Namespace(branch=None, message="Init commit", new=True, select=False)
     with pytest.raises(GitGoError) as exc_info:
         push_operation(args)
@@ -12,6 +15,7 @@ def test_push_new_branch_flag_no_name():
 
 
 def test_push_new_branch_success(mocker):
+    mocker.patch("pygitgo.commands.push.get_current_branch", return_value="main")
     fake_new_branch = mocker.patch("pygitgo.commands.push.git_new_branch")
     fake_commit = mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     fake_push = mocker.patch("pygitgo.commands.push.git_push")
