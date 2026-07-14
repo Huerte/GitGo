@@ -8,6 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Safety:** Changed `gitgo undo push` to use `--force-with-lease` to prevent accidentally overwriting remote changes.
+- **UX:** Updated the confirm prompt to accept "yes" as a valid input.
+- **Consistency:** Refactored `resolve.py` and `config.py` to use `run_command` instead of raw subprocess calls for better reliability and testing.
+- **CI:** Expanded GitHub Actions to test on Ubuntu, Windows, and macOS across Python 3.8, 3.10, and 3.12.
+- **Dependencies:** Downgraded `yaspin` requirement to `>=2.0` to restore compatibility with Python 3.8.
+
+### Fixed
+- Fixed a bug where the `commit.gpgsign` config wasn't completely cleared when invalid during account setup.
+- Fixed the help command documentation in README.
+
 ---
 
 ## [1.9.0] - 2026-07-14
