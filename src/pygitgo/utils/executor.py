@@ -6,7 +6,7 @@ import os
 import re
 
 
-def run_command(command, return_complete=False, loading_msg=None, ok_text=None, err_text=None):
+def run_command(command, return_complete=False, loading_msg=None, ok_text=None, err_text=None, extra_env=None):
 
     import sys
     kwargs = {"text": loading_msg}
@@ -22,6 +22,9 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
         env["GIT_TERMINAL_PROMPT"] = "0"
         base_ssh_cmd = env.get("GIT_SSH_COMMAND", "ssh")
         env["GIT_SSH_COMMAND"] = f"{base_ssh_cmd} -o BatchMode=yes"
+
+        if extra_env:
+            env.update(extra_env)
 
         result = subprocess.run(
             command,

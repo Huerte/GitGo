@@ -95,27 +95,28 @@ def test_sanitize_signing_config_ssh_format(mocker):
 
 
 def test_sanitize_signing_config_unset_gpg_program(mocker):
-    fake_run = mocker.patch("pygitgo.auth.account.run_command", side_effect=["true", "openpgp", None])
+    fake_run = mocker.patch("pygitgo.auth.account.run_command", side_effect=["true", "openpgp", None, None])
     fake_warning = mocker.patch("pygitgo.auth.account.warning")
 
     sanitize_signing_config()
 
-    assert fake_run.call_count == 3
+    assert fake_run.call_count == 4
     fake_run.assert_any_call(["git", "config", "--global", "commit.gpgsign"])
     fake_run.assert_any_call(["git", "config", "--global", "gpg.format"])
     fake_run.assert_any_call(["git", "config", "--global", "--unset", "gpg.program"])
+    fake_run.assert_any_call(["git", "config", "--global", "--unset", "commit.gpgsign"])
     assert fake_warning.call_count == 2
 
 
 def test_sanitize_signing_config_unset_gpg_program_error(mocker):
     fake_run = mocker.patch(
         "pygitgo.auth.account.run_command",
-        side_effect=["true", "openpgp", GitCommandError(["git", "config"])]
+        side_effect=["true", "openpgp", GitCommandError(["git", "config"]), GitCommandError(["git", "config"])]
     )
     fake_warning = mocker.patch("pygitgo.auth.account.warning")
 
     sanitize_signing_config()
 
-    assert fake_run.call_count == 3
+    assert fake_run.call_count == 4
     assert fake_warning.call_count == 2
 

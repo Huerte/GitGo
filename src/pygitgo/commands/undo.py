@@ -89,7 +89,7 @@ def undo_push():
 
     try:
         run_command(
-            ["git", "push", "--force", "origin", branch],
+            ["git", "push", "--force-with-lease", "origin", branch],
             loading_msg=f"Force-pushing reverted state to '{branch}'...",
             ok_text=f"Last push reverted. Remote '{branch}' is back to the previous commit."
         )
@@ -98,7 +98,7 @@ def undo_push():
     except GitCommandError as e:
         warning("Local and remote have diverged!")
         warning("The local commit was reverted, but force-pushing to the remote failed.")
-        warning(f"To recover, run manually: git push --force origin {branch}")
+        warning(f"To recover, run manually: git push --force-with-lease origin {branch}")
         raise GitGoError(f"Force-push failed: {e}")
 
 

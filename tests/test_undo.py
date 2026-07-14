@@ -122,7 +122,7 @@ def test_undo_link_no_commit_to_reset(mock_info, mock_success, mock_run_command)
 def test_undo_push_success(mock_banner, mock_confirm, mock_success, mock_branch, mock_run_command):
     undo_push()
     mock_run_command.assert_any_call(["git", "reset", "--soft", "HEAD~"], loading_msg="Reverting last commit locally...", ok_text="Last commit reverted locally.")
-    mock_run_command.assert_any_call(["git", "push", "--force", "origin", "main"], loading_msg="Force-pushing reverted state to 'main'...", ok_text="Last push reverted. Remote 'main' is back to the previous commit.")
+    mock_run_command.assert_any_call(["git", "push", "--force-with-lease", "origin", "main"], loading_msg="Force-pushing reverted state to 'main'...", ok_text="Last push reverted. Remote 'main' is back to the previous commit.")
     mock_success.assert_not_called()
 
 
@@ -149,7 +149,7 @@ def test_undo_push_no_commit(mock_confirm, mock_branch, mock_run_command):
 @patch("pygitgo.commands.undo.get_current_branch", return_value="main")
 @patch("pygitgo.commands.undo.confirm", return_value=True)
 def test_undo_push_force_push_fails(mock_confirm, mock_branch, mock_run_command):
-    mock_run_command.side_effect = [None, GitCommandError(["git", "push", "--force"])]
+    mock_run_command.side_effect = [None, GitCommandError(["git", "push", "--force-with-lease"])]
     with pytest.raises(GitGoError, match="Force-push failed"):
         undo_push()
 

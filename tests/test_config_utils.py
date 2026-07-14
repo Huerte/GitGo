@@ -1,5 +1,4 @@
 from pygitgo.utils.config import get_config, set_config, get_default_branch
-import subprocess
 
 
 def test_get_config_fallback(mocker):
@@ -60,28 +59,24 @@ def test_get_config_error_handling(mocker):
 
 def test_get_default_branch_uses_git_init_default_branch(mocker):
     mocker.patch(
-        "pygitgo.utils.config.subprocess.check_output",
-        return_value="develop\n",
+        "pygitgo.utils.config.run_command",
+        return_value="develop",
     )
     result = get_default_branch()
     assert result == "develop"
 
 
 def test_get_default_branch_falls_back_to_gitgo_config(mocker):
+    from pygitgo.exceptions import GitCommandError
     mocker.patch(
-        "pygitgo.utils.config.subprocess.check_output",
-        side_effect=subprocess.CalledProcessError(1, "git"),
+        "pygitgo.utils.config.run_command",
+        side_effect=[GitCommandError(["git"]), "trunk"],
     )
-    mocker.patch("pygitgo.utils.config.run_command", return_value="trunk")
     result = get_default_branch()
     assert result == "trunk"
 
 
 def test_get_default_branch_hard_fallback_to_main(mocker):
-    mocker.patch(
-        "pygitgo.utils.config.subprocess.check_output",
-        side_effect=subprocess.CalledProcessError(1, "git"),
-    )
     from pygitgo.exceptions import GitCommandError
     mocker.patch("pygitgo.utils.config.run_command", side_effect=GitCommandError(["git"]))
     result = get_default_branch()
@@ -89,11 +84,8 @@ def test_get_default_branch_hard_fallback_to_main(mocker):
 
 
 def test_get_default_branch_handles_git_not_found(mocker):
-    mocker.patch(
-        "pygitgo.utils.config.subprocess.check_output",
-        side_effect=FileNotFoundError,
-    )
     from pygitgo.exceptions import GitCommandError
+    # GitCommandError is raised by run_command when git is not found
     mocker.patch("pygitgo.utils.config.run_command", side_effect=GitCommandError(["git"]))
     result = get_default_branch()
     assert result == "main"
