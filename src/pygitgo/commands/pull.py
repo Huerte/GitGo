@@ -1,18 +1,13 @@
 from pygitgo.utils.cli_io import success, warning, error, info, write
+from pygitgo.commands.git_core import is_rebase_in_progress
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
-from pathlib import Path
 import sys
 
 
 def _pull_interrupt_cleanup():
-    rebase_in_progress = (
-        Path(".git/rebase-merge").exists() or
-        Path(".git/rebase-apply").exists()
-    )
-
-    if rebase_in_progress:
+    if is_rebase_in_progress():
         warning("A rebase is in progress from the interrupted pull.")
         try:
             run_command(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...", ok_text="Rebase aborted. Branch is back to its pre-pull state.")

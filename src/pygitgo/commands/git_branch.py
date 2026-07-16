@@ -12,8 +12,8 @@ def get_current_branch(safe=False):
         commit_hash = run_command(["git", "rev-parse", "--short", "HEAD"]).strip()
         
         if safe:
-            warning("You are in a 'detached HEAD' state (not on any branch).")
-            warning("If you switch away now, your current commits could be lost.")
+            warning("You are in a 'detached HEAD' state (not on any branch).", required=True)
+            warning("If you switch away now, your current commits could be lost.", required=True)
             if confirm("Would you like to create a new branch here to save your work? (y/n): "):
                 new_branch = input("Enter a name for the new branch: ").strip()
                 if new_branch:
@@ -65,3 +65,12 @@ def git_new_branch(branch, ok_text=None):
                 raise GitGoError(f"Operation canceled. Branch '{branch}' already exists.")
 
     return branch
+
+
+def get_head_sha(short=False):
+    args = ["git", "rev-parse"]
+    if short:
+        args.append("--short")
+    args.append("HEAD")
+    return run_command(args).strip()
+

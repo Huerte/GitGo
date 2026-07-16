@@ -1,6 +1,7 @@
 from pygitgo.utils.update_checker import check_for_updates_background, check_for_updates
+from pygitgo.utils.cli_io import info, warning, error, write, _highlight_cmd
 from pygitgo.utils.bootstrap import ensure_first_run_setup
-from pygitgo.utils.cli_io import info, warning, error, write
+from pygitgo.commands.resolve import resolve_operation
 from pygitgo.commands.config import config_operation
 from pygitgo.commands.state import state_operation
 from pygitgo.commands.undo import undo_operation
@@ -11,10 +12,11 @@ from pygitgo.commands.push import push_operation
 from pygitgo.commands.user import user_operation
 from pygitgo.commands.repo import repo_operation
 from pygitgo.commands.init import init_operation
+from pygitgo.commands.sync import sync_operation
 from pygitgo.commands.log import log_operation
 from pygitgo.commands.new import new_operation
 from pygitgo.utils.cli_io import set_verbosity
-from pygitgo.commands.resolve import resolve_operation
+from pygitgo.utils.banner import show_banner
 from pygitgo.exceptions import GitGoError
 import argparse
 import sys
@@ -27,6 +29,28 @@ def get_version():
         return version("pygitgo")
     except Exception:
         return "dev"
+
+
+class ColorHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def _format_action(self, action):
+        result = super()._format_action(action)
+        return _highlight_cmd(result)
+
+    def format_help(self):
+        result = super().format_help()
+        return _highlight_cmd(result)
+
+
+def _add_subcommand(subparsers, name, help, epilog=None, description=None):
+    kwargs = {
+        "help": help,
+        "formatter_class": ColorHelpFormatter
+    }
+    if epilog is not None:
+        kwargs["epilog"] = epilog
+    if description is not None:
+        kwargs["description"] = description
+    return subparsers.add_parser(name, **kwargs)
 
 
 def main():
@@ -45,31 +69,29 @@ def main():
     subparsers = parser.add_subparsers(title="Commands", dest="command")
     subparsers.required = False
 
-    jump_parser = subparsers.add_parser(
+    jump_parser = _add_subcommand(
+        subparsers,
         "jump", 
         help="Safely switch branches with try-and-revert",
-        epilog=(
-            "Examples:\n"
-            "  gitgo jump feature/login          Switch to 'feature/login' branch"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        epilog="Examples:\n  gitgo jump feature/login          Switch to 'feature/login' branch"
     )
     jump_parser.add_argument("branch", help="The name of the branch to jump to")
 
-    link_parser = subparsers.add_parser(
+    link_parser = _add_subcommand(
+        subparsers,
         "link", 
         help="Init, commit, and link to a remote repo",
         epilog=(
             "Examples:\n"
             "  gitgo link https://github.com/user/repo.git               Link to a remote repo\n"
             "  gitgo link https://github.com/user/repo.git 'First commit' Link with custom commit message"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     link_parser.add_argument("url", help="The GitHub repository URL to link")
     link_parser.add_argument("message", nargs="?", default="Initial commit", help="Custom commit message")
 
-    push_parser = subparsers.add_parser(
+    push_parser = _add_subcommand(
+        subparsers,
         "push",
         help="Commit and push branch to remote",
         epilog=(
@@ -79,15 +101,15 @@ def main():
             "  gitgo push 'fix auth bug'         Push current branch with a custom message\n"
             "  gitgo push -n feature/login 'add login'   Create new branch and push\n"
             "  gitgo push -s main 'fix bug'      Pick which files to include before pushing"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     push_parser.add_argument("-n", "--new", action="store_true", help="Create a new branch before pushing")
     push_parser.add_argument("-s", "--select", action="store_true", help="Interactively select which files to stage")
     push_parser.add_argument("branch", nargs="?", default=None, help="Branch to push to (default: current branch)")
     push_parser.add_argument("message", nargs="?", default=None, help="Commit message")
 
-    state_parser = subparsers.add_parser(
+    state_parser = _add_subcommand(
+        subparsers,
         "state",
         help="Manage saved working states (stashes)",
         epilog=(
@@ -97,8 +119,7 @@ def main():
             "  gitgo state load 1                Restore state by ID\n"
             "  gitgo state delete 1              Delete a specific state\n"
             "  gitgo state delete -a             Delete all saved states"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     state_parser.add_argument(
         "action",
@@ -126,33 +147,36 @@ def main():
         help="Apply action to all states (e.g., delete all)"
     )
     
-    user_parser = subparsers.add_parser(
+    user_parser = _add_subcommand(
+        subparsers,
         "user", 
         help="Manage Git user identity",
         epilog=(
             "Examples:\n"
             "  gitgo user login                  Authenticate with Git provider\n"
             "  gitgo user logout                 Remove authentication credentials"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     user_parser.add_argument("action", nargs="?", choices=["login", "logout"], default=None, help="login or logout")
 
-    config_parser = subparsers.add_parser("config",
+    config_parser = _add_subcommand(
+        subparsers,
+        "config",
         help="Manage GitGo default settings",
         epilog=(
             "Examples:\n"
             "  gitgo config set default-branch master\n"
             "  gitgo config set default-message 'WIP'\n"
             "  gitgo config get default-branch"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     config_parser.add_argument("action", choices=["set", "get"], help="Action to perform")
     config_parser.add_argument("key", choices=["default-branch", "default-message"], help="The setting to change")
     config_parser.add_argument("value", nargs="?", help="The new value (required for 'set')")
 
-    undo_parser = subparsers.add_parser("undo", 
+    undo_parser = _add_subcommand(
+        subparsers,
+        "undo", 
         help="Safely undo mistakes", 
         epilog=(
             "Examples:\n"
@@ -162,8 +186,7 @@ def main():
             "  gitgo undo link         Remove the remote and undo the initial commit\n"
             "  gitgo undo push         DANGER: Revert the last push with a force-push\n"
             "  gitgo undo pull         Revert the branch to its state before the last pull"
-        ), 
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     undo_parser.add_argument(
         "action", 
@@ -171,38 +194,40 @@ def main():
         help="What to undo: 'commit', 'add', 'changes', 'link', 'push', or 'pull'"
     )
 
-    pull_parser = subparsers.add_parser("pull", 
+    pull_parser = _add_subcommand(
+        subparsers,
+        "pull", 
         help="Safely pull the latest code without losing your changes",
         epilog=(
             "Examples:\n"
             "  gitgo pull                Safely pull updates for your current branch\n"
             "  gitgo pull main           Safely pull updates from the 'main' branch\n"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     pull_parser.add_argument("branch", nargs="?", default=None, help="The branch to pull from (default is your current branch)")
 
-    resolve_parser = subparsers.add_parser("resolve", 
+    resolve_parser = _add_subcommand(
+        subparsers,
+        "resolve", 
         help="Resolve a paused sync after fixing a merge conflict",
         description="Automatically stages your resolved files and finishes the active merge conflict, bypassing the text editor.",
         epilog=(
             "Examples:\n"
             "  gitgo resolve                     Finish merge conflict after fixing files\n"
             "  gitgo resolve --abort             Cancel the merge/rebase and revert to pre-pull state"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     resolve_parser.add_argument("--abort", action="store_true", help="Abort the current merge/rebase and revert to the pre-pull state")
 
-    init_parser = subparsers.add_parser(
+    init_parser = _add_subcommand(
+        subparsers,
         "init",
         help="Scaffold a new project structure",
         epilog=(
             "Examples:\n"
             "  gitgo init my-app python          Scaffold a Python project locally\n"
             "  gitgo init my-app --template owner/repo  Download a template locally\n"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     init_parser.add_argument(
         "name",
@@ -223,7 +248,8 @@ def main():
         help="GitHub template repo to clone instead of a language scaffold."
     )
 
-    repo_parser = subparsers.add_parser(
+    repo_parser = _add_subcommand(
+        subparsers,
         "repo",
         help="Create a remote GitHub repository",
         epilog=(
@@ -231,8 +257,7 @@ def main():
             "  gitgo repo                         Use current directory name as repo name\n"
             "  gitgo repo my-app                  Create repo 'my-app' on GitHub\n"
             "  gitgo repo my-app --private        Create a private repo\n"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     repo_parser.add_argument(
         "name",
@@ -254,7 +279,8 @@ def main():
         help="Short repository description shown on GitHub."
     )
 
-    new_parser = subparsers.add_parser(
+    new_parser = _add_subcommand(
+        subparsers,
         "new",
         help="Scaffold, create remote repo, and push in one command",
         epilog=(
@@ -262,8 +288,7 @@ def main():
             "  gitgo new my-app python            Scaffold a Python project and push it\n"
             "  gitgo new my-app --private         Private repo, no language scaffold\n"
             "  gitgo new my-app rust --private    Private Rust project\n"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     new_parser.add_argument(
         "name",
@@ -296,7 +321,8 @@ def main():
         help="Short repository description shown on GitHub."
     )
 
-    log_parser = subparsers.add_parser(
+    log_parser = _add_subcommand(
+        subparsers,
         "log",
         help="Show commit history",
         epilog=(
@@ -305,8 +331,7 @@ def main():
             "  gitgo log -n 10                   Show last 10 commits\n"
             "  gitgo log -b main                 Show commits for the 'main' branch\n"
             "  gitgo log -b feature -n 3         Show last 3 commits for 'feature' branch"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     )
     log_parser.add_argument(
         "-n", "--number",
@@ -322,6 +347,18 @@ def main():
         metavar="BRANCH",
         help="Branch to show commits for."
     )
+
+    sync_parser = _add_subcommand(
+        subparsers,
+        "sync",
+        help="Download updates, save your work, and upload in one step (pull, commit, push)",
+        epilog=(
+            "Examples:\n"
+            "  gitgo sync                        Sync with default commit message\n"
+            "  gitgo sync 'Fix navbar'           Sync and commit with a custom message\n"
+        )
+    )
+    sync_parser.add_argument("message", nargs="?", default=None, help="Commit message for your local changes")
 
     args = parser.parse_args()
 
@@ -340,7 +377,7 @@ def main():
         return
 
     if not args.command:
-        parser.print_help()
+        show_banner()
         return
 
     ensure_first_run_setup()
@@ -360,6 +397,7 @@ def main():
         "new": new_operation,
         "init": lambda a: init_operation(a, standalone=True),
         "log": log_operation,
+        "sync": sync_operation,
     }
 
     try:

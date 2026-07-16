@@ -48,14 +48,15 @@ def log_operation(args):
         if target_branch:
             banner_subtitle += f" on {target_branch}"
             
-        banner("Commit History", banner_subtitle)
+        banner("Commit History", banner_subtitle, required=True)
         
         for line in output.splitlines():
             try:
                 commit_hash, author, date, message = line.split("||", 3)
-                write(f"[{YELLOW}{commit_hash}{RESET}] {message} ({CYAN}{date}{RESET}) [{GREEN}{author}{RESET}]")
+                write(f"[{YELLOW}{commit_hash}{RESET}] {message} ({CYAN}{date}{RESET}) [{GREEN}{author}{RESET}]", required=True)
             except ValueError:
-                write(line)
-        write()
+                write(line, required=True)
+        write(required=True)
+
     except GitCommandError as e:
         raise GitGoError(f"Failed to retrieve log: {getattr(e, 'stderr', str(e))}")

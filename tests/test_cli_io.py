@@ -77,3 +77,24 @@ def test_quiet_mode(mocker):
         set_verbosity(quiet=False)
 
 
+def test_supports_color_non_tty(mocker):
+    from pygitgo.utils.colors import _supports_color
+    mocker.patch("sys.stdout.isatty", return_value=False)
+    assert _supports_color() is False
+
+
+def test_supports_color_dumb_term(mocker):
+    from pygitgo.utils.colors import _supports_color
+    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch("os.environ", {"TERM": "dumb"})
+    assert _supports_color() is False
+
+
+def test_supports_color_no_color_env(mocker):
+    from pygitgo.utils.colors import _supports_color
+    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch("os.environ", {"NO_COLOR": "1"})
+    assert _supports_color() is False
+
+
+

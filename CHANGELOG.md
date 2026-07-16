@@ -9,8 +9,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Sync:** Added `gitgo sync [message]` command to seamlessly synchronize with the remote. It automatically pulls latest changes with rebase/autostash, commits any staged files, and pushes to the remote in one go.
+- **Color Detection:** Added capability detection (`_supports_color()`) to check for Windows VT support, `NO_COLOR`, and `dumb` terminals, preventing raw ANSI escape codes on incompatible terminals.
 - **Log:** Added `gitgo log` command to view commit history with a color-coded and structured output.
 - **CLI Docs:** Improved help documentation (`-h`) across all commands (like `resolve`, `push`, `undo`, `jump`, `link`, `user`) by adding examples and consistent formatting.
+
+### Changed
+- **CLI Architecture:** Refactored subparser creation in `main.py` using a new `_add_subcommand` factory to reduce boilerplate and centralize help formatting.
+- **UI:** Redesigned the success/command banner to use modern box-drawing borders and centered text alignment.
+- **Quiet Mode Safety:** Added `required=True` to critical I/O functions across all commands to ensure important prompts remain visible even when `--quiet` mode is active.
 
 ### Changed
 - **Safety:** Changed `gitgo undo push` to use `--force-with-lease` to prevent accidentally overwriting remote changes.

@@ -20,6 +20,7 @@ def config_operation(args):
     elif action == 'get':
         current_value = get_config(key, None)
         if current_value:
-            info(f"\n{key} is currently set to: '{current_value}'\n")
+            info(f"\n{key} is currently set to: '{current_value}'\n", required=True)
         else:
-            warning(f"\n{key} is not currently set.\n")
+            warning(f"\n{key} is not currently set.\n", required=True)
+

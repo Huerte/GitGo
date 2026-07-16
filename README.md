@@ -65,6 +65,8 @@ gitgo new my-app python
 ## Features
 
 - **Single commands for linking, pushing, and stashing.** No more chaining five commands together.
+- **Seamless Sync:** Run `sync` to pull the latest updates (with rebase), commit your staged files, and push in one go.
+- **Smart CLI UI:** Modern box-drawing banners, color-coded output, and automatic terminal capability detection (respects `NO_COLOR` and Windows VT limitations).
 - **Quickstart with `new`:** One command to scaffold your project, create the GitHub repo, and push it. No switching tabs, no manual steps.
 - **Project scaffolding with `init`:** Generates a language-specific project structure with a `.gitignore` from GitHub's official templates. Supports Python, Node, Rust, Go, C#, and more.
 - **Remote repo creation with `repo`:** Creates a GitHub repo directly from the terminal without touching a browser.
@@ -318,6 +320,14 @@ Pulls updates from the remote. Stashes any uncommitted work first, runs a rebase
 ```bash
 gitgo pull             # Pull updates for the current branch
 gitgo pull <branch>    # Pull updates from a specific branch
+```
+
+### `gitgo sync`
+
+Synchronizes your branch with the remote. Pulls latest updates with `--rebase` and `--autostash`, commits staged files, and pushes everything.
+
+```bash
+gitgo sync [message]
 ```
 
 ### `gitgo link`

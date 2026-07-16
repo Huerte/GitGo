@@ -1,5 +1,5 @@
+from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist, get_head_sha
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
-from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist
 from pygitgo.utils.cli_io import info, warning, success, confirm, banner, write
 from pygitgo.commands.git_core import git_commit, git_push
 from pygitgo.exceptions import GitCommandError, GitGoError
@@ -17,7 +17,7 @@ def _push_interrupt_cleanup(original_branch, original_head, created_branch):
         current_branch = original_branch
 
     try:
-        current_head = run_command(["git", "rev-parse", "HEAD"]).strip()
+        current_head = get_head_sha()
     except GitCommandError:
         current_head = original_head
 
@@ -65,7 +65,7 @@ def push_operation(args):
 
     original_branch = get_current_branch(safe=True)
     try:
-        original_head = run_command(["git", "rev-parse", "HEAD"]).strip()
+        original_head = get_head_sha()
     except GitCommandError:
         original_head = None
 
