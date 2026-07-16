@@ -1,6 +1,5 @@
 from pygitgo.commands.push import push_operation
 from pygitgo.exceptions import GitGoError
-from pygitgo.utils.cli_io import warning
 from argparse import Namespace
 import pytest
 
@@ -177,8 +176,7 @@ def test_push_keyboard_interrupt_commit_made(mocker):
     mocker.patch("pygitgo.commands.push.git_commit", return_value=True)
     mocker.patch("pygitgo.commands.push.git_push", side_effect=KeyboardInterrupt)
     
-    fake_run = mocker.patch("pygitgo.commands.push.run_command")
-    fake_run.side_effect = ["old_hash", "new_hash"]
+    mocker.patch("pygitgo.commands.push.get_head_sha", side_effect=["old_hash", "new_hash"])
     fake_warning = mocker.patch("pygitgo.commands.push.warning")
     fake_info = mocker.patch("pygitgo.commands.push.info")
 

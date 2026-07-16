@@ -84,6 +84,7 @@ src/pygitgo/
 │   ├── staging.py         # Interactive file picker for selective commits
 │   ├── stash.py           # Low-level git stash wrappers (push/pop/apply/drop/list/clear)
 │   ├── state.py           # Named stash interface (save/load/delete/list)
+│   ├── sync.py            # gitgo sync handler (pull rebase + push)
 │   ├── undo.py            # Undo commit, undo add, wipe changes
 │   └── user.py            # gitgo user handler (login/logout/display)
 ├── auth/
@@ -93,7 +94,7 @@ src/pygitgo/
 └── utils/
     ├── bootstrap.py       # First-run setup (git check, known_hosts init)
     ├── cli_io.py          # CLI output and interactive prompts
-    ├── colors.py          # ANSI color helpers (info, success, warning, error)
+    ├── colors.py          # ANSI color constants and terminal capability detection
     ├── config.py          # GitGo config read/write via git config --global
     ├── executor.py        # subprocess wrapper with spinner
     ├── platform.py        # OS/Termux detection (get_platform, is_termux)
@@ -178,6 +179,7 @@ git commit -m "update"
 
 - Centralize interactive and formatted CLI output through `pygitgo.utils.cli_io`.
 - Use the helpers: `info`, `warning`, `error`, `success`, `confirm`, `danger`, and `banner` for consistent prompts and messaging.
+- Use `required=True` on `cli_io` helpers for critical prompts that must remain visible during `--quiet` mode.
 - Avoid using `pygitgo.utils.colors` as print wrappers; `colors.py` now only exposes ANSI constants.
 - Use `confirm(..., destructive=True)` for irreversible actions so prompts clearly indicate risk.
 - Command implementations should avoid raw `input()` or ad-hoc `print()`; prefer the `cli_io` helpers for testability.

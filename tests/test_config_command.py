@@ -32,11 +32,12 @@ def test_config_operation_get_ok(mocker):
     fake_info = mocker.patch('pygitgo.commands.config.info')
     args = Namespace(key="default-branch", action="get")
     config_operation(args)
-    fake_info.assert_called_with("\ndefault-branch is currently set to: 'main'\n")
+    fake_info.assert_called_with("\ndefault-branch is currently set to: 'main'\n", required=True)
 
 def test_config_operation_get_none(mocker):
     mocker.patch('pygitgo.commands.config.get_config', return_value=None)
     fake_warning = mocker.patch('pygitgo.commands.config.warning')
     args = Namespace(key="default-branch", action="get")
     config_operation(args)
-    fake_warning.assert_called_with("\ndefault-branch is not currently set.\n")
+    fake_warning.assert_called_with("\ndefault-branch is not currently set.\n", required=True)
+

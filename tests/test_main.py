@@ -36,11 +36,12 @@ def test_main_ready_flag(mocker, capsys):
 
 def test_main_no_command_prints_help(mocker, capsys, _patch_startup):
     mocker.patch.object(sys, "argv", ["gitgo"])
+    mock_banner = mocker.patch("pygitgo.main.show_banner")
 
     main()
 
-    captured = capsys.readouterr()
-    assert "usage:" in captured.out.lower() or "Commands" in captured.out
+    mock_banner.assert_called_once()
+
 
 
 @pytest.mark.parametrize("command,handler", [

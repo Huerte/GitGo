@@ -5,7 +5,72 @@ from pygitgo.commands.git_remote import handle_rebase
 from pygitgo.utils.config import get_default_branch
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.cli_io import info, warning
+from pathlib import Path
 import os
+
+
+def ensure_inside_git_repository():
+    if not is_git_repository():
+        raise GitGoError("Not inside a git repository. Run 'gitgo init' or 'gitgo link' first.")
+
+
+def is_git_repository():
+    try:
+        run_command(["git", "rev-parse", "--is-inside-work-tree"])
+        return True
+    except GitCommandError:
+        return False
+
+
+def has_local_changes():
+    try:
+        status_result = run_command(["git", "status", "--porcelain"])
+        return bool(status_result.strip())
+    except GitCommandError:
+        return False
+
+
+def is_rebase_in_progress():
+    return Path(".git/rebase-merge").exists() or Path(".git/rebase-apply").exists()
+
+
+def has_any_commits():
+    try:
+        run_command(["git", "rev-parse", "HEAD"])
+        return True
+    except GitCommandError:
+        return False
+
+
+def get_recent_commits(number=5, branch=None):
+    command = [
+        "git", "log", 
+        f"-n{number}",
+        "--pretty=format:%h||%an||%cr||%s"
+    ]
+    if branch:
+        command.append(branch)
+        
+    try:
+        output = run_command(command)
+        if not output:
+            return []
+            
+        commits = []
+        for line in output.splitlines():
+            try:
+                commit_hash, author, date, message = line.split("||", 3)
+                commits.append({
+                    "hash": commit_hash,
+                    "author": author,
+                    "date": date,
+                    "message": message
+                })
+            except ValueError:
+                continue
+        return commits
+    except GitCommandError as e:
+        raise GitGoError(f"Failed to retrieve log: {getattr(e, 'stderr', str(e))}")
 
 
 
@@ -17,6 +82,7 @@ def _get_signing_flags():
         "-c", "gpg.format=ssh",
         "-c", f"user.signingkey={key_path}",
     ]
+
 
 
 def git_commit(commit_message, loading_msg="Committing changes...", skip_staging=False, ok_text=None):

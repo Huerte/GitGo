@@ -1,9 +1,9 @@
 from pygitgo.utils.cli_io import info, success, warning, error, confirm, banner, write
+from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.stash import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
 )
-from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 import sys
 
@@ -44,19 +44,20 @@ def display_save_states(save_state=None):
     save_states = save_state if save_state is not None else all_save_state()
 
     if not save_states:
-        info("No saved states found.")
+        info("No saved states found.", required=True)
         return
 
-    write("\nID | Date                | Saved State")
-    write("-" * 60)
+    write("\nID | Date                | Saved State", required=True)
+    write("-" * 60, required=True)
 
     for state in save_states:
         write(
-            f"{state['id']:>2} | {state['date']} | {state['message']}"
+            f"{state['id']:>2} | {state['date']} | {state['message']}",
+            required=True
         )
 
-    write("-" * 60)
-    write()
+    write("-" * 60, required=True)
+    write(required=True)
 
 
 def is_number(value):
@@ -84,16 +85,17 @@ def ask_state_id(save_states):
     state_id = None
 
     display_save_states(save_states)
-    write("Enter the ID (or 'q' to cancel):")
+    write("Enter the ID (or 'q' to cancel):", required=True)
 
     while not proceed:
         state_id = input(">> ").strip().lower()
         if state_id == 'q':
-            info("Load canceled.")
+            info("Load canceled.", required=True)
             return
         proceed = validate_state_id(state_id, save_states)
 
     return state_id
+
 
 
 def state_list():

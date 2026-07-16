@@ -1,6 +1,6 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.pull import pull_operation
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from argparse import Namespace
 import pytest
 
@@ -84,8 +84,8 @@ def test_pull_operation_merge_conflict(mock_run_command):
 @patch("pygitgo.commands.pull.run_command")
 @patch("pygitgo.commands.pull.success")
 @patch("pygitgo.commands.pull.warning")
-@patch("pygitgo.commands.pull.Path")
-def test_pull_keyboard_interrupt_rebase_in_progress(mock_path, mock_warning, mock_success, mock_run_command):
+@patch("pygitgo.commands.pull.is_rebase_in_progress")
+def test_pull_keyboard_interrupt_rebase_in_progress(mock_rebase, mock_warning, mock_success, mock_run_command):
     def side_effect_fn(*args, **kwargs):
         cmd = args[0]
         if cmd[1] == "ls-remote":
@@ -95,10 +95,7 @@ def test_pull_keyboard_interrupt_rebase_in_progress(mock_path, mock_warning, moc
         return ""
 
     mock_run_command.side_effect = side_effect_fn
-
-    mock_path_instance = MagicMock()
-    mock_path_instance.exists.return_value = True
-    mock_path.return_value = mock_path_instance
+    mock_rebase.return_value = True
 
     args = Namespace(branch="main")
     with pytest.raises(SystemExit) as sys_exit:
@@ -114,8 +111,8 @@ def test_pull_keyboard_interrupt_rebase_in_progress(mock_path, mock_warning, moc
 @patch("pygitgo.commands.pull.run_command")
 @patch("pygitgo.commands.pull.success")
 @patch("pygitgo.commands.pull.warning")
-@patch("pygitgo.commands.pull.Path")
-def test_pull_keyboard_interrupt_no_rebase(mock_path, mock_warning, mock_success, mock_run_command):
+@patch("pygitgo.commands.pull.is_rebase_in_progress")
+def test_pull_keyboard_interrupt_no_rebase(mock_rebase, mock_warning, mock_success, mock_run_command):
     def side_effect_fn(*args, **kwargs):
         cmd = args[0]
         if cmd[1] == "ls-remote":
@@ -125,10 +122,7 @@ def test_pull_keyboard_interrupt_no_rebase(mock_path, mock_warning, mock_success
         return ""
 
     mock_run_command.side_effect = side_effect_fn
-
-    mock_path_instance = MagicMock()
-    mock_path_instance.exists.return_value = False
-    mock_path.return_value = mock_path_instance
+    mock_rebase.return_value = False
 
     args = Namespace(branch="main")
     with pytest.raises(SystemExit) as sys_exit:
