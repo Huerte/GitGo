@@ -75,10 +75,12 @@ src/pygitgo/
 │   ├── init.py            # gitgo init handler (local project scaffolding)
 │   ├── jump.py            # Safe branch switching with Try-and-Revert engine
 │   ├── link.py            # Init, link remote, and push a new repo
+│   ├── log.py             # gitgo log handler (commit history)
 │   ├── new.py             # gitgo new handler (quickstart: init + repo + link)
 │   ├── pull.py            # Safe pull with auto-stash and rebase
 │   ├── push.py            # Stage, commit, push (with selective staging support)
 │   ├── repo.py            # gitgo repo handler (remote GitHub repo creation)
+│   ├── resolve.py         # gitgo resolve handler (conflict resolution)
 │   ├── staging.py         # Interactive file picker for selective commits
 │   ├── stash.py           # Low-level git stash wrappers (push/pop/apply/drop/list/clear)
 │   ├── state.py           # Named stash interface (save/load/delete/list)
@@ -90,6 +92,7 @@ src/pygitgo/
 │   └── ssh_utils.py       # SSH key generation, known_hosts, HTTPS to SSH conversion
 └── utils/
     ├── bootstrap.py       # First-run setup (git check, known_hosts init)
+    ├── cli_io.py          # CLI output and interactive prompts
     ├── colors.py          # ANSI color helpers (info, success, warning, error)
     ├── config.py          # GitGo config read/write via git config --global
     ├── executor.py        # subprocess wrapper with spinner
