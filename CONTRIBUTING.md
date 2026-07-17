@@ -18,14 +18,7 @@ Thanks for considering a contribution. This guide covers everything you need to 
 
 ## Code of Conduct
 
-Be direct, be respectful. No gatekeeping. This is a student project open to everyone, regardless of experience level. If someone is learning, help them, don't mock them.
-
-This applies to all project spaces: GitHub issues, pull requests, and any public discussion tied to this repository. It covers contributors and maintainers alike, including first-time contributors.
-
-To report a violation, contact the maintainer at [Report a Violation](mailto:huertejerald@gmail.com?subject=GitGo%20CoC%20Report).
-A short description of what happened is enough.
-
-Violations may result in a warning, removal of the offending content, or a block from the repository depending on severity.
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 ---
 
