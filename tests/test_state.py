@@ -1,9 +1,9 @@
 from pygitgo.commands.state import (
     delete_state, save_state, load_state, validate_state_id,
-    all_save_state
+    all_save_state, state_operation
 )
+from pygitgo.exceptions import GitCommandError, GitGoError
 import pytest
-
 
 @pytest.mark.parametrize('state_id', ['1', '3', '11', '00002'])
 def test_validate_state_id(state_id, mocker):
@@ -12,14 +12,12 @@ def test_validate_state_id(state_id, mocker):
     assert result is True
     fake_error.assert_not_called()
 
-
 @pytest.mark.parametrize('state_id', ['-1', '-3', '-11', '-00002'])
 def test_validate_state_id_negative(state_id, mocker):
     fake_error = mocker.patch('pygitgo.commands.state.error')
     result = validate_state_id(state_id, [1] * 12)
     assert result is False
     fake_error.assert_called_with("Invalid ID. Range is 1 to 12.")
-
 
 @pytest.mark.parametrize('state_id', ['4', '10', '15', '0000020'])
 def test_validate_state_id_out_scope(state_id, mocker):
@@ -28,15 +26,11 @@ def test_validate_state_id_out_scope(state_id, mocker):
     assert result is False
     fake_error.assert_called_with("ID out of range. Range is 1 to 3.")
 
-
 def test_all_save_state_no_output(mocker):
     mocker.patch("pygitgo.commands.state.git_stash_list", return_value="")
     mocker.patch("pygitgo.commands.state.info")
-
     result = all_save_state()
-
     assert result == []
-
 
 def test_all_save_state_with_output(mocker):
     output = (
@@ -59,7 +53,6 @@ def test_all_save_state_with_output(mocker):
         "stash_index": 0
     }
 
-
 def test_all_save_state_malformed_line(mocker):
     output = "malformed_line_here\nstash@{1}||2023-10-27 10:05:00||Another stash"
     mocker.patch("pygitgo.commands.state.git_stash_list", return_value=output)
@@ -70,7 +63,6 @@ def test_all_save_state_malformed_line(mocker):
     assert len(result) == 1
     assert result[0]["message"] == "Another stash"
     fake_warning.assert_called_once_with("Skipping malformed line: malformed_line_here")
-
 
 def test_load_state_specific_id(mocker):
     save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
@@ -84,25 +76,20 @@ def test_load_state_specific_id(mocker):
     fake_apply.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("State 'msg' restored.")
 
-
 def test_load_state_invalid_id(mocker):
     save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
     mocker.patch("pygitgo.commands.state.validate_state_id", return_value=False)
 
-    from pygitgo.exceptions import GitGoError
     with pytest.raises(GitGoError):
         load_state("100")
-
 
 def test_load_state_invalid_argument(mocker):
     save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
 
-    from pygitgo.exceptions import GitGoError
     with pytest.raises(GitGoError):
         load_state("invalid_arg")
-
 
 def test_load_state_no_args(mocker):
     save_states = [
@@ -119,7 +106,6 @@ def test_load_state_no_args(mocker):
     fake_apply.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("State 'msg2' restored.")
 
-
 def test_save_state_no_args(mocker):
     mocker.patch("pygitgo.commands.state.run_command", return_value="M file")
     fake_push = mocker.patch(
@@ -132,7 +118,6 @@ def test_save_state_no_args(mocker):
 
     fake_push.assert_called_once_with(label="Auto-Save")
     fake_success.assert_called_once_with("State 'Auto-Save' saved.")
-
 
 def test_save_state_with_name(mocker):
     mocker.patch("pygitgo.commands.state.run_command", return_value="M file")
@@ -147,9 +132,8 @@ def test_save_state_with_name(mocker):
     fake_push.assert_called_once_with(label="My-State")
     fake_success.assert_called_once_with("State 'My-State' saved.")
 
-
 def test_delete_state_all_confirm(mocker):
-    mocker.patch("builtins.input", return_value="y")
+    mocker.patch("pygitgo.commands.state.confirm", return_value=True)
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
     fake_clear = mocker.patch("pygitgo.commands.state.git_stash_clear", return_value=True)
     fake_success = mocker.patch("pygitgo.commands.state.success")
@@ -159,9 +143,8 @@ def test_delete_state_all_confirm(mocker):
     fake_clear.assert_called_once()
     fake_success.assert_called_once_with("All saved states deleted.")
 
-
 def test_delete_state_all_cancel(mocker):
-    mocker.patch("builtins.input", return_value="n")
+    mocker.patch("pygitgo.commands.state.confirm", return_value=False)
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
     fake_info = mocker.patch("pygitgo.commands.state.info")
 
@@ -169,14 +152,11 @@ def test_delete_state_all_cancel(mocker):
 
     fake_info.assert_called_once_with("Delete canceled.")
 
-
 def test_delete_state_invalid_id(mocker):
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
 
-    from pygitgo.exceptions import GitGoError
     with pytest.raises(GitGoError):
         delete_state("abc")
-
 
 def test_delete_state_specific_id(mocker):
     save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
@@ -189,7 +169,6 @@ def test_delete_state_specific_id(mocker):
 
     fake_drop.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("State 1 deleted.")
-
 
 def test_delete_state_no_args(mocker):
     save_states = [
@@ -206,7 +185,6 @@ def test_delete_state_no_args(mocker):
     fake_drop.assert_called_once_with(stash_id="0")
     fake_success.assert_called_once_with("State 2 deleted.")
 
-
 def test_load_state_keyboard_interrupt(mocker):
     save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
@@ -215,7 +193,6 @@ def test_load_state_keyboard_interrupt(mocker):
     fake_warning = mocker.patch("pygitgo.commands.state.warning")
     fake_success = mocker.patch("pygitgo.commands.state.success")
 
-    from pygitgo.commands.state import load_state
     with pytest.raises(SystemExit) as sys_exit:
         load_state("1")
 
@@ -224,86 +201,134 @@ def test_load_state_keyboard_interrupt(mocker):
     fake_run.assert_called_once_with(["git", "checkout", "--", "."])
     fake_success.assert_called_once_with("Partial changes cleaned up. Your stash is still saved.")
 
-
 def _state_args(action=None, action_alias=None, identifier=None, all=False):
     from argparse import Namespace
     return Namespace(action=action, action_alias=action_alias, identifier=identifier, all=all)
 
-
 def test_state_operation_list(mocker):
-    from pygitgo.commands.state import state_operation
     mock_list = mocker.patch("pygitgo.commands.state.state_list")
-
     state_operation(_state_args(action="list"))
-
     mock_list.assert_called_once()
-
 
 def test_state_operation_save_with_name(mocker):
-    from pygitgo.commands.state import state_operation
     mock_save = mocker.patch("pygitgo.commands.state.save_state")
-
     state_operation(_state_args(action="save", identifier="wip"))
-
     mock_save.assert_called_once_with("wip")
 
-
 def test_state_operation_load_with_id(mocker):
-    from pygitgo.commands.state import state_operation
     mock_load = mocker.patch("pygitgo.commands.state.load_state")
-
     state_operation(_state_args(action="load", identifier="2"))
-
     mock_load.assert_called_once_with("2")
 
-
 def test_state_operation_delete_with_id(mocker):
-    from pygitgo.commands.state import state_operation
     mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
-
     state_operation(_state_args(action="delete", identifier="1"))
-
     mock_delete.assert_called_once_with("1")
 
-
 def test_state_operation_alias_list(mocker):
-    from pygitgo.commands.state import state_operation
     mock_list = mocker.patch("pygitgo.commands.state.state_list")
-
     state_operation(_state_args(action_alias="list"))
-
     mock_list.assert_called_once()
 
-
 def test_state_operation_delete_all_via_flag(mocker):
-    from pygitgo.commands.state import state_operation
     mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
-
     state_operation(_state_args(action="delete", all=True))
-
     mock_delete.assert_called_once_with("-a")
 
-
 def test_state_operation_conflicting_actions():
-    from pygitgo.commands.state import state_operation
-    from pygitgo.exceptions import GitGoError
-
     with pytest.raises(GitGoError, match="Conflicting actions"):
         state_operation(_state_args(action="list", action_alias="save"))
 
-
 def test_state_operation_all_flag_requires_delete():
-    from pygitgo.commands.state import state_operation
-    from pygitgo.exceptions import GitGoError
-
     with pytest.raises(GitGoError, match="-a/--all flag is only valid"):
         state_operation(_state_args(action="list", all=True))
 
-
 def test_state_operation_missing_action():
-    from pygitgo.commands.state import state_operation
-    from pygitgo.exceptions import GitGoError
-
     with pytest.raises(GitGoError, match="Missing action"):
         state_operation(_state_args())
 
+def test_all_save_state_git_stash_list_exception(mocker):
+    mocker.patch("pygitgo.commands.state.git_stash_list", side_effect=GitCommandError(["cmd"]))
+    assert all_save_state() == []
+
+def test_display_save_states_empty(mocker):
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=[])
+    fake_info = mocker.patch("pygitgo.commands.state.info")
+    load_state()
+    fake_info.assert_called_once_with("No saved states to load.")
+
+def test_ask_state_id_q(mocker):
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
+    mocker.patch("pygitgo.commands.state.confirm", return_value=True)
+    mocker.patch("builtins.input", return_value="q")
+    fake_info = mocker.patch("pygitgo.commands.state.info")
+    from pygitgo.commands.state import ask_state_id
+    assert ask_state_id(save_states) is None
+    fake_info.assert_called_once_with("Load canceled.", required=True)
+
+def test_load_state_stash_apply_false(mocker):
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
+    mocker.patch("pygitgo.commands.state.validate_state_id", return_value=True)
+    mocker.patch("pygitgo.commands.state.git_stash_apply", return_value=False)
+    with pytest.raises(GitGoError, match="State load failed"):
+        load_state("1")
+
+def test_load_state_keyboard_interrupt_cleanup_fails(mocker):
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
+    mocker.patch("pygitgo.commands.state.git_stash_apply", side_effect=KeyboardInterrupt)
+    mocker.patch("pygitgo.commands.state.run_command", side_effect=GitCommandError(["cmd"]))
+    fake_warning = mocker.patch("pygitgo.commands.state.warning")
+    with pytest.raises(SystemExit) as sys_exit:
+        load_state("1")
+    assert sys_exit.value.code == 130
+    fake_warning.assert_any_call("Could not clean up automatically. Run 'git status' to check, then 'git checkout -- .' if needed.")
+
+def test_save_state_local_changes_error(mocker):
+    mocker.patch("pygitgo.commands.state.run_command", side_effect=GitCommandError(["cmd"]))
+    fake_warning = mocker.patch("pygitgo.commands.state.warning")
+    save_state()
+    fake_warning.assert_called_once_with("Could not check for local changes - make sure you're in a valid git repository.")
+
+def test_save_state_no_changes(mocker):
+    mocker.patch("pygitgo.commands.state.run_command", return_value="")
+    fake_info = mocker.patch("pygitgo.commands.state.info")
+    save_state()
+    fake_info.assert_called_once_with("No local changes to save.")
+
+def test_save_state_push_fails(mocker):
+    mocker.patch("pygitgo.commands.state.run_command", return_value="M test.py")
+    mocker.patch("pygitgo.commands.state.git_stash_push", return_value=None)
+    fake_error = mocker.patch("pygitgo.commands.state.error")
+    save_state()
+    fake_error.assert_called_once_with("Failed to save state 'Auto-Save'.")
+
+def test_delete_state_empty(mocker):
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=[])
+    fake_info = mocker.patch("pygitgo.commands.state.info")
+    delete_state()
+    fake_info.assert_called_once_with("No saved states to delete.")
+
+def test_delete_state_clear_all_fails(mocker):
+    mocker.patch("pygitgo.commands.state.confirm", return_value=True)
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
+    mocker.patch("pygitgo.commands.state.git_stash_clear", return_value=False)
+    fake_error = mocker.patch("pygitgo.commands.state.error")
+    delete_state("-a")
+    fake_error.assert_called_once_with("Failed to delete all saved states.")
+
+def test_delete_state_specific_id_fails(mocker):
+    save_states = [{"id": 1, "ref": "stash@{0}", "date": "date", "message": "msg", "stash_index": 0}]
+    mocker.patch("pygitgo.commands.state.validate_state_id", return_value=True)
+    mocker.patch("pygitgo.commands.state.all_save_state", return_value=save_states)
+    mocker.patch("pygitgo.commands.state.git_stash_drop", return_value=False)
+    fake_error = mocker.patch("pygitgo.commands.state.error")
+    with pytest.raises(GitGoError, match="Delete failed"):
+        delete_state("1")
+    fake_error.assert_called_once_with("Failed to delete state 1.")
+
+def test_state_operation_unknown_action(mocker):
+    args = _state_args(action="unknown")
+    with pytest.raises(GitGoError, match="Unknown state operation"):
+        state_operation(args)

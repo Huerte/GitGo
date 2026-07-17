@@ -8,6 +8,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Fixed target directory lock issues on Windows inside `gitgo init` on scaffolding failures by returning to the original directory before cleanup.
+
+### Changed
+- Expanded and cleaned test suite coverage (now at 93% total coverage) across commands and utility modules with clean, uncommented test cases.
+
 ---
 
 ## [1.10.1] - 2026-07-17
