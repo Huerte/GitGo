@@ -34,7 +34,6 @@ def _format_sync():
     return f"{YELLOW}{ahead} ahead, {behind} behind (diverged){RESET}"
 
 def show_banner():
-    # Import here to avoid circular dependencies
     from pygitgo.main import get_version
 
     ensure_inside_git_repository()

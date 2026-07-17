@@ -1,12 +1,12 @@
-from pygitgo.commands.jump import undo_jump_operation, jump_operation
+from pygitgo.commands.jump import undo_jump_operation, jump_operation, _jump_interrupt_cleanup
 from pygitgo.exceptions import GitCommandError, GitGoError
 from conftest import capture_system_exit_code
 from argparse import Namespace
+from pathlib import Path
 import pytest
 
-
-def make_args(branch):
-    return Namespace(branch=branch)
+def make_args(branch, nested=False):
+    return Namespace(branch=branch, nested=nested)
 
 def test_undo_jump_operation_no_stash(mocker):
     fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value='')
@@ -26,7 +26,6 @@ def test_undo_jump_operation_no_stash(mocker):
     )
     fake_pop.assert_not_called()
 
-
 def test_undo_jump_operation_with_stash(mocker):
     fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value='')
     fake_pop = mocker.patch('pygitgo.commands.jump.git_stash_pop', return_value=True)
@@ -45,7 +44,6 @@ def test_undo_jump_operation_with_stash(mocker):
     )
     fake_pop.assert_called_once_with(ok_text="Canceled safely. Back on 'original_branch'. Your code is safe.")
 
-
 def test_undo_jump_operation_deletes_ghost_branch(mocker):
     fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value='')
     fake_pop = mocker.patch('pygitgo.commands.jump.git_stash_pop', return_value=True)
@@ -63,14 +61,12 @@ def test_undo_jump_operation_deletes_ghost_branch(mocker):
     )
     fake_pop.assert_called_once_with(ok_text="Canceled safely. Back on 'original_branch'. Your code is safe.")
 
-
 def test_jump_operation_same_branch(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='main')
     fake_warning = mocker.patch('pygitgo.commands.jump.warning')
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 0
     fake_warning.assert_called_with("Already on branch 'main'.")
-
 
 def test_jump_operation_not_valid_repo(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
@@ -82,9 +78,7 @@ def test_jump_operation_not_valid_repo(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('main'))) == 1
 
-
 def test_jump_operation_has_changes_exit(mocker):
-    # Tests when git_stash_push fails
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.run_command', return_value='M file.txt')
     mocker.patch('pygitgo.commands.jump.git_stash_push', return_value=False)
@@ -106,28 +100,24 @@ def test_jump_operation_has_changes_moves_to_branch(mocker):
     fake_stash.assert_called_once()
     fake_drop.assert_called_once()
 
-
 def test_jump_operation_no_changes(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
-    fake_success = mocker.patch('pygitgo.commands.jump.success')
     mocker.patch('pygitgo.commands.jump.run_command', side_effect=['', 'ok', 'ok'])
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
-
 
 def test_jump_operation_save_changes_error(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.run_command', return_value='M file.txt')
     mocker.patch('pygitgo.commands.jump.git_stash_push', return_value=False)
-    mocker.patch('pathlib.Path.exists', return_value=True) # Mock index.lock exists
+    mocker.patch('pathlib.Path.exists', return_value=True) 
     fake_warning = mocker.patch('pygitgo.commands.jump.warning')
 
     with pytest.raises(GitGoError):
         jump_operation(make_args('main'))
     fake_warning.assert_any_call("A stale lock file is blocking git.")
-
 
 def test_jump_operation_branch_not_exist_cancel_operation(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
@@ -144,7 +134,6 @@ def test_jump_operation_branch_not_exist_cancel_operation(mocker):
 
     fake_info.assert_any_call("Jump canceled.")
     fake_pop.assert_called_once()
-
 
 def test_jump_operation_branch_not_exist_create_branch(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
@@ -166,7 +155,6 @@ def test_jump_operation_branch_not_exist_create_branch(mocker):
     fake_apply.assert_called_once()
     fake_drop.assert_called_once()
 
-
 def test_jump_operation_sync_fail_stay(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
@@ -187,7 +175,6 @@ def test_jump_operation_sync_fail_stay(mocker):
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
     fake_info.assert_any_call("On 'feature', but not yet synced with 'main'.")
 
-
 def test_jump_operation_merge_conflict_cancel(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
     mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
@@ -206,7 +193,6 @@ def test_jump_operation_merge_conflict_cancel(mocker):
 
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
     fake_error.assert_any_call("CONFLICT: Your local changes clash with the target branch.")
-
 
 def test_jump_operation_merge_conflict_stay(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
@@ -227,7 +213,6 @@ def test_jump_operation_merge_conflict_stay(mocker):
     assert capture_system_exit_code(lambda: jump_operation(make_args('feature'))) == 0
     fake_success.assert_any_call("On 'feature'. Fix the conflict markers in your files.")
     fake_warning.assert_any_call("Your stash backup is still saved. Run 'gitgo state list' to see it.")
-
 
 def test_jump_keyboard_interrupt_during_checkout(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='main')
@@ -252,7 +237,6 @@ def test_jump_keyboard_interrupt_during_checkout(mocker):
     mock_warning.assert_called_with("Jump interrupted (Ctrl+C).")
     mock_cleanup.assert_called_once_with('main', False, None)
 
-
 def test_jump_keyboard_interrupt_after_stash(mocker):
     mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='main')
     mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
@@ -275,3 +259,101 @@ def test_jump_keyboard_interrupt_after_stash(mocker):
 
     assert exc_info.value.code == 130
     mock_cleanup.assert_called_once_with('main', True, None)
+
+def test_undo_jump_operation_delete_branch_fails(mocker):
+    fake_run = mocker.patch('pygitgo.commands.jump.run_command')
+    fake_run.side_effect = [
+        "",
+        GitCommandError(["branch", "-D", "feat"])
+    ]
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    undo_jump_operation("main", False, created_branch="feat")
+    fake_warning.assert_any_call("Could not delete branch 'feat'. Remove it manually with: git branch -D feat")
+
+def test_undo_jump_operation_pop_fails(mocker):
+    mocker.patch('pygitgo.commands.jump.run_command', return_value="")
+    mocker.patch("pygitgo.commands.jump.git_stash_pop", return_value=False)
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    undo_jump_operation("main", True)
+    fake_warning.assert_any_call("Could not restore your unsaved changes automatically. Run 'gitgo state list' to recover them.")
+
+def test_jump_interrupt_cleanup_exceptions(mocker):
+    mocker.patch("pygitgo.commands.jump.run_command", side_effect=GitCommandError(["rebase", "--abort"]))
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="feat")
+    mocker.patch("pygitgo.commands.jump.undo_jump_operation", side_effect=GitCommandError(["undo"]))
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    _jump_interrupt_cleanup("main", True, "feat")
+    fake_warning.assert_any_call("Could not auto-revert. You are on 'feat'.")
+
+def test_jump_interrupt_cleanup_pop_fails(mocker):
+    mocker.patch("pygitgo.commands.jump.run_command", return_value="")
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.git_stash_pop", return_value=False)
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    _jump_interrupt_cleanup("main", True, None)
+    fake_warning.assert_any_call("Could not restore stash automatically. Run 'gitgo state list' to find it.")
+
+def test_jump_operation_status_error(mocker):
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.run_command", side_effect=GitCommandError(["status"], stderr="some other error"))
+    with pytest.raises(GitGoError) as ex:
+        jump_operation(make_args("feat"))
+    assert "Could not check repository status" in str(ex.value)
+
+def test_jump_operation_stash_fails_rebase_in_progress(mocker):
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.run_command", side_effect=["M file.py", ""])
+    mocker.patch("pygitgo.commands.jump.git_stash_push", return_value=False)
+    def mock_exists(self):
+        return "rebase-merge" in str(self)
+    mocker.patch.object(Path, "exists", mock_exists)
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    with pytest.raises(GitGoError):
+        jump_operation(make_args("feat"))
+    fake_warning.assert_any_call("A rebase is in progress. Finish or abort it first.")
+
+def test_jump_operation_stash_fails_generic(mocker):
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.run_command", side_effect=["M file.py", ""])
+    mocker.patch("pygitgo.commands.jump.git_stash_push", return_value=False)
+    mocker.patch("pathlib.Path.exists", return_value=False)
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    with pytest.raises(GitGoError):
+        jump_operation(make_args("feat"))
+    fake_warning.assert_any_call("Could not auto-save changes before switching.")
+
+def test_jump_operation_new_branch_not_exist_cancel_pop_fails(mocker):
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.is_branch_exist", return_value=False)
+    mocker.patch("pygitgo.commands.jump.confirm", return_value=False)
+    mocker.patch("pygitgo.commands.jump.run_command", return_value="M file.py")
+    mocker.patch("pygitgo.commands.jump.git_stash_push", return_value=True)
+    mocker.patch("pygitgo.commands.jump.git_stash_pop", return_value=False)
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    assert capture_system_exit_code(lambda: jump_operation(make_args("feat"))) == 0
+    fake_warning.assert_any_call("Could not restore changes automatically. Run 'gitgo state list' to recover them.")
+
+def test_jump_operation_sync_fails_generic(mocker):
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.is_branch_exist", return_value=True)
+    mocker.patch("pygitgo.commands.jump.get_main_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.run_command", side_effect=[
+        "",
+        "",
+        GitCommandError(["pull"], stderr="network error")
+    ])
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    assert capture_system_exit_code(lambda: jump_operation(make_args("feat"))) == 0
+    fake_warning.assert_any_call("Could not sync from 'main': no remote or no internet.")
+
+def test_jump_operation_stash_apply_fails_drop_fails(mocker):
+    mocker.patch("pygitgo.commands.jump.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.is_branch_exist", return_value=True)
+    mocker.patch("pygitgo.commands.jump.get_main_branch", return_value="main")
+    mocker.patch("pygitgo.commands.jump.git_stash_push", return_value=True)
+    mocker.patch("pygitgo.commands.jump.git_stash_apply", return_value=True)
+    mocker.patch("pygitgo.commands.jump.git_stash_drop", return_value=False)
+    mocker.patch("pygitgo.commands.jump.run_command", side_effect=lambda *a, **kw: "M file.py" if a[0] == ["git", "status", "--porcelain"] else "ok")
+    fake_warning = mocker.patch("pygitgo.commands.jump.warning")
+    assert capture_system_exit_code(lambda: jump_operation(make_args("feat"))) == 0
+    fake_warning.assert_any_call("Could not clean up the temporary stash. Run 'gitgo state list' to remove it manually.")

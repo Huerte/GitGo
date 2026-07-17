@@ -317,6 +317,7 @@ def init_operation(args, standalone=False):
             info(f"Next steps:\n  cd {target_dir}\n  gitgo repo\n  gitgo link <url>")
 
     except Exception as e:
+        os.chdir(orig_cwd)
         if os.path.exists(target_dir) and not os.listdir(target_dir):
             try:
                 os.rmdir(target_dir)
