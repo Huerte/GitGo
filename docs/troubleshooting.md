@@ -986,7 +986,9 @@ On Windows, double-check that the config file has no `.txt` extension. On all pl
 
 ## Nothing worked
 
-If you've gone through the relevant section and still have the same problem, open a Bug Report on GitHub. The issue template will prompt you for your environment details (like your OS and Python version) and the exact error output. 
+If you've gone through the relevant section and still have the same problem, open a Bug Report on GitHub. The issue template will prompt you for your environment details (like your OS and Python version) and the exact error output.
+
+> **Note:** If you are reporting a security problem, please do NOT open a bug report. See [SECURITY.md](../SECURITY.md) instead.
 
 More detail means a faster fix. Don't just paste the last error line in the issue body. The lines before it often show the real cause.
 

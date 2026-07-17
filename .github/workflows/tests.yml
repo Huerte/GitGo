@@ -31,3 +31,8 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests/ -v
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: Huerte/GitGo

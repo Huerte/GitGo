@@ -40,6 +40,8 @@ def show_banner():
     ensure_inside_git_repository()
 
     username, email = get_user()
+    username = username or "Not set"
+    email = email or "Not set"
     remote_url = _safe(lambda: run_command("git config --get remote.origin.url".split())) or "not set"
     current_branch = _safe(get_current_branch) or "unknown"
     sync_msg = _format_sync() or f"{YELLOW}no upstream{RESET}"

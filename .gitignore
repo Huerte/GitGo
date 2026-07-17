@@ -26,4 +26,5 @@ Thumbs.db
 *.txt
 todo/
 .coverage
+coverage.xml
 src/pygitgo/commands/tag.py
