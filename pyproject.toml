@@ -29,7 +29,8 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-mock>=3.10",
-    "pytest-cov>=4.0"
+    "pytest-cov>=4.0",
+    "pyinstaller>=6.0"
 ]
 
 [project.urls]
