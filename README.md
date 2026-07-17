@@ -94,25 +94,19 @@ gitgo new my-app python
 - **OpenSSH**: required for `gitgo user login` (pre-installed on most systems)
 - A **GitHub account**
 
-### Install from PyPI
+### Quick Install (Recommended)
 
-For Windows users or environments without global pip restrictions:
+The install scripts create an isolated Python virtual environment in `~/.gitgo/venv` and add the `gitgo` executable to your PATH. This safely avoids conflicts with system Python packages (PEP 668).
 
-```bash
-pip install pygitgo
+#### Windows
+
+Open PowerShell and run:
+
+```powershell
+irm https://raw.githubusercontent.com/Huerte/GitGo/main/install.ps1 | iex
 ```
 
-*(Alternatively, use `pipx install pygitgo` for an isolated environment.)*
-
-### Install via pipx (Cross-Platform)
-
-```bash
-pipx install pygitgo
-```
-
-### Quick Install (Linux & macOS)
-
-The install script creates an isolated environment and places `gitgo` in `~/.local/bin`. Useful for PEP 668-enforced systems:
+#### Linux & macOS
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Huerte/GitGo/main/install.sh | bash
@@ -124,9 +118,27 @@ Verify the installation:
 gitgo -r
 ```
 
-> **Note for Termux (Android):** GitGo detects the Termux environment automatically and adjusts install paths and browser behavior accordingly.
+> **Note for Termux (Android):** GitGo detects the Termux environment automatically and adjusts install paths and browser behavior accordingly. Run the Linux installation command above.
 
-### Install from Source
+### Alternative Installation Methods
+
+#### Install via pipx (Cross-Platform)
+
+If you prefer managing Python CLI tools with `pipx`:
+
+```bash
+pipx install pygitgo
+```
+
+#### Install from PyPI
+
+For environments without global pip restrictions:
+
+```bash
+pip install pygitgo
+```
+
+#### Install from Source
 
 ```bash
 git clone https://github.com/Huerte/GitGo.git
