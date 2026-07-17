@@ -56,10 +56,8 @@ def test_show_banner_clean_status(mocker, capsys):
     mock_commits = [{"hash": "abcdef0", "message": "Initial commit", "date": "2026-07-17", "author": "Huerte"}]
     mocker.patch("pygitgo.utils.banner.get_recent_commits", return_value=mock_commits)
     
-    mock_size = mocker.MagicMock()
-    mock_size.columns = 80
-    mock_size.lines = 20
-    mocker.patch("shutil.get_terminal_size", return_value=mock_size)
+    import os
+    mocker.patch("shutil.get_terminal_size", return_value=os.terminal_size((80, 20)))
     
     show_banner()
     
@@ -98,11 +96,8 @@ def test_show_banner_dirty_status(mocker, capsys):
     
     mocker.patch("pygitgo.utils.banner.run_command", side_effect=mock_run)
     mocker.patch("pygitgo.utils.banner.get_recent_commits", return_value=[])
-    
-    mock_size = mocker.MagicMock()
-    mock_size.columns = 40
-    mock_size.lines = 20
-    mocker.patch("shutil.get_terminal_size", return_value=mock_size)
+    import os
+    mocker.patch("shutil.get_terminal_size", return_value=os.terminal_size((40, 20)))
     
     show_banner()
     
