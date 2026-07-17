@@ -2,6 +2,8 @@
 
 ![GitGo Banner](assets/banner.png)
 
+### Stop typing the same five Git commands. Run one instead.
+
 [![Tests](https://github.com/Huerte/GitGo/actions/workflows/tests.yml/badge.svg)](https://github.com/Huerte/GitGo/actions)
 [![Codecov](https://codecov.io/gh/Huerte/GitGo/branch/main/graph/badge.svg)](https://codecov.io/gh/Huerte/GitGo)
 [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
@@ -10,8 +12,6 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/Huerte?label=Sponsor&logo=github&color=EA4AAA)](https://github.com/sponsors/Huerte)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
-
-### Stop typing the same five Git commands. Run one instead.
 
 **We won't let you nuke your work by accident.** GitGo features DANGER-red prompts before destructive operations, a Try-and-Revert engine that cleanly rolls back merge conflicts, and safe `Ctrl+C` aborts to keep your code safe.
 
