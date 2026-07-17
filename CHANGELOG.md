@@ -8,6 +8,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Installers:** Created a new robust Windows installation script (`install.ps1`) and improved the existing Linux/macOS script (`install.sh`) with dependency checks and better cross-platform support.
+- **Community:** Added `CODE_OF_CONDUCT.md` and `SECURITY.md` for community guidelines and security policy.
+- **CI/CD:** Integrated Codecov in GitHub Actions workflow and Pytest config to track test coverage. Added the Codecov badge to `README.md`.
+
+### Changed
+- **Documentation:** Updated the bug report issue template and troubleshooting documentation to direct security-related issues to `SECURITY.md`.
+
 ---
 
 ## [1.10.0] - 2026-07-16

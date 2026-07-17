@@ -3,6 +3,7 @@
 ![GitGo Banner](assets/banner.png)
 
 [![Tests](https://github.com/Huerte/GitGo/actions/workflows/tests.yml/badge.svg)](https://github.com/Huerte/GitGo/actions)
+[![Codecov](https://codecov.io/gh/Huerte/GitGo/branch/main/graph/badge.svg)](https://codecov.io/gh/Huerte/GitGo)
 [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/pygitgo?color=blue)](https://pypi.org/project/pygitgo)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -10,11 +11,11 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/Huerte?label=Sponsor&logo=github&color=EA4AAA)](https://github.com/sponsors/Huerte)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
 
-**Stop typing the same five Git commands. Run one instead.**
+### Stop typing the same five Git commands. Run one instead.
 
-<a href="https://github.com/Huerte/GitGo/issues">Report Bug</a> · <a href="https://github.com/Huerte/GitGo/issues">Request Feature</a>
+**We won't let you nuke your work by accident.** GitGo features DANGER-red prompts before destructive operations, a Try-and-Revert engine that cleanly rolls back merge conflicts, and safe `Ctrl+C` aborts to keep your code safe.
 
-<br />
+[Report Bug](https://github.com/Huerte/GitGo/issues) · [Request Feature](https://github.com/Huerte/GitGo/issues)
 
 If GitGo saves you time, give it a star. If you want to go further, sponsoring helps keep it going.
 

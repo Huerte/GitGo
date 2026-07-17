@@ -44,5 +44,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=pygitgo --cov-report=term-missing"
+addopts = "--cov=pygitgo --cov-report=term-missing --cov-report=xml"
 pythonpath = ["src"]

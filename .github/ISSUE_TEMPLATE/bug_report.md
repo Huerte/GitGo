@@ -6,6 +6,8 @@ labels: bug
 assignees: ''
 ---
 
+**Note: If you are reporting a security problem, please do NOT open an issue.** See our [Security Policy](../../SECURITY.md) for safe reporting instructions.
+
 ## What went wrong?
 
 <!-- Check docs/troubleshooting.md first. What were you doing and what happened? A sentence or two is fine. -->
