@@ -1,5 +1,6 @@
 from pygitgo.utils.cli_io import info, success, warning, error, confirm, banner, write
 from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.commands.git_core import ensure_inside_git_repository
 from pygitgo.commands.stash import (
     git_stash_apply, git_stash_clear, git_stash_drop,
     git_stash_list, git_stash_push
@@ -209,6 +210,7 @@ def delete_state(identifier=None):
 
 
 def state_operation(args):
+    ensure_inside_git_repository()
     alias = getattr(args, "action_alias", None)
     positional = getattr(args, "action", None)
 

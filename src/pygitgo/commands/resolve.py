@@ -1,10 +1,12 @@
 from pygitgo.utils.cli_io import info, warning, error, banner
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
-from pygitgo.commands.git_core import abort_pull_conflict
+from pygitgo.commands.git_core import abort_pull_conflict, ensure_inside_git_repository
 from pathlib import Path
 
 def resolve_operation(args):
+    ensure_inside_git_repository()
+
     if getattr(args, 'abort', False):
         abort_pull_conflict()
         return
@@ -12,11 +14,6 @@ def resolve_operation(args):
     rebase_in_progress = Path(".git/rebase-merge").exists() or Path(".git/rebase-apply").exists()
     if not rebase_in_progress:
         raise GitGoError("No conflict resolution is currently in progress. You are good to go!")
-        
-    try:
-        run_command(["git", "status", "--porcelain"])
-    except GitCommandError:
-        raise GitGoError("Not inside a git repository.")
         
     # Stage the resolved files
     run_command(["git", "add", "."], loading_msg="Staging resolved files...", ok_text="Conflict fixes staged.")

@@ -1,6 +1,7 @@
 from pygitgo.utils.cli_io import success, warning, info, confirm, danger, banner, write
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
+from pygitgo.commands.git_core import ensure_inside_git_repository
 from pygitgo.utils.executor import run_command
 import sys
 
@@ -103,6 +104,7 @@ def undo_push():
 
 
 def undo_operation(args):
+    ensure_inside_git_repository()
     action = args.action
 
     success_flag = False
