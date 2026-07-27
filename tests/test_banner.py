@@ -36,7 +36,7 @@ def test_format_sync_valid_cases(mocker, ahead, behind, expected):
 
 def test_show_banner_clean_status(mocker, capsys):
     mocker.patch("pygitgo.main.get_version", return_value="1.10.1")
-    mocker.patch("pygitgo.utils.banner.ensure_inside_git_repository")
+    mocker.patch("pygitgo.utils.banner.is_git_repository", return_value=True)
     mocker.patch("pygitgo.utils.banner.get_user", return_value=("Huerte", "huerte@example.com"))
     mocker.patch("pygitgo.utils.banner.get_current_branch", return_value="main")
     mocker.patch("pygitgo.utils.banner.check_for_updates", return_value=None)
@@ -79,7 +79,7 @@ def test_show_banner_clean_status(mocker, capsys):
 
 def test_show_banner_dirty_status(mocker, capsys):
     mocker.patch("pygitgo.main.get_version", return_value="1.10.1")
-    mocker.patch("pygitgo.utils.banner.ensure_inside_git_repository")
+    mocker.patch("pygitgo.utils.banner.is_git_repository", return_value=True)
     mocker.patch("pygitgo.utils.banner.get_user", return_value=(None, None))
     mocker.patch("pygitgo.utils.banner.get_current_branch", side_effect=Exception("no branch"))
     mocker.patch("pygitgo.utils.banner.check_for_updates", return_value="Update available: 1.10.2")
@@ -118,7 +118,7 @@ def test_show_banner_dirty_status(mocker, capsys):
 
 def test_show_banner_dirty_only_modified(mocker, capsys):
     mocker.patch("pygitgo.main.get_version", return_value="1.10.1")
-    mocker.patch("pygitgo.utils.banner.ensure_inside_git_repository")
+    mocker.patch("pygitgo.utils.banner.is_git_repository", return_value=True)
     mocker.patch("pygitgo.utils.banner.get_user", return_value=("user", "email"))
     mocker.patch("pygitgo.utils.banner.get_current_branch", return_value="main")
     mocker.patch("pygitgo.utils.banner.check_for_updates", return_value=None)
@@ -144,7 +144,7 @@ def test_show_banner_dirty_only_modified(mocker, capsys):
 
 def test_show_banner_dirty_only_untracked(mocker, capsys):
     mocker.patch("pygitgo.main.get_version", return_value="1.10.1")
-    mocker.patch("pygitgo.utils.banner.ensure_inside_git_repository")
+    mocker.patch("pygitgo.utils.banner.is_git_repository", return_value=True)
     mocker.patch("pygitgo.utils.banner.get_user", return_value=("user", "email"))
     mocker.patch("pygitgo.utils.banner.get_current_branch", return_value="main")
     mocker.patch("pygitgo.utils.banner.check_for_updates", return_value=None)
@@ -167,3 +167,17 @@ def test_show_banner_dirty_only_untracked(mocker, capsys):
     captured = capsys.readouterr().out
     assert "1 untracked" in captured
     assert "modified" not in captured
+
+def test_show_banner_non_git_repository(mocker, capsys):
+    mocker.patch("pygitgo.main.get_version", return_value="1.10.1")
+    mocker.patch("pygitgo.utils.banner.is_git_repository", return_value=False)
+    mocker.patch("pygitgo.utils.banner.get_user", return_value=("Huerte", "huerte@example.com"))
+    mocker.patch("pygitgo.utils.banner.check_for_updates", return_value=None)
+    
+    show_banner()
+    
+    captured = capsys.readouterr().out
+    assert "Identity" in captured
+    assert "Not a git repository" in captured
+    assert "Run 'gitgo init' or 'gitgo link' to start" in captured
+

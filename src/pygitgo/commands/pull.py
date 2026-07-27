@@ -1,5 +1,5 @@
 from pygitgo.utils.cli_io import success, warning, error, info, write
-from pygitgo.commands.git_core import is_rebase_in_progress
+from pygitgo.commands.git_core import is_rebase_in_progress, ensure_inside_git_repository
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
@@ -27,6 +27,7 @@ def _pull_interrupt_cleanup():
 
 
 def pull_operation(args):
+    ensure_inside_git_repository()
     branch = args.branch
 
     if not branch:

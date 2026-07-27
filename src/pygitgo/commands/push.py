@@ -1,7 +1,7 @@
 from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist, get_head_sha
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.utils.cli_io import info, warning, success, confirm, banner, write
-from pygitgo.commands.git_core import git_commit, git_push
+from pygitgo.commands.git_core import git_commit, git_push, ensure_inside_git_repository
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.jump import jump_operation
 from pygitgo.utils.executor import run_command
@@ -59,6 +59,7 @@ def _push_interrupt_cleanup(original_branch, original_head, created_branch):
 
 
 def push_operation(args):
+    ensure_inside_git_repository()
     branch = args.branch
     message = args.message
     select = args.select if hasattr(args, 'select') else False

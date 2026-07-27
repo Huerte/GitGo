@@ -8,11 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Added robust Unicode print fallback for `show_banner` to prevent crashes on legacy Windows terminals.
+
 ### Fixed
 - Fixed target directory lock issues on Windows inside `gitgo init` on scaffolding failures by returning to the original directory before cleanup.
+- Safely handle non-git repository executions in `gitgo` banner by displaying human-readable status instead of throwing exception tracebacks.
+- Added git repository validation across commands (`push`, `pull`, `state`, `undo`, `resolve`) to output friendly error messages when executed outside a git repository.
 
 ### Changed
 - Expanded and cleaned test suite coverage (now at 93% total coverage) across commands and utility modules with clean, uncommented test cases.
+- Unified banner box borders to be consistently green across all CLI outputs.
 
 ---
 
