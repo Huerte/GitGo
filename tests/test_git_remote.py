@@ -147,7 +147,7 @@ def test_check_and_sync_branch_need_sync(mocker):
         call(["git", "rev-parse", branch]),
         call(["git", "rev-parse", f"origin/{branch}"]),
         call(["git", "rev-list", "--count", f"{branch}..origin/{branch}"]),
-        call(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Synced with remote.")
+        call(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Checked remote.", return_complete=True)
     ]
 
 def test_check_and_sync_branch_no_remote(mocker):

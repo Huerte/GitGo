@@ -59,7 +59,8 @@ def test_sync_happy_path_with_message(mock_banner, mock_push, mock_commit, mock_
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "main"],
         loading_msg="Downloading latest updates for 'main'...",
-        ok_text="Successfully pulled latest changes."
+        ok_text="Checked remote.",
+        return_complete=True
     )
     mock_commit.assert_called_with("test msg")
     mock_push.assert_called_with("main")

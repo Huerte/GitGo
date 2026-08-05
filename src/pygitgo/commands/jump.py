@@ -116,11 +116,17 @@ def jump_operation(args):
             )
             main_branch = get_main_branch()
             try:
-                run_command(
+                pull_result = run_command(
                     ["git", "pull", "--rebase", "--autostash", "origin", main_branch],
                     loading_msg=f"Syncing '{target_branch}' with latest from '{main_branch}'...",
-                    ok_text=f"'{target_branch}' is up to date with '{main_branch}'."
+                    ok_text=f"Checked '{main_branch}'.",
+                    return_complete=True,
                 )
+                pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
+                if "already up to date" in pull_stdout.lower():
+                    info(f"'{target_branch}' was already up to date with '{main_branch}'.")
+                else:
+                    info(f"'{target_branch}' synced with latest commits from '{main_branch}'.")
             except GitCommandError as e:
                 stderr = getattr(e, "stderr", str(e))
                 if "conflict" in stderr.lower() or "rebase in progress" in stderr.lower():

@@ -15,7 +15,7 @@ def _pull_interrupt_cleanup():
             error("Could not abort rebase automatically.")
             info("Run manually: git rebase --abort")
     else:
-        success("No partial rebase detected. Branch is clean.")
+        info("No partial rebase detected. Branch is clean.")
 
     try:
         stash_list = run_command(["git", "stash", "list"])
@@ -47,14 +47,21 @@ def pull_operation(args):
             info("Push your local branch first, or verify the branch name.")
             raise GitGoError("Pull aborted — branch not found on remote.")
 
-        run_command(
+        pull_result = run_command(
             ["git", "pull", "--rebase", "--autostash", "origin", branch],
             loading_msg=f"Downloading latest updates for '{branch}' (auto-saving your code)...",
-            ok_text=f"Project is up to date with '{branch}'."
+            ok_text=f"Checked '{branch}'.",
+            return_complete=True,
         )
 
+        pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
+        already_synced = "already up to date" in pull_stdout.lower()
+
         from pygitgo.utils.cli_io import banner
-        banner("REMOTE SYNCHRONIZED. LATEST CHANGES ACQUIRED.", "LOCAL WORKSPACE UPDATED AND ALIGNED.")
+        if already_synced:
+            info(f"Already up to date. Your work is already in sync with '{branch}'. Nothing was pulled.")
+        else:
+            banner("REMOTE SYNCHRONIZED. LATEST CHANGES ACQUIRED.", "LOCAL WORKSPACE UPDATED AND ALIGNED.")
 
     except KeyboardInterrupt:
         write()

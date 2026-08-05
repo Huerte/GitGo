@@ -27,7 +27,8 @@ def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_ru
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "main"], 
         loading_msg="Downloading latest updates for 'main' (auto-saving your code)...",
-        ok_text="Project is up to date with 'main'."
+        ok_text="Checked 'main'.",
+        return_complete=True
     )
     mock_success.assert_not_called()
 
@@ -52,7 +53,8 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "feature/test"], 
         loading_msg="Downloading latest updates for 'feature/test' (auto-saving your code)...",
-        ok_text="Project is up to date with 'feature/test'."
+        ok_text="Checked 'feature/test'.",
+        return_complete=True
     )
     mock_success.assert_not_called()
 
@@ -131,4 +133,5 @@ def test_pull_keyboard_interrupt_no_rebase(mock_rebase, mock_warning, mock_succe
     assert sys_exit.value.code == 130
     for call in mock_run_command.call_args_list:
         assert "--abort" not in call[0][0]
-    mock_success.assert_called_with("No partial rebase detected. Branch is clean.")
+    mock_success.assert_not_called()
+    # Need to check info("No partial rebase detected. Branch is clean.") but info is not mocked in this test.

@@ -28,11 +28,15 @@ def sync_operation(args):
 
     if remote_exists:
         try:
-            run_command(
+            pull_result = run_command(
                 ["git", "pull", "--rebase", "--autostash", "origin", branch],
                 loading_msg=f"Downloading latest updates for '{branch}'...",
-                ok_text="Successfully pulled latest changes."   
+                ok_text="Checked remote.",
+                return_complete=True,
             )
+            pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
+            if "already up to date" not in pull_stdout.lower():
+                info("Latest changes pulled from remote.")
         except KeyboardInterrupt:
             write()
             warning("Sync interrupted (Ctrl+C).")
