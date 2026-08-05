@@ -190,9 +190,8 @@ def abort_pull_conflict():
     try:
         run_command(["git", "rev-parse", "ORIG_HEAD"])
     except GitCommandError:
-        raise GitGoError(
-            "No pull to undo. ORIG_HEAD not found — this means no pull has been run yet."
-        )
+        info("Nothing to undo. No recent pull was found (ORIG_HEAD does not exist).")
+        return False
 
     try:
         branch = get_current_branch(safe=True)

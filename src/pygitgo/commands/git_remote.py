@@ -47,9 +47,10 @@ def check_and_sync_branch(branch):
                 )
                 if behind_check and int(behind_check) > 0:
                     warning(f"Local branch is behind remote by {behind_check} commit(s). Pulling changes...")
-                    output = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Synced with remote.")
-                    if output:
-                        write(output)
+                    pull_result = run_command(["git", "pull", "--rebase", "origin", branch], loading_msg="Pulling changes from remote...", ok_text="Checked remote.", return_complete=True)
+                    pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
+                    if "already up to date" not in pull_stdout.lower():
+                        info("Synced with remote.")
                 else:
                     info("Branch is up to date.")
             else:

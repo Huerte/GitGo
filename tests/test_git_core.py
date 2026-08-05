@@ -338,9 +338,10 @@ def test_abort_pull_conflict_active_rebase_error(mocker):
 def test_abort_pull_conflict_no_orig_head(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
     mocker.patch("pygitgo.utils.executor.run_command", side_effect=GitCommandError(["cmd"]))
-    with pytest.raises(GitGoError) as ex:
-        abort_pull_conflict()
-    assert "No pull to undo" in str(ex.value)
+    mock_info = mocker.patch("pygitgo.utils.cli_io.info")
+    result = abort_pull_conflict()
+    assert result is False
+    mock_info.assert_called_once_with("Nothing to undo. No recent pull was found (ORIG_HEAD does not exist).")
 
 def test_abort_pull_conflict_branch_error(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
