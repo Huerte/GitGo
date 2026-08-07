@@ -140,6 +140,9 @@ def repo_operation(args, silent=False):
         repo_url = repo_.get("clone_url")
         spinner.text = f"Successfully created remote repository: {repo_url}"
         spinner.ok("✔")
+    except KeyboardInterrupt:
+        spinner.stop()
+        raise
     except Exception as e:
         spinner.text = str(e)
         spinner.fail("✖")

@@ -128,10 +128,14 @@ def check_connection(ok_text=None, fail_text=None, host: str = "github.com"):
     spinner = yaspin(**kwargs)
     spinner.start()
 
-    if host == "github.com":
-        raw_output, timed_out, os_error = _get_cached_ssh_response()
-    else:
-        raw_output, timed_out, os_error = _get_ssh_response(host)
+    try:
+        if host == "github.com":
+            raw_output, timed_out, os_error = _get_cached_ssh_response()
+        else:
+            raw_output, timed_out, os_error = _get_ssh_response(host)
+    except KeyboardInterrupt:
+        spinner.stop()
+        raise
 
     connected = (
         not timed_out
