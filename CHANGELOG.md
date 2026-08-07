@@ -8,6 +8,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.10.2] - 2026-08-07
+
 ### Added
 - Added robust Unicode print fallback for `show_banner` to prevent crashes on legacy Windows terminals.
 - Added `is_agent_loaded(key_path)` to check if an SSH key is currently held by the SSH agent.
