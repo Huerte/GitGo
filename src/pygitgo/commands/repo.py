@@ -113,6 +113,7 @@ def create_github_repo(name, private=False, description="", token=None, retry_co
 
 
 def repo_operation(args, silent=False):
+    info("This command creates a repository on GitHub. A GitHub account and token are required.")
     if args.name:
         repo_name = args.name
     else:

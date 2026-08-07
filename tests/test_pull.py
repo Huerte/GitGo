@@ -104,7 +104,7 @@ def test_pull_keyboard_interrupt_rebase_in_progress(mock_rebase, mock_warning, m
         pull_operation(args)
 
     assert sys_exit.value.code == 130
-    mock_run_command.assert_any_call(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...", ok_text="Rebase aborted. Branch is back to its pre-pull state.")
+    mock_run_command.assert_any_call(["git", "rebase", "--abort"])
     mock_warning.assert_any_call("Pull interrupted (Ctrl+C).")
     mock_warning.assert_any_call("A rebase is in progress from the interrupted pull.")
     mock_success.assert_not_called()

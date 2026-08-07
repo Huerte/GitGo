@@ -2,7 +2,7 @@ from pygitgo.commands.git_remote import add_remote_origin, confirm_remote_link
 from pygitgo.utils.cli_io import success, warning, error, info, banner, write
 from pygitgo.commands.git_core import git_init, git_commit, git_push
 from pygitgo.commands.git_branch import get_current_branch
-from pygitgo.auth.ssh_utils import ensure_github_known_host, convert_https_to_ssh, is_ssh_url, check_connection
+from pygitgo.auth.ssh_utils import ensure_known_host, get_remote_host, convert_https_to_ssh, is_ssh_url, check_connection
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.validators import validate_repo_url
 from pygitgo.utils.config import get_default_branch
@@ -43,12 +43,14 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
     if not validate_repo_url(repo_url):
         raise GitGoError(f"Invalid remote repository URL: '{repo_url}'")
     
-    ensure_github_known_host()
+    host = get_remote_host(repo_url) or "github.com"
+    ensure_known_host(host)
 
     if not is_ssh_url(repo_url):
         ssh_ok = check_connection(
-            ok_text="GitHub SSH verified. Switching to SSH URL.",
-            fail_text="SSH unavailable. Keeping HTTPS URL."
+            ok_text=f"{host} SSH verified. Switching to SSH URL.",
+            fail_text=f"SSH unavailable for {host}. Keeping HTTPS URL.",
+            host=host,
         )
         if ssh_ok:
             ssh_url = convert_https_to_ssh(repo_url)

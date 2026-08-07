@@ -158,11 +158,15 @@ def _fetch_gitignore(resolved_lang):
 
 
 def _parse_template_slug(template):
-    # For github url
+    non_github = re.search(r"https?://([^/]+)", template)
+    if non_github and "github.com" not in non_github.group(1):
+        raise GitGoError(
+            f"Template download only supports GitHub repositories.\n"
+            f"Provide an 'owner/repo' slug or a github.com URL."
+        )
     match = re.search(r"github\.com[/:]([^/]+/[^/.]+)", template)
     if match:
         return match.group(1)
-    # For repo slug
     if re.match(r"^[^/]+/[^/]+$", template):
         return template
     raise GitGoError(
