@@ -10,7 +10,7 @@ def _pull_interrupt_cleanup():
     if is_rebase_in_progress():
         warning("A rebase is in progress from the interrupted pull.")
         try:
-            run_command(["git", "rebase", "--abort"], loading_msg="Aborting interrupted rebase...", ok_text="Rebase aborted. Branch is back to its pre-pull state.")
+            run_command(["git", "rebase", "--abort"])
         except GitCommandError:
             error("Could not abort rebase automatically.")
             info("Run manually: git rebase --abort")

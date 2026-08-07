@@ -41,7 +41,7 @@ def undo_changes():
         if reset_done:
             warning("Interrupted during file removal. Finishing cleanup...")
             try:
-                run_command(["git", "clean", "-fd"], loading_msg="Removing new files...", ok_text="Working tree reset. All changes discarded.")
+                run_command(["git", "clean", "-fd"])
             except GitCommandError:
                 warning("Could not finish cleanup. Run 'git clean -fd' manually.")
         else:

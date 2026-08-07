@@ -30,14 +30,19 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
             cmd_str = " ".join(command) if isinstance(command, list) else command
             print(f"[DEBUG] Running command: {cmd_str}")
 
-        result = subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True,
-            stdin=subprocess.DEVNULL,
-            env=env,
-        )
+        try:
+            result = subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+                stdin=subprocess.DEVNULL,
+                env=env,
+            )
+        except KeyboardInterrupt:
+            if spinner:
+                spinner.stop()
+            raise
 
         if _VERBOSE:
             if result.stdout.strip():

@@ -10,6 +10,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.10.3] - 2026-08-07
+
+### Fixed
+- Fixed a bug where hitting Ctrl+C during any command with a loading spinner (like `gitgo pull` or `gitgo jump`) would cause the spinner to keep running and leave broken text on the terminal. The spinner is now stopped cleanly on interrupt.
+- Fixed `gitgo init --template` and `gitgo link` failing with cryptic errors when using non-GitHub URLs (like GitLab or self-hosted servers). The SSH checks and template downloads now correctly detect and handle the remote host.
+
+---
+
 ## [1.10.2] - 2026-08-07
 
 ### Added
