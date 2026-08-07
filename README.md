@@ -65,23 +65,20 @@ gitgo new my-app python
 
 ## Features
 
-- **Single commands for linking, pushing, and stashing.** No more chaining five commands together.
-- **Seamless Sync:** Run `sync` to pull the latest changes, commit your work, and push in one command.
-- **Smart CLI UI:** Modern box-drawing banners, color-coded output, and automatic terminal capability detection (respects `NO_COLOR` and Windows VT limitations).
-- **Quickstart with `new`:** One command to scaffold your project, create the GitHub repo, and push it. No switching tabs, no manual steps.
-- **Project scaffolding with `init`:** Generates a language-specific project structure with a `.gitignore` from GitHub's official templates. Supports Python, Node, Rust, Go, C#, and more.
-- **Remote repo creation with `repo`:** Creates a GitHub repo directly from the terminal without touching a browser.
-- **Undo:** Roll back commits, unstage files, discard local changes, or revert pushes. The subcommands say what they do: `undo commit`, `undo add`, `undo changes`, `undo link`, `undo push`, `undo pull`.
-- **Conflict resolution with `resolve`:** Finish a pull after fixing a merge conflict. Verifies the conflict markers are actually gone before staging and completing it. Back out anytime with `resolve --abort`.
-- **Commit history with `log`:** View a beautifully color-coded and structured commit history.
-- **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
-- **Snapshot management:** Named, numbered interface over `git stash`. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
-- **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
-- **Auto-update checker:** Checks PyPI for newer versions in a background thread. Results are cached for 7 days so startup isn't delayed.
-- **SSH auto-setup & signing:** Generates an `ed25519` key, loads it into `ssh-agent`, opens your GitHub SSH settings page, and automatically signs all future commits for the verified badge.
-- **HTTPS-to-SSH conversion:** Detects HTTPS remotes and rewrites them before pushing if SSH is configured. No manual `git remote set-url`.
-- **Termux support:** Detects the Termux environment, adjusts install paths, uses `termux-open` for browser actions, and patches the dubious ownership Git error.
-- **Safe interruptions:** Hitting `Ctrl+C` midway through a command automatically aborts in-progress merges, cleans up partial states, and tells you exactly what was and wasn't saved.
+- **One command instead of five.** `push`, `link`, `sync`, and `jump` combine the git commands you'd normally type out by hand.
+- **Won't let you nuke your work by accident.** Destructive commands like `undo changes` and `undo push` ask for confirmation first, and hitting Ctrl+C mid-command always leaves your repo in a clean, known state.
+- **Fixes merge conflicts without leaving you stuck in an editor.** `resolve` checks that the conflict markers are actually gone before finishing the pull. If you get stuck, `resolve --abort` or `undo pull` puts things back the way they were.
+- **Works with any Git host.** GitHub, GitLab, Gitea, self-hosted, all of it. A GitHub account is only needed for `repo` and `new`, since those two create the remote repo through GitHub's API.
+- **`new` takes you from nothing to a live repo in one command.** Scaffolds the project, creates the GitHub repo, and pushes it. No switching tabs.
+- **`init` scaffolds a project locally.** Generates a README, a `.gitignore` pulled from GitHub's official templates, and starter files for Python, Node, Rust, Go, C#, and more.
+- **`repo` creates a GitHub repo from your terminal.** No browser needed.
+- **`jump` switches branches without losing your work.** Stashes what you're doing, moves to the target branch, pulls the latest, then restores your work. If that causes a conflict, GitGo offers to undo the whole thing and put you back where you started.
+- **`state` replaces `git stash` with something you can actually read.** Named, numbered snapshots. Run `state list` to see what you saved instead of guessing what `stash@{2}` was.
+- **`log` shows your commit history in a readable, color-coded view.**
+- **Set your own defaults.** Store your usual branch name and commit message once with `config`, and GitGo uses them every time after.
+- **SSH setup and commit signing, handled for you.** `user login` generates a key, loads it into `ssh-agent`, and signs your future commits so they show up as Verified on GitHub.
+- **Works out of the box in Termux.** GitGo detects Termux, adjusts install paths, and fixes the common "dubious ownership" Git error automatically.
+- **Checks for updates in the background.** No delay on startup; results are cached for a week.
 
 ---
 
@@ -92,7 +89,7 @@ gitgo new my-app python
 - **Python 3.8+**
 - **Git 2.x+**: [git-scm.com](https://git-scm.com)
 - **OpenSSH**: required for `gitgo user login` (pre-installed on most systems)
-- A **GitHub account**
+- A **GitHub account**: only required for `gitgo repo` and `gitgo new`, which create the remote repo for you through GitHub's API. Every other command works with any Git remote, GitHub or not.
 
 ### Quick Install (Recommended)
 
@@ -327,12 +324,12 @@ gitgo push -s [branch] [message]   # interactively select files to stage
 **How arguments work:**
 - Two arguments: first is the branch, second is the commit message.
 - One argument: if it matches an existing branch, it is used as the branch; otherwise it is used as the commit message and the current branch is used.
-- No arguments: GitGo uses your current branch and the configured default message. Both defaults are shown before anything happens, for example:
+- No arguments: GitGo always pushes to whatever branch you're currently on, it doesn't read `default-branch` for this. Only the commit message falls back to your configured default. Both are shown before anything happens, for example:
   ```
-  No branch given. Using: 'main'
+  No branch given. Using current branch: 'feature/login'
   No commit message given. Using: 'chore: new changes applied'
   ```
-  You can change these defaults with `gitgo config set default-branch` and `gitgo config set default-message`.
+  You can change the default commit message with `gitgo config set default-message`.
 
 If there are no new changes but unpushed commits exist, GitGo detects this and pushes without creating an empty commit.
 
