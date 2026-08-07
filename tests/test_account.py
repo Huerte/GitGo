@@ -86,33 +86,31 @@ def test_sanitize_signing_config_not_configured(mocker):
     fake_run.assert_called_once_with(["git", "config", "--global", "commit.gpgsign"])
 
 
-def test_sanitize_signing_config_ssh_format_agent_loaded(mocker):
-    """When gpg.format=ssh and the key is loaded in the agent, signing stays enabled."""
+def test_sanitize_signing_config_ssh_format_key_exists(mocker):
+    """When gpg.format=ssh and the key file exists, signing is left on."""
     fake_run = mocker.patch("pygitgo.auth.account.run_command", side_effect=["true", "ssh"])
     mock_key = mocker.MagicMock()
     mock_key.exists.return_value = True
     mocker.patch("pygitgo.auth.ssh_utils.get_ssh_key_path", return_value=mock_key)
-    mocker.patch("pygitgo.auth.ssh_utils.is_agent_loaded", return_value=True)
     sanitize_signing_config()
     assert fake_run.call_count == 2
     fake_run.assert_any_call(["git", "config", "--global", "commit.gpgsign"])
     fake_run.assert_any_call(["git", "config", "--global", "gpg.format"])
 
 
-def test_sanitize_signing_config_ssh_format_agent_not_loaded(mocker):
-    """When gpg.format=ssh but the agent does not have the key, signing is disabled."""
+def test_sanitize_signing_config_ssh_format_key_missing(mocker):
+    """When gpg.format=ssh but the key file is missing, signing is disabled."""
     fake_run = mocker.patch(
         "pygitgo.auth.account.run_command",
         side_effect=["true", "ssh", None, None]
     )
     mock_key = mocker.MagicMock()
-    mock_key.exists.return_value = True
+    mock_key.exists.return_value = False
     mocker.patch("pygitgo.auth.ssh_utils.get_ssh_key_path", return_value=mock_key)
-    mocker.patch("pygitgo.auth.ssh_utils.is_agent_loaded", return_value=False)
     fake_warning = mocker.patch("pygitgo.auth.account.warning")
-    mocker.patch("pygitgo.auth.account.info")
     sanitize_signing_config()
     assert fake_warning.call_count >= 1
+
 
 def test_sanitize_signing_config_unset_gpg_program(mocker):
     fake_run = mocker.patch("pygitgo.auth.account.run_command", side_effect=["true", "openpgp", None, None])

@@ -283,24 +283,12 @@ def test_get_signing_flags(mocker):
     mock_path = mocker.MagicMock()
     mock_path.exists.return_value = True
     mocker.patch("pygitgo.commands.git_core.get_ssh_key_path", return_value=mock_path)
-    mocker.patch("pygitgo.commands.git_core.is_agent_loaded", return_value=True)
     flags = _get_signing_flags()
     assert len(flags) > 0
 
     # When key file does not exist, no flags returned.
     mock_path.exists.return_value = False
     assert _get_signing_flags() == []
-
-
-def test_get_signing_flags_agent_not_loaded(mocker):
-    """When the agent does not have the key, signing flags are skipped."""
-    mock_path = mocker.MagicMock()
-    mock_path.exists.return_value = True
-    mocker.patch("pygitgo.commands.git_core.get_ssh_key_path", return_value=mock_path)
-    mocker.patch("pygitgo.commands.git_core.is_agent_loaded", return_value=False)
-    mocker.patch("pygitgo.commands.git_core.warning")
-    flags = _get_signing_flags()
-    assert flags == []
 
 def test_git_commit_no_changes(mocker):
     mocker.patch("pygitgo.commands.git_core.run_command", return_value="")

@@ -85,18 +85,11 @@ def sanitize_signing_config():
         fmt = ""
 
     if fmt == "ssh":
-        # Check that the key file exists and the agent has it loaded.
-        from pygitgo.auth.ssh_utils import get_ssh_key_path, is_agent_loaded
+        from pygitgo.auth.ssh_utils import get_ssh_key_path
         key_path = get_ssh_key_path()
-        if key_path.exists() and is_agent_loaded(key_path):
-            # Signing is properly configured, nothing to fix.
+        if key_path.exists():
             return
-
-        if not key_path.exists():
-            warning("SSH signing key file not found. Disabling commit signing to prevent failures.")
-        else:
-            warning("SSH signing key is not loaded in the agent. Disabling commit signing to prevent failures.")
-            info("Run 'gitgo user login' to reload your key.")
+        warning("SSH signing key file not found. Disabling commit signing to prevent failures.")
     else:
         warning("Commit signing is on but no GPG key is configured.")
         warning("Disabling global commit signing to prevent failures.")

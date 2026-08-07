@@ -1,4 +1,4 @@
-from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection, is_agent_loaded, get_remote_host
+from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection, get_remote_host
 from pygitgo.exceptions import GitGoError, GitCommandError
 from pygitgo.auth.account import sanitize_signing_config
 from pygitgo.commands.git_remote import handle_rebase
@@ -77,10 +77,6 @@ def get_recent_commits(number=5, branch=None):
 def _get_signing_flags():
     key_path = get_ssh_key_path()
     if not key_path.exists():
-        return []
-    if not is_agent_loaded(key_path):
-        warning("SSH key is not loaded in the agent. Skipping commit signing this time.")
-        warning("Run 'gitgo user login' to load your key and re-enable signing.")
         return []
     return [
         "-c", "gpg.format=ssh",
