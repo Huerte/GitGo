@@ -10,16 +10,27 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added robust Unicode print fallback for `show_banner` to prevent crashes on legacy Windows terminals.
+- Added `is_agent_loaded(key_path)` to check if an SSH key is currently held by the SSH agent before signing commits.
+- Added `get_remote_host(url)` to extract the hostname from any SSH or HTTPS remote URL.
+- Added new test cases: `test_get_signing_flags_agent_not_loaded`, `test_git_push_non_github_host_skips_conversion`, `test_sanitize_signing_config_ssh_format_agent_loaded`, `test_sanitize_signing_config_ssh_format_agent_not_loaded`.
 
 ### Fixed
 - Fixed target directory lock issues on Windows inside `gitgo init` on scaffolding failures by returning to the original directory before cleanup.
 - Safely handle non-git repository executions in `gitgo` banner by displaying human-readable status instead of throwing exception tracebacks.
 - Added git repository validation across commands (`push`, `pull`, `state`, `undo`, `resolve`) to output friendly error messages when executed outside a git repository.
 - Fixed misleading success banners from appearing when `pull` or `sync` operations did not actually fetch any new commits.
+- Fixed `gitgo push` silently failing with authentication errors on private Gitea and GitLab servers. HTTPS remotes on non-GitHub hosts are no longer converted to SSH, letting the user's existing HTTPS credentials work.
+- Fixed commit signing failures when the SSH agent is stopped between sessions. `_get_signing_flags` and `sanitize_signing_config` now check `is_agent_loaded` before enabling signing and disable it gracefully if the agent is empty.
+- Fixed `gitgo push` with no arguments only showing one of the two default values. Both the default branch and the default commit message are now shown before anything happens.
+- Fixed `gitgo state` letter aliases (`-l`, `-s`, `-o`, `-d`) causing confusion for new users. The aliases are removed. Use the full action words: `list`, `save`, `load`, `delete`.
 
 ### Changed
 - Expanded and cleaned test suite coverage (now at 93% total coverage) across commands and utility modules with clean, uncommented test cases.
 - Unified banner box borders to be consistently green across all CLI outputs.
+- Rewrote all CLI help text for `push`, `sync`, `link`, `jump`, `resolve`, `undo`, and `state` in plain English that is clear to users who are new to Git or non-native English speakers.
+- `ensure_known_host` is now host-aware and works for any server. The existing `ensure_github_known_host` alias is kept for backward compatibility.
+- `convert_https_to_ssh` now matches any hostname, not just `github.com`.
+- Updated `README.md`: documented the both-defaults behavior for `gitgo push`, removed state aliases from docs, updated descriptions for `sync`, `link`, `jump`, `resolve`, and `undo`.
 
 ---
 

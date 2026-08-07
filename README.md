@@ -66,7 +66,7 @@ gitgo new my-app python
 ## Features
 
 - **Single commands for linking, pushing, and stashing.** No more chaining five commands together.
-- **Seamless Sync:** Run `sync` to pull the latest updates (with rebase), commit your staged files, and push in one go.
+- **Seamless Sync:** Run `sync` to pull the latest changes, commit your work, and push in one command.
 - **Smart CLI UI:** Modern box-drawing banners, color-coded output, and automatic terminal capability detection (respects `NO_COLOR` and Windows VT limitations).
 - **Quickstart with `new`:** One command to scaffold your project, create the GitHub repo, and push it. No switching tabs, no manual steps.
 - **Project scaffolding with `init`:** Generates a language-specific project structure with a `.gitignore` from GitHub's official templates. Supports Python, Node, Rust, Go, C#, and more.
@@ -75,7 +75,7 @@ gitgo new my-app python
 - **Conflict resolution with `resolve`:** Finish a pull after fixing a merge conflict. Verifies the conflict markers are actually gone before staging and completing it. Back out anytime with `resolve --abort`.
 - **Commit history with `log`:** View a beautifully color-coded and structured commit history.
 - **Branch switching with `jump`:** Stashes your uncommitted work, moves to the target branch, syncs with main, and pops the stash. If a merge conflict occurs, the Try-and-Revert engine offers to roll the whole operation back.
-- **State management:** Named, indexed stash. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
+- **Snapshot management:** Named, numbered interface over `git stash`. Run `state list` to see what you saved. No more `stash@{2}` archaeology.
 - **Custom defaults:** Store your preferred branch name and default commit message. GitGo picks them up on every run.
 - **Auto-update checker:** Checks PyPI for newer versions in a background thread. Results are cached for 7 days so startup isn't delayed.
 - **SSH auto-setup & signing:** Generates an `ed25519` key, loads it into `ssh-agent`, opens your GitHub SSH settings page, and automatically signs all future commits for the verified badge.
@@ -324,6 +324,16 @@ gitgo push -s [branch] [message]   # interactively select files to stage
 | `-n`, `--new` | Create a new branch before pushing |
 | `-s`, `--select` | Interactively select which files to include in the push |
 
+**How arguments work:**
+- Two arguments: first is the branch, second is the commit message.
+- One argument: if it matches an existing branch, it is used as the branch; otherwise it is used as the commit message and the current branch is used.
+- No arguments: GitGo uses your current branch and the configured default message. Both defaults are shown before anything happens, for example:
+  ```
+  No branch given. Using: 'main'
+  No commit message given. Using: 'chore: new changes applied'
+  ```
+  You can change these defaults with `gitgo config set default-branch` and `gitgo config set default-message`.
+
 If there are no new changes but unpushed commits exist, GitGo detects this and pushes without creating an empty commit.
 
 ### `gitgo pull`
@@ -337,7 +347,7 @@ gitgo pull <branch>    # Pull updates from a specific branch
 
 ### `gitgo sync`
 
-Synchronizes your branch with the remote. Pulls latest updates with `--rebase` and `--autostash`, commits staged files, and pushes everything.
+Pulls the latest changes with `--rebase` and `--autostash`, commits your work, then pushes everything in one step.
 
 ```bash
 gitgo sync [message]
@@ -345,15 +355,15 @@ gitgo sync [message]
 
 ### `gitgo link`
 
-Initializes a Git repository, connects it to a remote, and pushes. Works on already-initialized repos and handles unrelated histories.
+Connects a local project to a remote repository. Initializes Git if needed, stages everything, commits, and pushes. Works on already-initialized repos too, and handles unrelated histories.
 
 ```bash
-gitgo link <github_repo_url> [commit_message]
+gitgo link <repo_url> [commit_message]
 ```
 
 ### `gitgo jump`
 
-Switches branches with uncommitted work in progress. Stashes changes, moves to the target branch, pulls from main, and pops the stash. If the pop triggers a merge conflict, the Try-and-Revert engine offers to abort the entire operation and restore the repo to the state it was in before the command ran.
+Switches to another branch while saving your current work automatically. Stashes your changes, moves to the target branch, pulls from main, then restores your work. If restoring causes a conflict, the Try-and-Revert engine offers to cancel the whole operation and put everything back.
 
 ```bash
 gitgo jump <branch>
@@ -366,25 +376,23 @@ Undo recent actions with subcommands named for what they undo.
 ```bash
 gitgo undo commit    # Undo the last commit without losing files
 gitgo undo add       # Unstage files
-gitgo undo changes   # Permanently discard all new files and uncommitted edits
+gitgo undo changes   # DANGER (destructive): permanently discard all uncommitted edits
 gitgo undo link      # Remove the remote and undo the initial commit
-gitgo undo push      # DANGER: Revert the last push with a force-push
+gitgo undo push      # DANGER (destructive): revert the last push with a force-push
 gitgo undo pull      # Revert the branch to its state before the last pull
 ```
 
 ### `gitgo state`
 
-Named, indexed interface over `git stash`.
+Save and restore snapshots of your work-in-progress. Built on top of `git stash` with named saves and numbered access.
 
 ```bash
-gitgo state list              # show all saved states
+gitgo state list              # show all saved snapshots
 gitgo state save [name]       # save current work (default name: Auto-Save)
-gitgo state load [id]         # restore a state by index
-gitgo state delete [id]       # delete a state by index
-gitgo state delete -a         # delete all saved states
+gitgo state load [id]         # restore a snapshot by its number
+gitgo state delete [id]       # delete a snapshot by its number
+gitgo state delete -a         # delete all saved snapshots
 ```
-
-*Short aliases:* `-l`, `-s`, `-o`, `-d`
 
 ### `gitgo log`
 

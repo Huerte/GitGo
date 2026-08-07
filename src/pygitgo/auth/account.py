@@ -75,29 +75,38 @@ def sanitize_signing_config():
         gpgsign = run_command(["git", "config", "--global", "commit.gpgsign"]).strip().lower()
     except GitCommandError:
         return
-    
+
     if gpgsign != "true":
         return
-    
+
     try:
         fmt = run_command(["git", "config", "--global", "gpg.format"]).strip().lower()
     except GitCommandError:
         fmt = ""
 
     if fmt == "ssh":
-        return
-    
-    warning("Detected 'commit.gpgsign=true' with no GPG key configured.")
-    warning("Disabling global GPG signing to prevent commit failures.")
+        # Check that the key file exists and the agent has it loaded.
+        from pygitgo.auth.ssh_utils import get_ssh_key_path, is_agent_loaded
+        key_path = get_ssh_key_path()
+        if key_path.exists() and is_agent_loaded(key_path):
+            # Signing is properly configured, nothing to fix.
+            return
+
+        if not key_path.exists():
+            warning("SSH signing key file not found. Disabling commit signing to prevent failures.")
+        else:
+            warning("SSH signing key is not loaded in the agent. Disabling commit signing to prevent failures.")
+            info("Run 'gitgo user login' to reload your key.")
+    else:
+        warning("Commit signing is on but no GPG key is configured.")
+        warning("Disabling global commit signing to prevent failures.")
 
     try:
         run_command(["git", "config", "--global", "--unset", "gpg.program"])
     except GitCommandError:
         pass
-    
+
     try:
         run_command(["git", "config", "--global", "--unset", "commit.gpgsign"])
     except GitCommandError:
         pass
-    
-

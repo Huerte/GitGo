@@ -169,7 +169,7 @@ def test_ensure_ssh_agent_windows_failure(mocker):
     assert fake_try.call_count == 2
     fake_sub.assert_called_once_with(["sc", "start", "ssh-agent"], capture_output=True, timeout=5)
     assert fake_warning.call_count == 1
-    assert fake_info.call_count == 3
+    assert fake_info.call_count == 4
 
 
 def test_ensure_ssh_agent_linux_failure(mocker):
@@ -192,7 +192,7 @@ def test_generate_ssh_key_exists_and_declined(mocker):
 
     with pytest.raises(GitGoError) as exc_info:
         generate_ssh_key("test@example.com")
-    assert "SSH key generation aborted" in str(exc_info.value)
+    assert "SSH key generation canceled" in str(exc_info.value)
 
 
 def test_generate_ssh_key_exists_and_accepted(mocker):
