@@ -188,6 +188,9 @@ def _download_and_extract_template(template_slug, target_dir):
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             zip_data = response.read()
+    except KeyboardInterrupt:
+        spinner.stop()
+        raise
     except urllib.error.HTTPError as e:
         if e.code == 404:
             spinner.text = f"Template '{template_slug}' not found on GitHub."
@@ -225,6 +228,9 @@ def _download_and_extract_template(template_slug, target_dir):
                         out.write(src.read())
         spinner.text = "Template extracted successfully."
         spinner.ok("✔")
+    except KeyboardInterrupt:
+        spinner.stop()
+        raise
     except Exception as e:
         spinner.text = f"Failed to extract template: {e}"
         spinner.fail("✖")
