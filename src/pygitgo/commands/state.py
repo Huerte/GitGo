@@ -211,15 +211,7 @@ def delete_state(identifier=None):
 
 def state_operation(args):
     ensure_inside_git_repository()
-    alias = getattr(args, "action_alias", None)
-    positional = getattr(args, "action", None)
-
-    if alias and positional and alias != positional:
-        raise GitGoError(
-            f"Conflicting actions: '{positional}' and '{alias}'. Use one or the other."
-        )
-
-    action = alias or positional
+    action = getattr(args, "action", None)
     identifier = getattr(args, "identifier", None)
 
     if getattr(args, "all", False):
@@ -230,7 +222,7 @@ def state_operation(args):
         identifier = "-a"
 
     if not action:
-        raise GitGoError("Missing action. Use: list, save, load, delete (or -l, -s, -o, -d).")
+        raise GitGoError("Missing action. Use one of: list, save, load, delete.")
 
     if action == "list":
         state_list()
@@ -241,4 +233,4 @@ def state_operation(args):
     elif action == "delete":
         delete_state(identifier)
     else:
-        raise GitGoError(f"Unknown state operation: {action}")
+        raise GitGoError(f"Unknown state action: {action}")

@@ -145,6 +145,7 @@ def test_git_push_convert_https_to_ssh(mocker):
     )
 
     mocker.patch('pygitgo.commands.git_core.is_ssh_url', return_value=False)
+    mocker.patch('pygitgo.commands.git_core.get_remote_host', return_value='github.com')
     mocker.patch('pygitgo.commands.git_core.check_connection', return_value=True)
     mocker.patch('pygitgo.commands.git_core.convert_https_to_ssh', return_value=url)
 
@@ -152,17 +153,37 @@ def test_git_push_convert_https_to_ssh(mocker):
     git_push(branch)
 
     fake_run.assert_any_call(
-        ["git", "remote", "set-url", "origin", url], 
-        loading_msg="Converting remote from HTTPS to SSH for secure push...",
+        ["git", "remote", "set-url", "origin", url],
+        loading_msg="Converting remote from HTTPS to SSH...",
         ok_text=f"Remote updated to: {url}"
     )
 
     fake_run.assert_called_with(
-        ["git", "push", "-u", "origin", branch], 
+        ["git", "push", "-u", "origin", branch],
         loading_msg=f"Pushing to remote branch '{branch}'...",
         ok_text=f"Pushed to remote branch '{branch}'.",
         err_text="Push failed: verify your remote URL and SSH key, then try again."
     )
+
+
+def test_git_push_non_github_host_skips_conversion(mocker):
+    """For non-GitHub hosts (e.g. Gitea), HTTPS URL is kept as-is."""
+    url = 'https://git.mycompany.com/user/repo.git'
+    fake_run = mocker.patch(
+        'pygitgo.commands.git_core.run_command',
+        side_effect=[url, None]
+    )
+
+    mocker.patch('pygitgo.commands.git_core.is_ssh_url', return_value=False)
+    mocker.patch('pygitgo.commands.git_core.get_remote_host', return_value='git.mycompany.com')
+    mocker.patch('pygitgo.commands.git_core.check_connection', return_value=True)
+    mock_convert = mocker.patch('pygitgo.commands.git_core.convert_https_to_ssh')
+
+    branch = 'main'
+    git_push(branch)
+
+    # convert_https_to_ssh must NOT be called for non-GitHub hosts
+    mock_convert.assert_not_called()
 
 def test_git_commit_skip_staging_does_not_run_git_add(mocker):
     mocker.patch("pygitgo.commands.git_core._get_signing_flags", return_value=[])
@@ -265,6 +286,7 @@ def test_get_signing_flags(mocker):
     flags = _get_signing_flags()
     assert len(flags) > 0
 
+    # When key file does not exist, no flags returned.
     mock_path.exists.return_value = False
     assert _get_signing_flags() == []
 

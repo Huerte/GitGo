@@ -225,19 +225,16 @@ def test_state_operation_delete_with_id(mocker):
     state_operation(_state_args(action="delete", identifier="1"))
     mock_delete.assert_called_once_with("1")
 
-def test_state_operation_alias_list(mocker):
-    mock_list = mocker.patch("pygitgo.commands.state.state_list")
-    state_operation(_state_args(action_alias="list"))
-    mock_list.assert_called_once()
+def test_state_operation_alias_no_longer_supported(mocker):
+    """Letter aliases were removed. Passing only action_alias raises GitGoError."""
+    with pytest.raises(GitGoError, match="Missing action"):
+        state_operation(_state_args(action_alias="list"))
+
 
 def test_state_operation_delete_all_via_flag(mocker):
     mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
     state_operation(_state_args(action="delete", all=True))
     mock_delete.assert_called_once_with("-a")
-
-def test_state_operation_conflicting_actions():
-    with pytest.raises(GitGoError, match="Conflicting actions"):
-        state_operation(_state_args(action="list", action_alias="save"))
 
 def test_state_operation_all_flag_requires_delete():
     with pytest.raises(GitGoError, match="-a/--all flag is only valid"):
@@ -330,5 +327,5 @@ def test_delete_state_specific_id_fails(mocker):
 
 def test_state_operation_unknown_action(mocker):
     args = _state_args(action="unknown")
-    with pytest.raises(GitGoError, match="Unknown state operation"):
+    with pytest.raises(GitGoError, match="Unknown state action"):
         state_operation(args)

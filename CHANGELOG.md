@@ -10,16 +10,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added robust Unicode print fallback for `show_banner` to prevent crashes on legacy Windows terminals.
+- Added `is_agent_loaded(key_path)` to check if an SSH key is currently held by the SSH agent.
+- Added `get_remote_host(url)` to extract the hostname from any SSH or HTTPS remote URL.
 
 ### Fixed
 - Fixed target directory lock issues on Windows inside `gitgo init` on scaffolding failures by returning to the original directory before cleanup.
 - Safely handle non-git repository executions in `gitgo` banner by displaying human-readable status instead of throwing exception tracebacks.
 - Added git repository validation across commands (`push`, `pull`, `state`, `undo`, `resolve`) to output friendly error messages when executed outside a git repository.
 - Fixed misleading success banners from appearing when `pull` or `sync` operations did not actually fetch any new commits.
+- Fixed `gitgo push` silently failing with authentication errors on private Gitea and GitLab servers. HTTPS remotes on non-GitHub hosts are no longer converted to SSH, letting the user's existing HTTPS credentials work.
+- Fixed commit signing configuration checking in `sanitize_signing_config` to verify the SSH key file exists on disk, disabling commit signing gracefully if it is missing to prevent failures.
+- Fixed `gitgo push` with no arguments only showing one of the two default values. Both the default branch and the default commit message are now shown before anything happens.
+- Fixed `gitgo state` letter aliases (`-l`, `-s`, `-o`, `-d`) causing confusion for new users. The aliases are removed. Use the full action words: `list`, `save`, `load`, `delete`.
 
 ### Changed
 - Expanded and cleaned test suite coverage (now at 93% total coverage) across commands and utility modules with clean, uncommented test cases.
 - Unified banner box borders to be consistently green across all CLI outputs.
+- Rewrote all CLI help text for `push`, `sync`, `link`, `jump`, `resolve`, `undo`, and `state` in plain English that is clear to users who are new to Git or non-native English speakers.
+- `ensure_known_host` is now host-aware and works for any server. The existing `ensure_github_known_host` alias is kept for backward compatibility.
+- `convert_https_to_ssh` now matches any hostname, not just `github.com`.
+- Updated `README.md`: documented the both-defaults behavior for `gitgo push`, removed state aliases from docs, updated descriptions for `sync`, `link`, `jump`, `resolve`, and `undo`.
 
 ---
 

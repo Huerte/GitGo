@@ -3,6 +3,7 @@ from pygitgo.utils.cli_io import info, success, warning
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pathlib import Path
+from typing import Optional
 import subprocess
 import time
 import os
@@ -15,36 +16,56 @@ _cached_ssh_response = None
 _cache_populated = False
 
 
-def ensure_github_known_host():
+def get_remote_host(url: str) -> Optional[str]:
+    """Return the hostname from an SSH or HTTPS remote URL."""
+    url = url.strip()
+    # git@host:owner/repo.git
+    ssh_match = re.match(r"git@([^:]+):", url)
+    if ssh_match:
+        return ssh_match.group(1)
+    # https://host/owner/repo or http://host/owner/repo
+    https_match = re.match(r"https?://([^/]+)", url)
+    if https_match:
+        return https_match.group(1)
+    return None
+
+
+def ensure_known_host(host: str = "github.com"):
+    """Add a host to known_hosts if it is not already there."""
     known_hosts = Path.home() / ".ssh" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         if known_hosts.exists():
             with open(known_hosts, "r") as f:
-                if "github.com" in f.read():
-                    return 
+                if host in f.read():
+                    return
     except Exception:
         pass
 
-    info("Adding GitHub to known_hosts...")
+    info(f"Adding {host} to known_hosts...")
     try:
-        result = run_command(["ssh-keyscan", "-H", "github.com"], return_complete=True)
-    
-        if result.stdout and "github.com" in result.stdout:
+        result = run_command(["ssh-keyscan", "-H", host], return_complete=True)
+        if result.stdout and host in result.stdout:
             with open(known_hosts, "a") as f:
                 f.write(result.stdout)
                 if not result.stdout.endswith("\n"):
                     f.write("\n")
-            success("GitHub added to known_hosts.")
+            success(f"{host} added to known_hosts.")
     except GitCommandError:
-        warning("Could not automatically add GitHub to known_hosts. You might be prompted.")
+        warning(f"Could not automatically add {host} to known_hosts. You might be prompted.")
 
 
-def _get_github_ssh_response():
+# Keep the old name so existing callers do not break.
+def ensure_github_known_host():
+    ensure_known_host("github.com")
+
+
+def _get_ssh_response(host: str = "github.com"):
+    """Test SSH connectivity to the given host."""
     try:
         result = subprocess.run(
-            ["ssh", "-T", "-o", "BatchMode=yes", "git@github.com"],
+            ["ssh", "-T", "-o", "BatchMode=yes", f"git@{host}"],
             capture_output=True, text=True,
             timeout=SSH_TIMEOUT_SECONDS, stdin=subprocess.DEVNULL,
         )
@@ -54,6 +75,11 @@ def _get_github_ssh_response():
         return "", True, None
     except OSError as e:
         return "", False, str(e)
+
+
+# Keep module-level cache for GitHub only (used by login flow).
+def _get_github_ssh_response():
+    return _get_ssh_response("github.com")
 
 
 def _get_cached_ssh_response():
@@ -69,47 +95,55 @@ def clear_ssh_cache():
     _cached_ssh_response = None
     _cache_populated = False
 
-from typing import Optional
+
 def classify_connection_error(raw_output: str, timed_out: bool, os_error: Optional[str]) -> str:
-    """Return a specific, human-readable cause string based on the SSH response."""
+    """Return a short, plain-English reason for a connection failure."""
     if timed_out:
-        return "Connection timed out. GitHub SSH port (22) may be blocked by your network or firewall."
+        return "Connection timed out. Port 22 may be blocked by your network or firewall."
     if os_error:
-        return f"Could not launch the SSH client: {os_error}"
+        return f"Could not start SSH: {os_error}"
     if not raw_output:
-        return "No response from GitHub. Check your internet connection."
+        return "No response from the server. Check your internet connection."
     if "Permission denied" in raw_output:
-        return "Permission denied. The SSH key has not been added to your GitHub account, or it was added incorrectly."
+        return "Permission denied. Your SSH key was not accepted by the server."
     if "Connection refused" in raw_output:
         return "Connection refused on port 22. Try a network without strict firewall rules."
     if "Host key verification failed" in raw_output:
-        return "Host key verification failed. Run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+        return "Host key check failed. Run: ssh-keyscan -H <host> >> ~/.ssh/known_hosts"
     if "Could not resolve hostname" in raw_output:
-        return "DNS lookup failed. You may be offline or behind a restrictive proxy."
-    # Return the raw SSH message so users see the actual problem.
+        return "DNS lookup failed. You may be offline or behind a proxy."
     return raw_output.strip() or "Unknown SSH error."
 
 
-def check_connection(ok_text=None, fail_text=None):
+def check_connection(ok_text=None, fail_text=None, host: str = "github.com"):
+    """Check SSH connectivity to a given host. Defaults to github.com."""
     from yaspin import yaspin
     import sys
 
-    ensure_github_known_host()
+    ensure_known_host(host)
 
-    kwargs = {"text": "Verifying GitHub connection..."}
+    kwargs = {"text": f"Checking connection to {host}..."}
     if sys.stdout.isatty():
         kwargs["color"] = "cyan"
     spinner = yaspin(**kwargs)
     spinner.start()
 
-    raw_output, timed_out, os_error = _get_cached_ssh_response()
-    connected = not timed_out and not os_error and "successfully authenticated" in raw_output
+    if host == "github.com":
+        raw_output, timed_out, os_error = _get_cached_ssh_response()
+    else:
+        raw_output, timed_out, os_error = _get_ssh_response(host)
+
+    connected = (
+        not timed_out
+        and not os_error
+        and "successfully authenticated" in raw_output
+    )
 
     if connected:
-        spinner.text = ok_text or "GitHub connection verified."
+        spinner.text = ok_text or f"Connected to {host}."
         spinner.ok("✔")
     else:
-        spinner.text = fail_text or "Could not connect to GitHub."
+        spinner.text = fail_text or f"Could not connect to {host}."
         spinner.fail("✖")
 
     return connected
@@ -124,21 +158,39 @@ def get_github_username():
             pass
     return None
 
+
 def get_ssh_key_path():
     return Path.home() / ".ssh" / "id_ed25519"
+
+
+def is_agent_loaded(key_path: Path) -> bool:
+    """Return True if the given key is currently loaded in the SSH agent."""
+    try:
+        result = subprocess.run(
+            ["ssh-add", "-l"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0 and result.stdout:
+            # Check by key file path or by fingerprint presence.
+            key_str = str(key_path)
+            return key_str in result.stdout
+        return False
+    except Exception:
+        return False
+
 
 def generate_ssh_key(email):
     if not email or "@" not in email or "." not in email:
         raise GitGoError("Invalid email address provided for SSH key generation.")
-    
+
     key_path = get_ssh_key_path()
     if not key_path.parent.exists():
         key_path.parent.mkdir(parents=True)
-    
+
     if key_path.exists():
         from pygitgo.utils.cli_io import confirm
         if not confirm(f"SSH key {key_path} already exists. Overwrite it? (y/n): ", destructive=True):
-            raise GitGoError("SSH key generation aborted. Please back up your existing key or configure it manually.")
+            raise GitGoError("SSH key generation canceled. Back up your existing key or configure it manually.")
         os.remove(key_path)
     if (key_path.parent / f"{key_path.name}.pub").exists():
         os.remove(key_path.parent / f"{key_path.name}.pub")
@@ -155,29 +207,32 @@ def generate_ssh_key(email):
         run_command(command=command)
     except GitCommandError as e:
         raise GitGoError(
-            "\nFailed to generate SSH key. Is 'ssh-keygen' installed on your system?\n"
+            "\nFailed to generate SSH key. Is 'ssh-keygen' installed?\n"
             f"Details: {e}"
         )
-    
+
     ensure_ssh_agent(key_path, quiet=True)
-    
+
     return key_path
 
 
-def convert_https_to_ssh(url):    
-    pattern = r'^https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$'
-    match = re.match(pattern, url.strip())
-    
+def convert_https_to_ssh(url: str) -> Optional[str]:
+    """Convert an HTTPS remote URL to SSH format. Works for any hostname."""
+    url = url.strip()
+    # Match https://host/owner/repo or https://host/owner/repo.git
+    pattern = r"^https?://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?/?$"
+    match = re.match(pattern, url)
     if match:
-        owner = match.group(1)
-        repo = match.group(2)
-        return f"git@github.com:{owner}/{repo}.git"
-    
+        host = match.group(1)
+        owner = match.group(2)
+        repo = match.group(3)
+        return f"git@{host}:{owner}/{repo}.git"
     return None
 
 
 def is_ssh_url(url):
     return url.strip().startswith("git@")
+
 
 def _try_ssh_add(key_path):
     try:
@@ -186,10 +241,11 @@ def _try_ssh_add(key_path):
     except (GitCommandError, OSError):
         return False
 
+
 def ensure_ssh_agent(key_path, quiet=False):
     if _try_ssh_add(key_path):
         return True
-    
+
     if get_platform() == "windows":
         try:
             subprocess.run(
@@ -203,12 +259,13 @@ def ensure_ssh_agent(key_path, quiet=False):
 
         if _try_ssh_add(key_path):
             return True
-        
+
         if not quiet:
             warning("SSH agent is not running. Key may not persist across sessions.")
-            info("To fix this permanently, run in PowerShell (as Administrator):")
+            info("To fix this, run PowerShell as Administrator and type:")
             info("  Set-Service ssh-agent -StartupType Automatic")
             info("  Start-Service ssh-agent")
+            info("Then run 'gitgo user login' again.")
 
     else:
         if not quiet:
@@ -216,4 +273,3 @@ def ensure_ssh_agent(key_path, quiet=False):
             info("Run:  eval $(ssh-agent) && ssh-add")
 
     return False
-    

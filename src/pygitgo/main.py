@@ -71,20 +71,20 @@ def main():
 
     jump_parser = _add_subcommand(
         subparsers,
-        "jump", 
-        help="Safely switch branches with try-and-revert",
+        "jump",
+        help="Switch to another branch, saving your current work automatically if needed",
         epilog="Examples:\n  gitgo jump feature/login          Switch to 'feature/login' branch"
     )
     jump_parser.add_argument("branch", help="The name of the branch to jump to")
 
     link_parser = _add_subcommand(
         subparsers,
-        "link", 
-        help="Init, commit, and link to a remote repo",
+        "link",
+        help="Connect a local project to a remote repository (initializes if needed)",
         epilog=(
             "Examples:\n"
-            "  gitgo link https://github.com/user/repo.git               Link to a remote repo\n"
-            "  gitgo link https://github.com/user/repo.git 'First commit' Link with custom commit message"
+            "  gitgo link https://github.com/user/repo.git               Connect to a remote repo\n"
+            "  gitgo link https://github.com/user/repo.git 'First commit' Connect with a custom first commit message"
         )
     )
     link_parser.add_argument("url", help="The GitHub repository URL to link")
@@ -93,12 +93,13 @@ def main():
     push_parser = _add_subcommand(
         subparsers,
         "push",
-        help="Commit and push branch to remote",
+        help="Commit and push changes to remote",
         epilog=(
             "Examples:\n"
-            "  gitgo push                        Push current branch with default message\n"
-            "  gitgo push main 'fix auth bug'    Push to main with a custom message\n"
+            "  gitgo push                        Push current branch using defaults (shows which defaults are used)\n"
+            "  gitgo push main 'fix auth bug'    Push to 'main' with a specific message\n"
             "  gitgo push 'fix auth bug'         Push current branch with a custom message\n"
+            "                                    (a single argument that is not a branch name is treated as the message)\n"
             "  gitgo push -n feature/login 'add login'   Create new branch and push\n"
             "  gitgo push -s main 'fix bug'      Pick which files to include before pushing"
         )
@@ -111,14 +112,14 @@ def main():
     state_parser = _add_subcommand(
         subparsers,
         "state",
-        help="Manage saved working states (stashes)",
+        help="Temporarily save and restore your work-in-progress",
         epilog=(
             "Examples:\n"
-            "  gitgo state list                  Show all saved states\n"
+            "  gitgo state list                  Show all saved snapshots\n"
             "  gitgo state save 'halfway done'   Save current work with a name\n"
-            "  gitgo state load 1                Restore state by ID\n"
-            "  gitgo state delete 1              Delete a specific state\n"
-            "  gitgo state delete -a             Delete all saved states"
+            "  gitgo state load 1                Restore a snapshot by its number\n"
+            "  gitgo state delete 1              Delete a specific snapshot\n"
+            "  gitgo state delete -a             Delete all snapshots"
         )
     )
     state_parser.add_argument(
@@ -133,18 +134,12 @@ def main():
         "identifier",
         nargs="?",
         default=None,
-        help="Optional name or ID"
+        help="Optional name or number"
     )
-    _alias_group = state_parser.add_mutually_exclusive_group()
-    _alias_group.add_argument("-l", dest="action_alias", action="store_const", const="list",   help="Alias for 'list'")
-    _alias_group.add_argument("-s", dest="action_alias", action="store_const", const="save",   help="Alias for 'save'")
-    _alias_group.add_argument("-o", dest="action_alias", action="store_const", const="load",   help="Alias for 'load'")
-    _alias_group.add_argument("-d", dest="action_alias", action="store_const", const="delete", help="Alias for 'delete'")
-
     state_parser.add_argument(
         "-a", "--all",
         action="store_true",
-        help="Apply action to all states (e.g., delete all)"
+        help="Apply action to all snapshots (for example: delete all)"
     )
     
     user_parser = _add_subcommand(
@@ -176,22 +171,22 @@ def main():
 
     undo_parser = _add_subcommand(
         subparsers,
-        "undo", 
-        help="Safely undo mistakes", 
+        "undo",
+        help="Safely undo mistakes",
         epilog=(
             "Examples:\n"
-            "  gitgo undo commit       Undo your last commit (your files are safe)\n"
+            "  gitgo undo commit       Undo your last commit (your files stay safe)\n"
             "  gitgo undo add          Undo 'git add' (files are no longer ready to commit)\n"
-            "  gitgo undo changes      DANGER: Throw away all new changes and start fresh\n"
-            "  gitgo undo link         Remove the remote and undo the initial commit\n"
-            "  gitgo undo push         DANGER: Revert the last push with a force-push\n"
-            "  gitgo undo pull         Revert the branch to its state before the last pull"
+            "  gitgo undo changes      DANGER: Throw away all new changes permanently\n"
+            "  gitgo undo link         Remove the remote and undo the first commit\n"
+            "  gitgo undo push         DANGER: Undo the last push with a force-push\n"
+            "  gitgo undo pull         Revert the branch to how it was before the last pull"
         )
     )
     undo_parser.add_argument(
-        "action", 
-        choices=["commit", "add", "changes", "link", "push", "pull"], 
-        help="What to undo: 'commit', 'add', 'changes', 'link', 'push', or 'pull'"
+        "action",
+        choices=["commit", "add", "changes", "link", "push", "pull"],
+        help="What to undo: 'commit', 'add', 'changes' (destructive), 'link', 'push' (destructive), or 'pull'"
     )
 
     pull_parser = _add_subcommand(
@@ -208,13 +203,13 @@ def main():
 
     resolve_parser = _add_subcommand(
         subparsers,
-        "resolve", 
-        help="Resolve a paused sync after fixing a merge conflict",
-        description="Automatically stages your resolved files and finishes the active merge conflict, bypassing the text editor.",
+        "resolve",
+        help="Finish a merge conflict after you have fixed the files",
+        description="Run this after you fix the conflicting lines in your files. GitGo will stage the fixed files and complete the merge automatically.",
         epilog=(
             "Examples:\n"
-            "  gitgo resolve                     Finish merge conflict after fixing files\n"
-            "  gitgo resolve --abort             Cancel the merge/rebase and revert to pre-pull state"
+            "  gitgo resolve                     Finish a merge conflict after fixing your files\n"
+            "  gitgo resolve --abort             Cancel and go back to how things were before the conflict"
         )
     )
     resolve_parser.add_argument("--abort", action="store_true", help="Abort the current merge/rebase and revert to the pre-pull state")
@@ -351,10 +346,10 @@ def main():
     sync_parser = _add_subcommand(
         subparsers,
         "sync",
-        help="Download updates, save your work, and upload in one step (pull, commit, push)",
+        help="Pull the latest changes, commit your work, and push, all at once",
         epilog=(
             "Examples:\n"
-            "  gitgo sync                        Sync with default commit message\n"
+            "  gitgo sync                        Sync with the default commit message\n"
             "  gitgo sync 'Fix navbar'           Sync and commit with a custom message\n"
         )
     )

@@ -100,7 +100,11 @@ def push_operation(args):
 
         if not message:
             message = get_config("default-message", "chore: new changes applied")
-            info(f"No commit message provided. Using default: '{message}'\n")
+            if not args.branch:  # no arguments at all
+                info(f"No branch given. Using: '{branch}'")
+                info(f"No commit message given. Using: '{message}'\n")
+            else:
+                info(f"No commit message given. Using: '{message}'\n")
 
         if select:
             files = get_changed_files()

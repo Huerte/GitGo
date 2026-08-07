@@ -75,29 +75,31 @@ def sanitize_signing_config():
         gpgsign = run_command(["git", "config", "--global", "commit.gpgsign"]).strip().lower()
     except GitCommandError:
         return
-    
+
     if gpgsign != "true":
         return
-    
+
     try:
         fmt = run_command(["git", "config", "--global", "gpg.format"]).strip().lower()
     except GitCommandError:
         fmt = ""
 
     if fmt == "ssh":
-        return
-    
-    warning("Detected 'commit.gpgsign=true' with no GPG key configured.")
-    warning("Disabling global GPG signing to prevent commit failures.")
+        from pygitgo.auth.ssh_utils import get_ssh_key_path
+        key_path = get_ssh_key_path()
+        if key_path.exists():
+            return
+        warning("SSH signing key file not found. Disabling commit signing to prevent failures.")
+    else:
+        warning("Commit signing is on but no GPG key is configured.")
+        warning("Disabling global commit signing to prevent failures.")
 
     try:
         run_command(["git", "config", "--global", "--unset", "gpg.program"])
     except GitCommandError:
         pass
-    
+
     try:
         run_command(["git", "config", "--global", "--unset", "commit.gpgsign"])
     except GitCommandError:
         pass
-    
-

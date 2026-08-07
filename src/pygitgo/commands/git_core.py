@@ -1,4 +1,4 @@
-from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection
+from pygitgo.auth.ssh_utils import convert_https_to_ssh, get_ssh_key_path, is_ssh_url, check_connection, get_remote_host
 from pygitgo.exceptions import GitGoError, GitCommandError
 from pygitgo.auth.account import sanitize_signing_config
 from pygitgo.commands.git_remote import handle_rebase
@@ -84,7 +84,6 @@ def _get_signing_flags():
     ]
 
 
-
 def git_commit(commit_message, loading_msg="Committing changes...", skip_staging=False, ok_text=None):
     if not ok_text:
         ok_text = "Changes committed."
@@ -139,10 +138,22 @@ def git_push(branch, ok_text=None):
     except GitCommandError:
         remote_url = None
 
-    if remote_url and not is_ssh_url(remote_url) and check_connection():
-        ssh_url = convert_https_to_ssh(remote_url)
-        if ssh_url:
-            run_command(["git", "remote", "set-url", "origin", ssh_url], loading_msg="Converting remote from HTTPS to SSH for secure push...", ok_text=f"Remote updated to: {ssh_url}")
+    if remote_url and not is_ssh_url(remote_url):
+        # Only attempt SSH conversion if the remote host is github.com and
+        # GitHub SSH is working. For other hosts (Gitea, GitLab, etc.) we
+        # leave the URL as-is so HTTPS credentials are used instead.
+        remote_host = get_remote_host(remote_url)
+        if remote_host == "github.com" and check_connection():
+            ssh_url = convert_https_to_ssh(remote_url)
+            if ssh_url:
+                run_command(
+                    ["git", "remote", "set-url", "origin", ssh_url],
+                    loading_msg="Converting remote from HTTPS to SSH...",
+                    ok_text=f"Remote updated to: {ssh_url}"
+                )
+        elif remote_host and remote_host != "github.com":
+            from pygitgo.utils.cli_io import info as _info
+            _info(f"Remote host is '{remote_host}'. Keeping HTTPS URL (SSH conversion is for GitHub only).")
 
     try:
         run_command(["git", "push", "-u", "origin", branch], loading_msg=f"Pushing to remote branch '{branch}'...", ok_text=ok_text, err_text="Push failed: verify your remote URL and SSH key, then try again.")
