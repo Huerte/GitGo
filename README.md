@@ -8,6 +8,7 @@
 [![Codecov](https://codecov.io/gh/Huerte/GitGo/branch/main/graph/badge.svg)](https://codecov.io/gh/Huerte/GitGo)
 [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/pygitgo?color=blue)](https://pypi.org/project/pygitgo)
+[![Winget](https://img.shields.io/badge/winget-Huerte.GitGo-blue?logo=windows&logoColor=white)](https://github.com/microsoft/winget-pkgs/tree/master/manifests/h/Huerte/GitGo)  
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/Huerte?label=Sponsor&logo=github&color=EA4AAA)](https://github.com/sponsors/Huerte)
@@ -86,7 +87,7 @@ gitgo new my-app python
 
 ### Prerequisites
 
-- **Python 3.8+**
+- **Python 3.8+**: not required if installing via winget or the standalone executable
 - **Git 2.x+**: [git-scm.com](https://git-scm.com)
 - **OpenSSH**: required for `gitgo user login` (pre-installed on most systems)
 - A **GitHub account**: only required for `gitgo repo` and `gitgo new`, which create the remote repo for you through GitHub's API. Every other command works with any Git remote, GitHub or not.
@@ -97,7 +98,19 @@ The install scripts create an isolated Python virtual environment in `~/.gitgo/v
 
 #### Windows
 
-Open PowerShell and run:
+**Via winget** (Windows 10 1709+ / Windows 11):
+
+```powershell
+winget install gitgo
+```
+
+This installs a standalone executable. No Python needed, and updates are one line:
+
+```powershell
+winget upgrade gitgo
+```
+
+**Via install script** (requires Python 3.8+):
 
 ```powershell
 irm https://raw.githubusercontent.com/Huerte/GitGo/main/install.ps1 | iex
