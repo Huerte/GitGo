@@ -14,6 +14,7 @@ Find your symptom in the table below and jump straight to that section.
 
 | What you're seeing | Go to |
 |---|---|
+| `winget install gitgo` fails with multiple matches | [winget install fails with multiple matches](#winget-install-fails-with-multiple-matches) |
 | Typed `gitgo` and got "command not found" | [`gitgo` command not found](#gitgo-command-not-found) |
 | Typed `git` and got "command not found" | [`git` command not found](#git-command-not-found) |
 | `pip install pygitgo` failed with a Python version error | [pip install fails due to Python version](#pip-install-fails-due-to-python-version) |
@@ -37,6 +38,52 @@ Not sure which instructions to follow? Here's how to check.
 **Linux:** Open your terminal. Run `uname`. If it says `Linux`, you're on Linux.
 
 **Termux (Android):** If you're using the Termux app on Android, follow the Linux instructions unless a Termux-specific note is shown.
+
+---
+
+## winget install fails with multiple matches
+
+> This section applies to Windows only, since winget is Windows-specific.
+
+**What you see:**
+
+```
+Multiple packages found matching input criteria. Please refine the input.
+```
+
+**What happened:**
+
+`gitgo` is a short search term, and winget matches it against names and monikers across every package in the catalog, not just GitGo. If another package happens to share that term, winget can't tell which one you mean and asks you to be more specific.
+
+---
+
+### Fix: use the full package identifier
+
+```powershell
+winget install Huerte.GitGo
+```
+
+This is GitGo's exact identifier in the winget catalog. It's unique, so this always installs the right package regardless of what else matches `gitgo`.
+
+---
+
+### Verify
+
+```powershell
+gitgo -r
+```
+
+---
+
+### Still not working?
+
+Confirm the install actually went through:
+
+```powershell
+winget list Huerte.GitGo
+```
+
+If it shows up with a version number, GitGo is installed and the terminal just needs a restart to pick up the PATH change. If it shows nothing, try the install command again and check for an error above the "multiple matches" line, since something earlier in the output may point to the real cause.
 
 ---
 
