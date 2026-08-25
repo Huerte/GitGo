@@ -11,20 +11,25 @@
 [![Winget](https://img.shields.io/badge/winget-Huerte.GitGo-blue?logo=windows&logoColor=white)](https://github.com/microsoft/winget-pkgs/tree/master/manifests/h/Huerte/GitGo)  
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/Huerte?label=Sponsor&logo=github&color=EA4AAA)](https://github.com/sponsors/Huerte)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/Huerte?label=Sponsor&logo=github&color=EA4AAA)](https://github.com/sponsors/Huerte)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/huerte)
 
 **We won't let you nuke your work by accident.** GitGo features DANGER-red prompts before destructive operations, a Try-and-Revert engine that cleanly rolls back merge conflicts, and safe `Ctrl+C` aborts to keep your code safe.
 
 [Report Bug](https://github.com/Huerte/GitGo/issues) · [Request Feature](https://github.com/Huerte/GitGo/issues)
 
-If GitGo saves you time, give it a star. If you want to go further, sponsoring helps keep it going.
+If GitGo saves you time, give it a star. If it saves you from a massive merge headache, consider buying me a coffee! ☕ Your support fuels late-night coding sessions and helps keep the tool actively maintained.
 
+<a href="https://github.com/Huerte/GitGo/stargazers">
+  <img src="https://img.shields.io/github/stars/Huerte/GitGo?style=for-the-badge&logo=github&color=E3B341&label=Star%20GitGo" alt="Star on GitHub" />
+</a>
+<a href="https://ko-fi.com/huerte">
+  <img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Buy me a coffee" />
+</a>
 <a href="https://github.com/sponsors/Huerte">
   <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-%E2%9D%A4-EA4AAA?style=for-the-badge&logo=github" alt="Sponsor on GitHub" />
 </a>
-
-</div>
 
 ---
 
