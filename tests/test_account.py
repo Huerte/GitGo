@@ -117,7 +117,7 @@ def test_sanitize_signing_config_unset_gpg_program(mocker):
     fake_warning = mocker.patch("pygitgo.auth.account.warning")
 
     sanitize_signing_config()
-
+ 
     assert fake_run.call_count == 3
     fake_run.assert_any_call(["git", "config", "--global", "commit.gpgsign"])
     fake_run.assert_any_call(["git", "config", "--global", "gpg.format"])
