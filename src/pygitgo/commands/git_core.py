@@ -16,7 +16,7 @@ def ensure_inside_git_repository():
 
 def is_git_repository():
     try:
-        run_command(["git", "rev-parse", "--is-inside-work-tree"])
+        run_command(["git", "rev-parse", "--is-inside-work-tree"], loading_msg="Checking repository...")
         return True
     except GitCommandError:
         return False
@@ -31,7 +31,11 @@ def has_local_changes():
 
 
 def is_rebase_in_progress():
-    return Path(".git/rebase-merge").exists() or Path(".git/rebase-apply").exists()
+    try:
+        git_dir = run_command(["git", "rev-parse", "--git-dir"]).strip()
+        return Path(git_dir).joinpath("rebase-merge").exists() or Path(git_dir).joinpath("rebase-apply").exists()
+    except GitCommandError:
+        return False
 
 
 def has_any_commits():
@@ -105,7 +109,13 @@ def git_commit(commit_message, loading_msg="Committing changes...", skip_staging
     clean_message = commit_message.strip('"\'')
 
     signing_flags = _get_signing_flags()
-    commit_command = ["git"] + signing_flags + ["commit", "-S", "-m", clean_message]
+    
+    commit_command = ["git"]
+    if signing_flags:
+        commit_command.extend(signing_flags + ["commit", "-S", "-m", clean_message])
+    else:
+        commit_command.extend(["commit", "-m", clean_message])
+        
     run_command(commit_command, loading_msg=loading_msg, ok_text=ok_text)
 
     return True

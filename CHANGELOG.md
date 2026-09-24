@@ -10,6 +10,22 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.10.4] - 2026-09-24
+
+### Added
+- `gitgo pull` now checks if the remote branch exists before pulling, failing gracefully if you haven't pushed it yet.
+
+### Changed
+- Commit signing is now optional. If your SSH key is missing, GitGo disables signing locally so you can still commit your code.
+- GitHub tokens are now hidden as you type them when creating remote repositories.
+
+### Fixed
+- Fixed messy error traces when pressing `Ctrl+C` (KeyboardInterrupt) during `gitgo pull`, `gitgo sync`, and `gitgo resolve`. They now clean up properly.
+- Fixed `gitgo init` not returning to your original directory if initialization fails.
+- Fixed `gitgo state delete --all` flags and terminal prompts for managing saved states.
+
+---
+
 ## [1.10.3] - 2026-08-07
 
 ### Fixed

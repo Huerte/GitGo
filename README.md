@@ -355,7 +355,7 @@ If there are no new changes but unpushed commits exist, GitGo detects this and p
 
 ### `gitgo pull`
 
-Pulls updates from the remote. Stashes any uncommitted work first, runs a rebase pull, then pops the stash.
+Pulls updates from the remote. Stashes any uncommitted work first, checks if the remote branch exists, runs a rebase pull, then pops the stash.
 
 ```bash
 gitgo pull             # Pull updates for the current branch
@@ -456,7 +456,7 @@ gitgo -r        # verify GitGo is ready
 
 ## How It Works
 
-- **SSH Auto-Setup & Signing:** `gitgo user login` generates an `ed25519` SSH key and prompts you to add it to GitHub twice (for authentication and signing). GitGo then injects temporary `-c` flags into every commit to automatically sign them with this key, without touching your global git config.
+- **SSH Auto-Setup & Signing:** `gitgo user login` generates an `ed25519` SSH key and prompts you to add it to GitHub twice (for authentication and signing). GitGo then injects temporary `-c` flags into every commit to automatically sign them with this key, without touching your global git config. If your key is missing, GitGo gracefully disables signing locally so your commits still go through.
 - **HTTPS to SSH Conversion:** If your remote is set to HTTPS and SSH is configured, GitGo rewrites the remote before pushing. No `git remote set-url` required.
 - **Auto-Update Checker:** Spawns a non-blocking background thread on startup to query PyPI for newer versions. Results are cached locally for 7 days to prevent unnecessary network requests.
 - **Termux Compatibility:** Detects Termux via environment variables, adjusts binary locations (`$PREFIX/bin`), uses `termux-open` for browser actions, and patches the `detected dubious ownership` Git error.

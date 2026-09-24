@@ -74,7 +74,7 @@ def test_is_branch_exist_false(mocker):
 
 def test_get_current_branch_detached_head(mocker):
     mocker.patch("pygitgo.commands.git_branch.run_command", side_effect=["", "abcdef0"])
-    assert get_current_branch(safe=False) == "abcdef0"
+    assert get_current_branch(safe=False) == "detached HEAD (abcdef0)"
 
 def test_get_current_branch_detached_head_safe_confirm_yes(mocker):
     mocker.patch("pygitgo.commands.git_branch.run_command", side_effect=["", "abcdef0", ""])

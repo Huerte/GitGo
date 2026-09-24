@@ -18,6 +18,14 @@ def undo_commit():
 
 
 def undo_add():
+    try:
+        staged = run_command(["git", "diff", "--cached", "--name-only"]).strip()
+        if not staged:
+            info("There are no staged files to unstage.")
+            return False
+    except GitCommandError:
+        pass
+
     run_command(["git", "reset", "HEAD"], loading_msg="Clearing staging area...", ok_text="Staging cleared. Files are back to unstaged.")
     return True
 

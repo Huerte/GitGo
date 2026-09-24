@@ -56,22 +56,29 @@ def sync_operation(args):
         message = get_config("default-message", "chore: new changes applied")
         info(f"No commit message provided. Using default: '{message}'\n")
 
-    if git_commit(message):
-        git_push(branch)    
-    else:
-        try:
-            if remote_exists:
-                unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"])
-            else:
-                unpushed = run_command(["git", "log", "--oneline", "HEAD"])
+    try:
+        if git_commit(message):
+            git_push(branch)    
+        else:
+            try:
+                if remote_exists:
+                    unpushed = run_command(["git", "log", "--oneline", f"origin/{branch}..HEAD"])
+                else:
+                    unpushed = run_command(["git", "log", "--oneline", "HEAD"])
 
-            if unpushed.strip():
-                info("No new changes to commit, but found unpushed commits.")
+                if unpushed.strip():
+                    info("No new changes to commit, but found unpushed commits.")
+                    git_push(branch)
+                else:
+                    info("Working tree is clean and already up to date with remote.")
+                    return
+            except GitCommandError:
                 git_push(branch)
-            else:
-                info("Working tree is clean and already up to date with remote.")
-                return
-        except GitCommandError:
-            git_push(branch)
+    except KeyboardInterrupt:
+        write()
+        warning("Sync interrupted during push (Ctrl+C).")
+        info("If a commit was made, it is saved locally.")
+        info("Run 'gitgo push' to retry pushing.")
+        sys.exit(130)
     
     banner("SYNC COMPLETE. REMOTE AND LOCAL ARE ALIGNED.", "ALL CHANGES SAVED AND PUBLISHED.")

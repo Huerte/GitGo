@@ -108,11 +108,10 @@ def test_check_for_updates_newer_version_available(mocker):
     mocker.patch("pygitgo.utils.update_checker.read_cache", return_value={})
     mocker.patch("pygitgo.utils.update_checker.write_cache")
     mocker.patch("pygitgo.utils.update_checker.get_latest_version", return_value="2.0.0")
-    fake_warning = mocker.patch("pygitgo.utils.update_checker.warning")
-    fake_info = mocker.patch("pygitgo.utils.update_checker.info")
-    check_for_updates("1.5.0")
-    fake_warning.assert_called_with("GitGo update available: 1.5.0 -> 2.0.0")
-    fake_info.assert_called_with("Run: pip install --upgrade pygitgo")
+    msg = check_for_updates("1.5.0")
+    assert msg is not None
+    assert "1.5.0 -> 2.0.0" in msg
+    assert "pip install --upgrade pygitgo" in msg
 
 
 def test_check_for_updates_older_version_on_pypi(mocker):

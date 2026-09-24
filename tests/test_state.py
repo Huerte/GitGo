@@ -138,7 +138,7 @@ def test_delete_state_all_confirm(mocker):
     fake_clear = mocker.patch("pygitgo.commands.state.git_stash_clear", return_value=True)
     fake_success = mocker.patch("pygitgo.commands.state.success")
 
-    delete_state("-a")
+    delete_state(all_states=True)
 
     fake_clear.assert_called_once()
     fake_success.assert_called_once_with("All saved states deleted.")
@@ -148,7 +148,7 @@ def test_delete_state_all_cancel(mocker):
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
     fake_info = mocker.patch("pygitgo.commands.state.info")
 
-    delete_state("-a")
+    delete_state(all_states=True)
 
     fake_info.assert_called_once_with("Delete canceled.")
 
@@ -223,7 +223,7 @@ def test_state_operation_load_with_id(mocker):
 def test_state_operation_delete_with_id(mocker):
     mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
     state_operation(_state_args(action="delete", identifier="1"))
-    mock_delete.assert_called_once_with("1")
+    mock_delete.assert_called_once_with("1", all_states=False)
 
 def test_state_operation_alias_no_longer_supported(mocker):
     """Letter aliases were removed. Passing only action_alias raises GitGoError."""
@@ -234,7 +234,7 @@ def test_state_operation_alias_no_longer_supported(mocker):
 def test_state_operation_delete_all_via_flag(mocker):
     mock_delete = mocker.patch("pygitgo.commands.state.delete_state")
     state_operation(_state_args(action="delete", all=True))
-    mock_delete.assert_called_once_with("-a")
+    mock_delete.assert_called_once_with(None, all_states=True)
 
 def test_state_operation_all_flag_requires_delete():
     with pytest.raises(GitGoError, match="-a/--all flag is only valid"):
@@ -312,7 +312,7 @@ def test_delete_state_clear_all_fails(mocker):
     mocker.patch("pygitgo.commands.state.all_save_state", return_value=[{"id": 1}])
     mocker.patch("pygitgo.commands.state.git_stash_clear", return_value=False)
     fake_error = mocker.patch("pygitgo.commands.state.error")
-    delete_state("-a")
+    delete_state(all_states=True)
     fake_error.assert_called_once_with("Failed to delete all saved states.")
 
 def test_delete_state_specific_id_fails(mocker):

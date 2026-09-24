@@ -65,31 +65,42 @@ def parse_version(version_string):
 
 
 def check_for_updates(current_version):
-    if not should_check():
-        return
-
     cache = read_cache()
+    
+    msg = None
+    notified_version = cache.get("notified_version")
+    if notified_version:
+        try:
+            if parse_version(notified_version) > parse_version(current_version):
+                from pygitgo.utils.colors import YELLOW, RESET
+                msg = f"  {YELLOW}GitGo update available:{RESET} {current_version} -> {notified_version}\n  Run: pip install --upgrade pygitgo"
+        except Exception:
+            pass
+
+    if not should_check():
+        return msg
+
     cache["last_check"] = datetime.now().isoformat()
     write_cache(cache)
 
     latest_version = get_latest_version()
     if not latest_version or latest_version == current_version:
-        return
+        return msg
 
     try:
         current_parts = parse_version(current_version)
         latest_parts = parse_version(latest_version)
 
         if latest_parts > current_parts:
-            write()
-            warning(f"GitGo update available: {current_version} -> {latest_version}")
-            info("Run: pip install --upgrade pygitgo")
-            write()
-
             cache["notified_version"] = latest_version
             write_cache(cache)
+            from pygitgo.utils.colors import YELLOW, RESET
+            msg = f"  {YELLOW}GitGo update available:{RESET} {current_version} -> {latest_version}\n  Run: pip install --upgrade pygitgo"
+            return msg
     except (ValueError, AttributeError):
         pass
+
+    return msg
 
 
 def check_for_updates_background(current_version):

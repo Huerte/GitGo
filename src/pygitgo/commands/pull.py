@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import success, warning, error, info, write
+from pygitgo.utils.cli_io import success, warning, error, info, write, banner
 from pygitgo.commands.git_core import is_rebase_in_progress, ensure_inside_git_repository
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
@@ -36,12 +36,18 @@ def pull_operation(args):
 
     try:
         try:
-            run_command(
+            ls_result = run_command(
                 ["git", "ls-remote", "--heads", "origin", branch],
                 loading_msg=f"Checking if '{branch}' exists on remote...",
-                ok_text=f"Branch '{branch}' found on remote.",
-                err_text=f"Branch '{branch}' does not exist on the remote."
+                return_complete=True
             )
+            ls_stdout = ls_result.stdout if hasattr(ls_result, "stdout") else str(ls_result)
+            if not ls_stdout.strip():
+                error(f"Branch '{branch}' does not exist on the remote.")
+                info("Push your local branch first, or verify the branch name.")
+                raise GitGoError("Pull aborted — branch not found on remote.")
+            else:
+                success(f"Branch '{branch}' found on remote.")
         except GitCommandError:
             error(f"Branch '{branch}' does not exist on the remote.")
             info("Push your local branch first, or verify the branch name.")
@@ -57,7 +63,6 @@ def pull_operation(args):
         pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
         already_synced = "already up to date" in pull_stdout.lower()
 
-        from pygitgo.utils.cli_io import banner
         if already_synced:
             info(f"Already up to date. Your work is already in sync with '{branch}'. Nothing was pulled.")
         else:

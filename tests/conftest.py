@@ -25,3 +25,11 @@ def _clear_ssh_cache():
     clear_ssh_cache()
     yield
     clear_ssh_cache()
+
+@pytest.fixture(autouse=True)
+def _restore_cwd():
+    """Ensure the working directory is restored after every test."""
+    import os
+    orig_cwd = os.getcwd()
+    yield
+    os.chdir(orig_cwd)

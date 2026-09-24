@@ -1,7 +1,7 @@
 from pygitgo.utils.executor import run_command
 from pygitgo.exceptions import GitCommandError
 from pygitgo.utils.cli_io import success
-from pick import pick
+
 
 
 STATUS_LABELS = {
@@ -31,6 +31,7 @@ def get_changed_files():
     return files
 
 def display_file_picker(files):
+    from pick import pick
     options = [f"({f['label']}) {f['path']}" for f in files]
 
     selected = pick(

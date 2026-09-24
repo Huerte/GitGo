@@ -21,7 +21,7 @@ def get_current_branch(safe=False):
                     return new_branch
             raise GitGoError("Operation aborted to prevent data loss in detached HEAD state.")
             
-        return commit_hash
+        return f"detached HEAD ({commit_hash})"
     return branch
 
 
@@ -40,7 +40,17 @@ def get_main_branch():
 
 
 def is_branch_exist(branch):
-    return bool(run_command(["git", "branch", "-r", "--list", f"*/{branch}"])) or bool(run_command(["git", "branch", "--list", branch]))
+    try:
+        # Check locally first
+        local = run_command(["git", "branch", "--list", branch]).strip()
+        if local:
+            return True
+            
+        # Check remote (origin)
+        remote = run_command(["git", "branch", "-r", "--list", f"origin/{branch}"]).strip()
+        return bool(remote)
+    except GitCommandError:
+        return False
 
 
 def git_new_branch(branch, ok_text=None):
