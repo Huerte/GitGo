@@ -1,6 +1,6 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.commands.pull import pull_operation
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from argparse import Namespace
 import pytest
 
@@ -9,9 +9,13 @@ import pytest
 @patch("pygitgo.commands.pull.success")
 @patch("pygitgo.commands.pull.get_current_branch", return_value="main")
 def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_run_command):
+    mock_ls = MagicMock()
+    mock_ls.stdout = "1234567890abcdef"
+    mock_pull = MagicMock()
+    mock_pull.stdout = ""
     mock_run_command.side_effect = [
-        "1234567890abcdef",  
-        None                 
+        mock_ls,
+        mock_pull
     ]
     
     args = Namespace(branch=None)
@@ -21,8 +25,7 @@ def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_ru
     mock_run_command.assert_any_call(
         ["git", "ls-remote", "--heads", "origin", "main"],
         loading_msg="Checking if 'main' exists on remote...",
-        ok_text="Branch 'main' found on remote.",
-        err_text="Branch 'main' does not exist on the remote."
+        return_complete=True
     )
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "main"], 
@@ -30,14 +33,18 @@ def test_pull_operation_success_no_branch(mock_get_branch, mock_success, mock_ru
         ok_text="Checked 'main'.",
         return_complete=True
     )
-    mock_success.assert_not_called()
+    mock_success.assert_called_with("Branch 'main' found on remote.")
 
 @patch("pygitgo.commands.pull.run_command")
 @patch("pygitgo.commands.pull.success")
 def test_pull_operation_success_with_branch(mock_success, mock_run_command):
+    mock_ls = MagicMock()
+    mock_ls.stdout = "1234567890abcdef"
+    mock_pull = MagicMock()
+    mock_pull.stdout = ""
     mock_run_command.side_effect = [
-        "1234567890abcdef",  
-        None                 
+        mock_ls,
+        mock_pull
     ]
     
     args = Namespace(branch="feature/test")
@@ -47,8 +54,7 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
     mock_run_command.assert_any_call(
         ["git", "ls-remote", "--heads", "origin", "feature/test"],
         loading_msg="Checking if 'feature/test' exists on remote...",
-        ok_text="Branch 'feature/test' found on remote.",
-        err_text="Branch 'feature/test' does not exist on the remote."
+        return_complete=True
     )
     mock_run_command.assert_any_call(
         ["git", "pull", "--rebase", "--autostash", "origin", "feature/test"], 
@@ -56,7 +62,7 @@ def test_pull_operation_success_with_branch(mock_success, mock_run_command):
         ok_text="Checked 'feature/test'.",
         return_complete=True
     )
-    mock_success.assert_not_called()
+    mock_success.assert_called_with("Branch 'feature/test' found on remote.")
 
 @patch("pygitgo.commands.pull.run_command")
 def test_pull_operation_branch_not_found(mock_run_command):
@@ -107,7 +113,7 @@ def test_pull_keyboard_interrupt_rebase_in_progress(mock_rebase, mock_warning, m
     mock_run_command.assert_any_call(["git", "rebase", "--abort"])
     mock_warning.assert_any_call("Pull interrupted (Ctrl+C).")
     mock_warning.assert_any_call("A rebase is in progress from the interrupted pull.")
-    mock_success.assert_not_called()
+    mock_success.assert_called_with("Branch 'main' found on remote.")
 
 
 @patch("pygitgo.commands.pull.run_command")
@@ -133,5 +139,5 @@ def test_pull_keyboard_interrupt_no_rebase(mock_rebase, mock_warning, mock_succe
     assert sys_exit.value.code == 130
     for call in mock_run_command.call_args_list:
         assert "--abort" not in call[0][0]
-    mock_success.assert_not_called()
+    mock_success.assert_called_with("Branch 'main' found on remote.")
     # Need to check info("No partial rebase detected. Branch is clean.") but info is not mocked in this test.

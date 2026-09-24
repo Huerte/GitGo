@@ -36,8 +36,8 @@ def test_get_github_token_cached(mock_get_config, mock_run):
 @patch("pygitgo.commands.repo.get_config", return_value="")
 @patch("pygitgo.commands.repo.open_url")
 @patch("pygitgo.commands.repo.set_config")
-@patch("builtins.input", return_value="user-pasted-token")
-def test_get_github_token_prompt(mock_input, mock_set_config, mock_open_url, mock_get_config, mock_run):
+@patch("getpass.getpass", return_value="user-pasted-token")
+def test_get_github_token_prompt(mock_getpass, mock_set_config, mock_open_url, mock_get_config, mock_run):
     mock_run.side_effect = FileNotFoundError()
     assert _get_github_token() == "user-pasted-token"
     mock_open_url.assert_called_once()
@@ -47,8 +47,8 @@ def test_get_github_token_prompt(mock_input, mock_set_config, mock_open_url, moc
 @patch("subprocess.run")
 @patch("pygitgo.commands.repo.get_config", return_value="")
 @patch("pygitgo.commands.repo.open_url")
-@patch("builtins.input", return_value="")
-def test_get_github_token_cancelled(mock_input, mock_open_url, mock_get_config, mock_run):
+@patch("getpass.getpass", return_value="")
+def test_get_github_token_cancelled(mock_getpass, mock_open_url, mock_get_config, mock_run):
     mock_run.side_effect = FileNotFoundError()
     with pytest.raises(GitGoError, match="Cancelled"):
         _get_github_token()

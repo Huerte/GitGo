@@ -89,17 +89,13 @@ def sanitize_signing_config():
         key_path = get_ssh_key_path()
         if key_path.exists():
             return
-        warning("SSH signing key file not found. Disabling commit signing to prevent failures.")
+        warning("SSH signing key file not found. Commits will not be signed.")
+        info("To restore signed commits, run: gitgo user login")
     else:
         warning("Commit signing is on but no GPG key is configured.")
         warning("Disabling global commit signing to prevent failures.")
 
     try:
-        run_command(["git", "config", "--global", "--unset", "gpg.program"])
-    except GitCommandError:
-        pass
-
-    try:
-        run_command(["git", "config", "--global", "--unset", "commit.gpgsign"])
+        run_command(["git", "config", "--local", "commit.gpgsign", "false"])
     except GitCommandError:
         pass

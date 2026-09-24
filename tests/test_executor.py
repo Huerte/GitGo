@@ -92,7 +92,7 @@ def test_run_command_dubious_ownership_decline(mocker):
     mock_warning.assert_called_with("Fix declined. Operations in this directory will continue to fail.")
 
 def test_run_command_verbose(mocker):
-    mocker.patch("pygitgo.utils.executor._VERBOSE", True)
+    mocker.patch("pygitgo.utils.cli_io._VERBOSE", True)
     mock_print = mocker.patch("builtins.print")
     
     mock_run = mocker.patch("subprocess.run")

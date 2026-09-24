@@ -172,18 +172,18 @@ def save_state(state_name=None):
         banner("WORKSPACE SNAPSHOT CAPTURED.", "LOCAL EDITS PRESERVED IN GitGo SECURE VAULT.")
 
 
-def delete_state(identifier=None):
+def delete_state(identifier=None, all_states=False):
     save_states = all_save_state()
     if not save_states:
         info("No saved states to delete.")
         return
 
-    if not identifier:
+    if not identifier and not all_states:
         state_id = ask_state_id(save_states)
         if not state_id:
             return
     else:
-        if identifier == '-a':
+        if all_states:
             if confirm("Delete all saved states? This cannot be undone. (y/n): ", destructive=True):
                 clear_result = git_stash_clear()
                 if not clear_result:
@@ -213,13 +213,13 @@ def state_operation(args):
     ensure_inside_git_repository()
     action = getattr(args, "action", None)
     identifier = getattr(args, "identifier", None)
+    all_states = getattr(args, "all", False)
 
-    if getattr(args, "all", False):
+    if all_states:
         if action != "delete":
             raise GitGoError(
                 "The -a/--all flag is only valid with the delete action."
             )
-        identifier = "-a"
 
     if not action:
         raise GitGoError("Missing action. Use one of: list, save, load, delete.")
@@ -231,6 +231,6 @@ def state_operation(args):
     elif action == "load":
         load_state(identifier)
     elif action == "delete":
-        delete_state(identifier)
+        delete_state(identifier, all_states=all_states)
     else:
         raise GitGoError(f"Unknown state action: {action}")

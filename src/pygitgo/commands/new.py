@@ -40,24 +40,39 @@ def new_operation(args):
 
     os.chdir(args.name)
 
-    repo_url = repo_operation(args, silent=True)
-
     try:
-        link_core(repo_url, "Initial commit", silent=True, already_initialized=True)
-    except GitGoError as e:
-        error(str(e))
-        from pygitgo.commands.repo import delete_github_repo, parse_repo_fullname
-        warning(f"An orphaned remote repository was created on GitHub: {repo_url}")
-        info("It needs manual deletion or a retry of 'gitgo link'.")
-        full_name = parse_repo_fullname(repo_url)
-        if full_name:
-            if confirm("Delete the repo I just created on GitHub? (y/n): ", destructive=True):
+        repo_url = repo_operation(args, silent=True)
+
+        try:
+            link_core(repo_url, "Initial commit", silent=True, already_initialized=True)
+        except GitGoError as e:
+            error(str(e))
+            from pygitgo.commands.repo import delete_github_repo, parse_repo_fullname
+            warning(f"An orphaned remote repository was created on GitHub: {repo_url}")
+            info("It needs manual deletion or a retry of 'gitgo link'.")
+            full_name = parse_repo_fullname(repo_url)
+            if full_name:
+                if confirm("Delete the repo I just created on GitHub? (y/n): ", destructive=True):
+                    try:
+                        delete_github_repo(full_name)
+                        success("GitHub repository deleted successfully.")
+                    except Exception as delete_err:
+                        error(f"Failed to delete: {delete_err}")
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        write()
+        warning("Operation interrupted (Ctrl+C).")
+        if 'repo_url' in locals():
+            from pygitgo.commands.repo import delete_github_repo, parse_repo_fullname
+            full_name = parse_repo_fullname(repo_url)
+            if full_name:
                 try:
                     delete_github_repo(full_name)
-                    success("GitHub repository deleted successfully.")
-                except Exception as delete_err:
-                    error(f"Failed to delete: {delete_err}")
-        sys.exit(1)
+                    info("GitHub repository cleaned up.")
+                except Exception:
+                    pass
+        sys.exit(130)
 
     banner("PROJECT LAUNCHED. SCAFFOLDED, CREATED, AND DEPLOYED.", "LOCAL STRUCTURE ESTABLISHED AND REMOTE SYNCED.")
 

@@ -47,7 +47,7 @@ def test_get_changed_files_deleted_file(mock_run_command):
     assert files[0]["label"] == "deleted"
 
 
-@patch("pygitgo.commands.staging.pick")
+@patch("pick.pick")
 def test_display_file_picker_select_specific(mock_pick):
     mock_pick.return_value = [("(modified) src/main.py", 0), ("(modified) README.md", 2)]
 
@@ -63,7 +63,7 @@ def test_display_file_picker_select_specific(mock_pick):
     mock_pick.assert_called_once()
 
 
-@patch("pygitgo.commands.staging.pick")
+@patch("pick.pick")
 def test_display_file_picker_select_all(mock_pick):
     mock_pick.return_value = [("(modified) src/main.py", 0), ("(new file) new_file.txt", 1)]
 
@@ -77,7 +77,7 @@ def test_display_file_picker_select_all(mock_pick):
     assert selected == ["src/main.py", "new_file.txt"]
 
 
-@patch("pygitgo.commands.staging.pick")
+@patch("pick.pick")
 def test_display_file_picker_cancel(mock_pick):
     mock_pick.return_value = []
 
@@ -90,7 +90,7 @@ def test_display_file_picker_cancel(mock_pick):
     assert selected == []
 
 
-@patch("pygitgo.commands.staging.pick")
+@patch("pick.pick")
 def test_display_file_picker_select_single(mock_pick):
     mock_pick.return_value = [("(new file) new_file.txt", 1)]
 

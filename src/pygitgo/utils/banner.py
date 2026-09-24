@@ -108,7 +108,7 @@ def show_banner():
     ]
     if cached:
         out += ["", str(cached)]
-    out += ["", f"  Run {GREEN}`gitgo help`{RESET} to see available commands.", ""]
+    out += ["", f"  Run {GREEN}`gitgo --help`{RESET} to see available commands.", ""]
 
     content = "\n".join(out)
     try:

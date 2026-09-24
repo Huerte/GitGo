@@ -1,4 +1,5 @@
-from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger, _QUIET, _VERBOSE
+from pygitgo.utils import cli_io
+from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger
 from pygitgo.exceptions import GitCommandError
 from yaspin import yaspin
 import subprocess
@@ -12,7 +13,7 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
     kwargs = {"text": loading_msg}
     if sys.stdout.isatty():
         kwargs["color"] = "cyan"
-    spinner = yaspin(**kwargs) if (loading_msg and not _QUIET) else None
+    spinner = yaspin(**kwargs) if (loading_msg and not cli_io._QUIET) else None
 
     if spinner:
         spinner.start()
@@ -26,7 +27,7 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
         if extra_env:
             env.update(extra_env)
 
-        if _VERBOSE:
+        if cli_io._VERBOSE:
             cmd_str = " ".join(command) if isinstance(command, list) else command
             print(f"[DEBUG] Running command: {cmd_str}")
 
@@ -44,7 +45,7 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
                 spinner.stop()
             raise
 
-        if _VERBOSE:
+        if cli_io._VERBOSE:
             if result.stdout.strip():
                 print(f"[DEBUG] stdout:\n{result.stdout.strip()}")
             if result.stderr.strip():
@@ -78,7 +79,7 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
             else:
                 stderr = f"Failed to run '{cmd_name}': {e}"
 
-        if _VERBOSE:
+        if cli_io._VERBOSE:
             print(f"[DEBUG] Command failed with exit code: {returncode}")
             if stderr:
                 print(f"[DEBUG] stderr:\n{stderr}")

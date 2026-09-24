@@ -1,4 +1,4 @@
-from pygitgo.utils.cli_io import info, warning, error, banner
+from pygitgo.utils.cli_io import info, warning, error, banner, write
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 from pygitgo.commands.git_core import abort_pull_conflict, ensure_inside_git_repository
@@ -24,6 +24,12 @@ def resolve_operation(args):
             loading_msg="Finishing sync...",
             extra_env={"GIT_EDITOR": "true"}
         )
+    except KeyboardInterrupt:
+        write()
+        warning("Resolve interrupted (Ctrl+C).")
+        info("The rebase is still paused. Run 'gitgo resolve' again when ready.")
+        import sys
+        sys.exit(130)
     except GitCommandError as e:
         stderr = getattr(e, "stderr", str(e))
         if "must edit all merge conflicts" in stderr.lower() or "still have unmerged paths" in stderr.lower():

@@ -335,5 +335,3 @@ def init_operation(args, standalone=False):
                 warning(f"Could not remove empty folder '{target_dir}': {cleanup_err}")
                 warning(f"Delete it manually before running this command again.")
         raise e
-    finally:
-        os.chdir(orig_cwd)

@@ -28,7 +28,8 @@ def _prompt_for_token():
     info("Tip: set 'Expiration' to 'No expiration' for a permanent token (Classic PAT only).")
     open_url(_TOKEN_URL)
 
-    token = input(
+    import getpass
+    token = getpass.getpass(
         "After creating the token on GitHub,\n"
         "come back here and paste it: "
     ).strip()

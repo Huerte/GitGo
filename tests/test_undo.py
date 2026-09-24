@@ -35,8 +35,10 @@ def test_undo_commit_total_failure(mock_run_command):
 @patch("pygitgo.commands.undo.run_command")
 @patch("pygitgo.commands.undo.success")
 def test_undo_add_success(mock_success, mock_run_command):
+    mock_run_command.side_effect = ["file.txt", None]
     undo_add()
-    mock_run_command.assert_called_once_with(
+    assert mock_run_command.call_count == 2
+    mock_run_command.assert_any_call(
         ["git", "reset", "HEAD"],
         loading_msg="Clearing staging area...",
         ok_text="Staging cleared. Files are back to unstaged."
@@ -46,10 +48,10 @@ def test_undo_add_success(mock_success, mock_run_command):
 
 @patch("pygitgo.commands.undo.run_command")
 def test_undo_add_failure(mock_run_command):
-    mock_run_command.side_effect = GitCommandError(["git", "reset", "HEAD"])
+    mock_run_command.side_effect = ["file.txt", GitCommandError(["git", "reset", "HEAD"])]
     with pytest.raises(GitCommandError):
         undo_add()
-    mock_run_command.assert_called_once()
+    assert mock_run_command.call_count == 2
 
 
 @patch("pygitgo.commands.undo.run_command")
