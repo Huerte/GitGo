@@ -330,7 +330,11 @@ def main():
             "  gitgo log                         Show last 5 commits for current branch\n"
             "  gitgo log -n 10                   Show last 10 commits\n"
             "  gitgo log -b main                 Show commits for the 'main' branch\n"
-            "  gitgo log -b feature -n 3         Show last 3 commits for 'feature' branch"
+            "  gitgo log -b feature -n 3         Show last 3 commits for 'feature' branch\n"
+            "  gitgo log --author alice          Only commits by authors matching 'alice'\n"
+            "  gitgo log --since \"2 weeks ago\"    Only commits from the last two weeks\n"
+            "  gitgo log --grep fix              Only commits whose message mentions 'fix'\n"
+            "  gitgo log --graph -n 15           Show branches and merges as a graph"
         )
     )
     log_parser.add_argument(
@@ -347,6 +351,10 @@ def main():
         metavar="BRANCH",
         help="Branch to show commits for."
     )
+    log_parser.add_argument("--author", default=None, metavar="NAME", help="Only show commits by authors matching NAME.")
+    log_parser.add_argument("--since", default=None, metavar="WHEN", help="Only show commits after WHEN (e.g. '2 weeks ago', '2026-01-01').")
+    log_parser.add_argument("--graph", action="store_true", help="Draw the branch and merge structure beside the commits.")
+    log_parser.add_argument("--grep", default=None, metavar="TEXT", help="Only show commits whose message matches TEXT.")
 
     sync_parser = _add_subcommand(
         subparsers,

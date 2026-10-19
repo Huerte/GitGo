@@ -71,6 +71,9 @@ def ensure_user_configure(default_email=None, default_username=None):
     return False
 
 def sanitize_signing_config():
+    from pygitgo.auth.ssh_utils import migrate_legacy_key
+    migrate_legacy_key()
+
     try:
         gpgsign = run_command(["git", "config", "--global", "commit.gpgsign"]).strip().lower()
     except GitCommandError:

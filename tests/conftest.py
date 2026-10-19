@@ -42,3 +42,10 @@ def _isolated_template_cache(tmp_path, monkeypatch):
         lambda: str(tmp_path / "gitignore_templates.json"),
         raising=False,
     )
+
+
+@pytest.fixture(autouse=True)
+def _isolated_home(tmp_path_factory, monkeypatch):
+    """Tests must never see (or modify) the developer's real ~/.ssh."""
+    home = tmp_path_factory.mktemp("home")
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))

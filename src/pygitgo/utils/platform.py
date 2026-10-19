@@ -48,3 +48,27 @@ def open_url(url: str):
         info("\nIf the browser did not open, visit this URL manually:")
         write(f"\n  {url}\n")
 
+
+
+def copy_to_clipboard(text: str) -> bool:
+    """Copy text with whatever the OS provides. Returns False if nothing worked."""
+    system = get_platform()
+    if system == "windows":
+        candidates = [["clip"]]
+    elif system == "macos":
+        candidates = [["pbcopy"]]
+    elif system == "termux":
+        candidates = [["termux-clipboard-set"]]
+    else:
+        candidates = [["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]]
+
+    for cmd in candidates:
+        if not shutil.which(cmd[0]):
+            continue
+        try:
+            subprocess.run(cmd, input=text.encode("utf-8"), check=True, timeout=5,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return False

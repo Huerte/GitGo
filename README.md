@@ -84,7 +84,7 @@ gitgo new my-app python
 - **`state` replaces `git stash` with something you can actually read.** Named, numbered snapshots. Run `state list` to see what you saved instead of guessing what `stash@{2}` was.
 - **`log` shows your commit history in a readable, color-coded view.**
 - **Set your own defaults.** Store your usual branch name and commit message once with `config`, and GitGo uses them every time after.
-- **SSH setup and commit signing, handled for you.** `user login` generates a key, loads it into `ssh-agent`, and signs your future commits so they show up as Verified on GitHub.
+- **SSH setup and commit signing, handled for you.** `user login` generates GitGo's own key (`~/.ssh/gitgo_ed25519`, your other keys are never touched), loads it into `ssh-agent`, and signs your future commits so they show up as Verified on GitHub.
 - **Works out of the box in Termux.** GitGo detects Termux, adjusts install paths, and fixes the common "dubious ownership" Git error automatically.
 - **Checks for updates in the background.** No delay on startup; results are cached for a week.
 
@@ -321,7 +321,7 @@ gitgo repo my-app -d "My project description"
 | `-p`, `--private` | Create a private repository |
 | `-d`, `--description TEXT` | Short description shown on GitHub |
 
-On first run, GitGo opens GitHub's PAT page and prompts you to paste a token with `repo` scope. The token is saved to git config for future calls. If the token expires, GitGo detects the 401 and re-prompts automatically.
+On first run, GitGo opens GitHub's PAT page and prompts you to paste a token with `repo` scope. The token is saved in your system's credential store (via Git's credential helper) or, if none is configured, in a file only you can read. It is no longer written to `~/.gitconfig`; tokens saved there by older versions are moved automatically. If the token expires, GitGo detects the 401 and re-prompts automatically.
 
 ### `gitgo push`
 
@@ -423,6 +423,10 @@ Show commit history with a color-coded output.
 gitgo log                  # show last 5 commits for current branch
 gitgo log -n 10            # show last 10 commits
 gitgo log -b main          # show commits for the main branch
+gitgo log --author alice   # only commits by authors matching 'alice'
+gitgo log --since "2 weeks ago"   # only recent commits
+gitgo log --grep fix       # only commits whose message mentions 'fix'
+gitgo log --graph -n 15    # draw branches and merges; unpushed commits are marked
 ```
 
 ### `gitgo user`
@@ -461,7 +465,7 @@ gitgo -r        # verify GitGo is ready
 
 ## How It Works
 
-- **SSH Auto-Setup & Signing:** `gitgo user login` generates an `ed25519` SSH key and prompts you to add it to GitHub twice (for authentication and signing). GitGo then injects temporary `-c` flags into every commit to automatically sign them with this key, without touching your global git config. If your key is missing, GitGo gracefully disables signing locally so your commits still go through.
+- **SSH Auto-Setup & Signing:** `gitgo user login` generates a dedicated `ed25519` SSH key and gets it onto GitHub twice (for authentication and signing). With browser login you approve a short code on GitHub and GitGo registers both entries for you; otherwise it copies the key to your clipboard and walks you through adding it. GitGo only routes `github.com` to its key through a marked block in `~/.ssh/config`. GitGo then injects temporary `-c` flags into every commit to automatically sign them with this key, without touching your global git config. If your key is missing, GitGo gracefully disables signing locally so your commits still go through.
 - **HTTPS to SSH Conversion:** If your remote is set to HTTPS and SSH is configured, GitGo rewrites the remote before pushing. No `git remote set-url` required.
 - **Auto-Update Checker:** Spawns a non-blocking background thread on startup to query PyPI for newer versions. Results are cached locally for 7 days to prevent unnecessary network requests.
 - **Termux Compatibility:** Detects Termux via environment variables, adjusts binary locations (`$PREFIX/bin`), uses `termux-open` for browser actions, and patches the `detected dubious ownership` Git error.

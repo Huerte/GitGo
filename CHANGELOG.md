@@ -6,7 +6,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [1.11.0] - 2026-10-19
 
 ### Added
 - `gitgo push`, `gitgo sync`, `gitgo link` and `gitgo new` now stop before committing files that look like secrets, such as `.env`, `*.pem` and private keys. You can ignore them, commit them anyway, or abort. Use `--allow-sensitive` to skip the check.
@@ -14,9 +14,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `gitgo push` now asks "Did you mean ...?" when the branch name you typed looks like a typo of an existing branch, instead of using it as the commit message.
 - `gitgo jump --sync` and `gitgo config set jump-sync true` pull the latest main into the target branch when you want that.
 - `gitgo undo changes --permanent` discards changes without saving a backup.
+- `gitgo log` now takes `--author`, `--since`, `--grep` and `--graph`. It shows branch and tag labels next to each commit, marks commits that are not pushed yet, and says when nothing matches your filters.
+- `gitgo user login` copies your new SSH public key to the clipboard when your system has a clipboard tool.
+- When `gitgo new` cannot delete the repository it just created because the saved token lacks the `delete_repo` scope, it now asks for a one-time token with that scope. That token is used once and never saved.
+- `gitgo user login` can now log in through the browser using GitHub's OAuth device flow. It shows a short code, you approve it on GitHub, and GitGo registers the key as both an authentication and a signing key. Nothing is pasted by hand, and the temporary token is never saved. It is used automatically when a GitHub OAuth App client ID is configured through the build or `GITGO_GITHUB_CLIENT_ID`, and falls back to the manual steps otherwise or if you cancel.
 
 ### Changed
-- `gitgo user logout` now asks for confirmation, moves your SSH key to a timestamped backup instead of deleting it, and asks separately before clearing your global Git identity.
+- GitGo now keeps its own SSH key at `~/.ssh/gitgo_ed25519` instead of `~/.ssh/id_ed25519`, and points only `github.com` at it through a marked block in `~/.ssh/config`. If an older GitGo created `id_ed25519`, it is copied (not moved) on first use, so your original stays untouched and GitHub needs no re-registration.
+- `gitgo user login` no longer asks you to replace an existing `id_ed25519`. If GitHub already accepts one of your keys, it offers to add GitGo's key next to it, and you can say no.
+- `gitgo user logout` removes only GitGo's key and its `~/.ssh/config` block. Your other keys are not touched.
+- `gitgo user logout` now asks for confirmation, moves its SSH key to a timestamped backup instead of deleting it, and asks separately before clearing your global Git identity.
 - `gitgo undo pull` now uses a record GitGo saves at pull time instead of Git's shared `ORIG_HEAD`, and uses `git reset --keep` so it can never overwrite uncommitted work.
 - `gitgo resolve` now stages only the files that were in conflict.
 - `gitgo undo changes` now lists what will be discarded and saves a backup first. Restore it with `gitgo state load`.
@@ -26,7 +33,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Errors and warnings now print to stderr, so piped output stays clean.
 - The "update available" notice now shows at most once a day after any command, and gives the upgrade command that matches how GitGo was installed.
 
+### Security
+- The GitHub token is no longer stored in plaintext in `~/.gitconfig`. It goes to your system credential store through Git's credential helper, or to a file only your user can read. A token saved by an older version is moved automatically on first use.
+- GitGo adds GitHub's published SSH host keys to `known_hosts` instead of trusting whatever answers the first connection. Entries are matched by exact host name, including hashed entries, so a similarly named host no longer counts as GitHub. The host key error message now says what to compare against before removing an old entry.
+- The one-time `delete_repo` token is used once and never stored, so the saved token keeps the narrower `repo` scope.
+- The OAuth device-flow token is used only for the login and SSH key registration process and is never saved to disk.
+
 ### Fixed
+- Saving or reading the GitHub token can no longer freeze GitGo. Credential-helper calls ignore `GIT_ASKPASS` (which VS Code and some terminals set), time out after a few seconds, and on a timeout GitGo switches to its private token file for the rest of that run. Set `GITGO_NO_CREDENTIAL_HELPER=1` to skip the helper entirely.
 - `gitgo resolve` no longer commits files that still contain conflict markers (`<<<<<<<` / `>>>>>>>`). It lists them and stops.
 - `gitgo undo pull` no longer resets to an unrelated `ORIG_HEAD` (for example after `gitgo undo commit`) and discards your work. It refuses if the branch changed or moved since the last pull.
 - `gitgo push -s` file picker: the first file no longer loses its first character, and filenames containing spaces work.

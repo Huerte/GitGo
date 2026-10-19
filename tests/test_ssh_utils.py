@@ -1,38 +1,77 @@
 from pygitgo.auth.ssh_utils import (
-    ensure_github_known_host, check_connection, get_github_username,
+    ensure_github_known_host, ensure_known_host, check_connection, get_github_username,
     generate_ssh_key, convert_https_to_ssh, is_ssh_url,
     _try_ssh_add, ensure_ssh_agent
 )
 from pygitgo.exceptions import GitGoError
+from pygitgo.auth.host_keys import GITHUB_HOST_KEYS
 from pathlib import Path
 import pytest
 
 
-def test_ensure_github_known_host_already_exists(mocker):
-    mocker.patch("pathlib.Path.exists", return_value=True)
-    mocker.patch("builtins.open", mocker.mock_open(read_data="github.com ssh-rsa AAA..."))
+@pytest.fixture
+def fake_home(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    return tmp_path
+
+
+def test_known_host_writes_pinned_keys_without_network(fake_home, mocker):
     fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command")
-
     ensure_github_known_host()
-
     fake_run.assert_not_called()
+    text = (fake_home / ".ssh" / "known_hosts").read_text()
+    for key_type, body in GITHUB_HOST_KEYS:
+        assert f"github.com {key_type} {body}" in text
 
 
-def test_ensure_github_known_host_not_exists(mocker):
-    mocker.patch("pathlib.Path.exists", return_value=False)
-    mocker.patch("pathlib.Path.mkdir")
-    mock_file = mocker.patch("builtins.open", mocker.mock_open())
-    
-    mock_process = mocker.MagicMock()
-    mock_process.stdout = "github.com ssh-rsa AAA...\n"
-    fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command", return_value=mock_process)
-    mocker.patch("pygitgo.auth.ssh_utils.info")
-    mocker.patch("pygitgo.auth.ssh_utils.success")
-
+def test_known_host_is_idempotent(fake_home):
     ensure_github_known_host()
+    first = (fake_home / ".ssh" / "known_hosts").read_text()
+    ensure_github_known_host()
+    assert (fake_home / ".ssh" / "known_hosts").read_text() == first
 
-    fake_run.assert_called_once_with(["ssh-keyscan", "-H", "github.com"], return_complete=True)
-    mock_file().write.assert_any_call("github.com ssh-rsa AAA...\n")
+
+def test_known_host_only_adds_missing_types_and_keeps_other_hosts(fake_home):
+    ssh = fake_home / ".ssh"
+    ssh.mkdir()
+    ed = GITHUB_HOST_KEYS[0]
+    (ssh / "known_hosts").write_text(f"other.example ssh-rsa AAAA\ngithub.com {ed[0]} {ed[1]}")
+    ensure_github_known_host()
+    text = (ssh / "known_hosts").read_text()
+    assert text.count(f"github.com {ed[0]}") == 1
+    assert "other.example ssh-rsa AAAA" in text
+    assert "ecdsa-sha2-nistp256" in text and "ssh-rsa AAAAB3" in text
+
+
+def test_known_host_substring_does_not_count_as_present(fake_home):
+    ssh = fake_home / ".ssh"
+    ssh.mkdir()
+    (ssh / "known_hosts").write_text("notgithub.com.evil.example ssh-ed25519 AAAA\n")
+    ensure_github_known_host()
+    assert "github.com ssh-ed25519 AAAAC3" in (ssh / "known_hosts").read_text()
+
+
+def test_known_host_recognises_hashed_entries(fake_home):
+    import base64, hashlib, hmac
+    salt = b"0123456789abcdefghij"
+    digest = hmac.new(salt, b"github.com", hashlib.sha1).digest()
+    hashed = f"|1|{base64.b64encode(salt).decode()}|{base64.b64encode(digest).decode()}"
+    ssh = fake_home / ".ssh"
+    ssh.mkdir()
+    lines = "".join(f"{hashed} {t} {b}\n" for t, b in GITHUB_HOST_KEYS)
+    (ssh / "known_hosts").write_text(lines)
+    ensure_github_known_host()
+    assert (ssh / "known_hosts").read_text() == lines
+
+
+def test_other_hosts_fall_back_to_keyscan_with_warning(fake_home, mocker):
+    proc = mocker.MagicMock(stdout="gitlab.example ssh-ed25519 AAAA\n")
+    fake_run = mocker.patch("pygitgo.auth.ssh_utils.run_command", return_value=proc)
+    warn = mocker.patch("pygitgo.auth.ssh_utils.warning")
+    ensure_known_host("gitlab.example")
+    fake_run.assert_called_once_with(["ssh-keyscan", "-H", "gitlab.example"], return_complete=True)
+    warn.assert_called_once()
+    assert "gitlab.example ssh-ed25519 AAAA" in (fake_home / ".ssh" / "known_hosts").read_text()
 
 
 def test_check_connection_success(mocker):
