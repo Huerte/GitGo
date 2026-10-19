@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 @patch("pygitgo.commands.staging.run_command")
 def test_get_changed_files_with_changes(mock_run_command):
-    mock_run_command.return_value = "M  src/main.py\n?? new_file.txt\nM  README.md"
+    mock_run_command.return_value = "M  src/main.py\0?? new_file.txt\0M  README.md\0"
 
     files = get_changed_files()
 
@@ -38,7 +38,7 @@ def test_get_changed_files_empty_status(mock_run_command):
 
 @patch("pygitgo.commands.staging.run_command")
 def test_get_changed_files_deleted_file(mock_run_command):
-    mock_run_command.return_value = "D  old_file.py"
+    mock_run_command.return_value = "D  old_file.py\0"
 
     files = get_changed_files()
 

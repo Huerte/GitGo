@@ -4,6 +4,7 @@ from pathlib import Path
 import urllib.request
 import urllib.error
 import threading
+import sys
 import json
 
 
@@ -13,6 +14,37 @@ CACHE_FILE = CACHE_DIR / "update_check.json"
 PYPI_URL = "https://pypi.org/pypi/pygitgo/json"
 CHECK_INTERVAL = timedelta(days=7)
 REQUEST_TIMEOUT = 2
+
+
+def upgrade_command():
+    """The right upgrade command for how GitGo was installed."""
+    exe = (sys.executable or "").replace("\\", "/").lower()
+    prefix = (sys.prefix or "").replace("\\", "/").lower()
+    if getattr(sys, "frozen", False) or "/winget/" in exe or "/winget/" in prefix:
+        return "winget upgrade Huerte.GitGo"
+    if "/pipx/" in prefix:
+        return "pipx upgrade pygitgo"
+    if "/.gitgo/" in prefix:
+        return "re-run the GitGo install script"
+    return "pip install --upgrade pygitgo"
+
+
+def cached_update_notice(current_version):
+    """Show a saved 'update available' message at most once a day, with no network call."""
+    cache = read_cache()
+    latest = cache.get("notified_version")
+    today = datetime.now().date().isoformat()
+    if not latest or cache.get("last_notice") == today:
+        return None
+    try:
+        if parse_version(latest) <= parse_version(current_version):
+            return None
+    except Exception:
+        return None
+    cache["last_notice"] = today
+    write_cache(cache)
+    from pygitgo.utils.colors import YELLOW, RESET
+    return f"{YELLOW}GitGo update available:{RESET} {current_version} -> {latest}. Run: {upgrade_command()}"
 
 
 def read_cache():
@@ -73,7 +105,7 @@ def check_for_updates(current_version):
         try:
             if parse_version(notified_version) > parse_version(current_version):
                 from pygitgo.utils.colors import YELLOW, RESET
-                msg = f"  {YELLOW}GitGo update available:{RESET} {current_version} -> {notified_version}\n  Run: pip install --upgrade pygitgo"
+                msg = f"  {YELLOW}GitGo update available:{RESET} {current_version} -> {notified_version}\n  Run: {upgrade_command()}"
         except Exception:
             pass
 
@@ -95,7 +127,7 @@ def check_for_updates(current_version):
             cache["notified_version"] = latest_version
             write_cache(cache)
             from pygitgo.utils.colors import YELLOW, RESET
-            msg = f"  {YELLOW}GitGo update available:{RESET} {current_version} -> {latest_version}\n  Run: pip install --upgrade pygitgo"
+            msg = f"  {YELLOW}GitGo update available:{RESET} {current_version} -> {latest_version}\n  Run: {upgrade_command()}"
             return msg
     except (ValueError, AttributeError):
         pass

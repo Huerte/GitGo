@@ -1,5 +1,5 @@
 from pygitgo.utils import cli_io
-from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger
+from pygitgo.utils.cli_io import error, info, success, warning, confirm, danger, ok_mark, fail_mark
 from pygitgo.exceptions import GitCommandError
 from yaspin import yaspin
 import subprocess
@@ -54,14 +54,14 @@ def run_command(command, return_complete=False, loading_msg=None, ok_text=None, 
         if spinner:
             if ok_text:
                 spinner.text = ok_text
-            spinner.ok("✔")
+            spinner.ok(ok_mark())
 
         return result if return_complete else result.stdout.strip()
     except (subprocess.CalledProcessError, OSError) as e:
         if spinner:
             if err_text:
                 spinner.text = err_text
-            spinner.fail("✖")
+            spinner.fail(fail_mark())
 
         stderr = ""
         returncode = 1

@@ -1,5 +1,5 @@
 from pygitgo.utils.cli_io import success, warning, error, info, write, banner
-from pygitgo.commands.git_core import is_rebase_in_progress, ensure_inside_git_repository
+from pygitgo.commands.git_core import is_rebase_in_progress, ensure_inside_git_repository, begin_pull_record, finish_pull_record
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
@@ -53,6 +53,7 @@ def pull_operation(args):
             info("Push your local branch first, or verify the branch name.")
             raise GitGoError("Pull aborted — branch not found on remote.")
 
+        begin_pull_record(branch)
         pull_result = run_command(
             ["git", "pull", "--rebase", "--autostash", "origin", branch],
             loading_msg=f"Downloading latest updates for '{branch}' (auto-saving your code)...",
@@ -60,6 +61,7 @@ def pull_operation(args):
             return_complete=True,
         )
 
+        finish_pull_record()
         pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
         already_synced = "already up to date" in pull_stdout.lower()
 

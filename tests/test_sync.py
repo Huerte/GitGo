@@ -37,7 +37,7 @@ def test_sync_remote_not_exists(mock_banner, mock_push, mock_commit, mock_run_co
     for call in mock_run_command.call_args_list:
         assert "pull" not in call[0][0]
 
-    mock_commit.assert_called_with("test msg")
+    mock_commit.assert_called_with("test msg", allow_sensitive=False)
     mock_push.assert_called_with("main")
     mock_banner.assert_called_once()
 
@@ -62,7 +62,7 @@ def test_sync_happy_path_with_message(mock_banner, mock_push, mock_commit, mock_
         ok_text="Checked remote.",
         return_complete=True
     )
-    mock_commit.assert_called_with("test msg")
+    mock_commit.assert_called_with("test msg", allow_sensitive=False)
     mock_push.assert_called_with("main")
     mock_banner.assert_called_once()
 
@@ -79,7 +79,7 @@ def test_sync_happy_path_no_message(mock_get_config, mock_push, mock_commit, moc
     sync_operation(args)
 
     mock_get_config.assert_called_with("default-message", "chore: new changes applied")
-    mock_commit.assert_called_with("default msg")
+    mock_commit.assert_called_with("default msg", allow_sensitive=False)
 
 @patch("pygitgo.commands.sync.ensure_inside_git_repository")
 @patch("pygitgo.commands.sync.get_current_branch", return_value="main")

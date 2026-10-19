@@ -30,13 +30,16 @@ def test_resolve_success(mock_banner, mock_path, mock_run, mock_ensure_git):
     mock_path.return_value = mock_path_instance
     
     mock_run.side_effect = ["", ""]
-    
+
     args = Namespace(abort=False)
-    resolve_operation(args)
-    
+    with patch("pygitgo.commands.resolve.get_unmerged_files", return_value=["a.py"]), \
+         patch("pygitgo.commands.resolve.files_with_conflict_markers", return_value=[]), \
+         patch("pygitgo.commands.resolve.read_pull_record", return_value=None):
+        resolve_operation(args)
+
     mock_ensure_git.assert_called_once()
     assert mock_run.call_count == 2
-    mock_run.assert_any_call(["git", "add", "."], loading_msg="Staging resolved files...", ok_text="Conflict fixes staged.")
+    mock_run.assert_any_call(["git", "add", "--", "a.py"], loading_msg="Staging resolved files...", ok_text="Conflict fixes staged.")
     mock_run.assert_any_call(["git", "rebase", "--continue"], loading_msg="Finishing sync...", extra_env={"GIT_EDITOR": "true"})
     
     mock_banner.assert_called_once()
@@ -62,10 +65,12 @@ def test_resolve_still_conflicted(mock_path, mock_run, mock_ensure_git):
         "",
         GitCommandError(["git", "rebase", "--continue"], stderr="you must edit all merge conflicts", returncode=1)
     ]
-    
+
     args = Namespace(abort=False)
-    with pytest.raises(GitGoError, match="You still have unresolved conflicts"):
-        resolve_operation(args)
+    with patch("pygitgo.commands.resolve.get_unmerged_files", return_value=["a.py"]), \
+         patch("pygitgo.commands.resolve.files_with_conflict_markers", return_value=[]):
+        with pytest.raises(GitGoError, match="You still have unresolved conflicts"):
+            resolve_operation(args)
 
 @patch("pygitgo.commands.resolve.ensure_inside_git_repository")
 @patch("pygitgo.commands.resolve.run_command")
@@ -81,5 +86,7 @@ def test_resolve_other_error(mock_path, mock_run, mock_ensure_git):
     ]
     
     args = Namespace(abort=False)
-    with pytest.raises(GitGoError, match="Resolve failed: some weird error occurred"):
-        resolve_operation(args)
+    with patch("pygitgo.commands.resolve.get_unmerged_files", side_effect=[["a.py"], []]), \
+         patch("pygitgo.commands.resolve.files_with_conflict_markers", return_value=[]):
+        with pytest.raises(GitGoError, match="Resolve failed: some weird error occurred"):
+            resolve_operation(args)

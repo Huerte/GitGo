@@ -1,4 +1,4 @@
-from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist, get_head_sha
+from pygitgo.commands.git_branch import git_new_branch, get_current_branch, is_branch_exist, get_head_sha, suggest_branch
 from pygitgo.commands.staging import get_changed_files, display_file_picker, selective_stage
 from pygitgo.utils.cli_io import info, warning, success, confirm, banner, write
 from pygitgo.commands.git_core import git_commit, git_push, ensure_inside_git_repository
@@ -30,11 +30,7 @@ def _push_interrupt_cleanup(original_branch, original_head, created_branch):
         return
 
     try:
-        status = run_command(["git", "status", "--porcelain"])
-        has_staged = any(
-            ln and ln[0] not in (' ', '?', '!')
-            for ln in status.splitlines()
-        )
+        has_staged = bool(run_command(["git", "diff", "--cached", "--name-only"]).strip())
     except GitCommandError:
         has_staged = False
 
@@ -63,6 +59,7 @@ def push_operation(args):
     branch = args.branch
     message = args.message
     select = args.select if hasattr(args, 'select') else False
+    allow_sensitive = getattr(args, 'allow_sensitive', False)
 
     original_branch = get_current_branch(safe=True)
     try:
@@ -80,6 +77,14 @@ def push_operation(args):
             git_new_branch(branch)
             created_branch = branch
         else:
+            if branch and not message and not is_branch_exist(branch) and sys.stdin.isatty():
+                suggestion = suggest_branch(branch)
+                if suggestion and confirm(
+                    f"'{branch}' is not a branch. Did you mean the branch '{suggestion}'? "
+                    f"(y = use '{suggestion}', n = use '{branch}' as the commit message): "
+                ):
+                    branch = suggestion
+
             if branch and not message and not is_branch_exist(branch):
                 message = branch
                 branch = get_current_branch()
@@ -119,13 +124,13 @@ def push_operation(args):
                 return
 
             selective_stage(selected)
-            commit_made = git_commit(message, loading_msg="Committing selected files...", skip_staging=True)
+            commit_made = git_commit(message, loading_msg="Committing selected files...", skip_staging=True, allow_sensitive=allow_sensitive)
 
             if commit_made:
                 git_push(branch)
 
         else:
-            commit_made = git_commit(message)
+            commit_made = git_commit(message, allow_sensitive=allow_sensitive)
 
             if commit_made:
                 git_push(branch)

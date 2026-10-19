@@ -1,5 +1,5 @@
 from pygitgo.utils.config import get_config, set_config
-from pygitgo.utils.cli_io import info, warning, banner
+from pygitgo.utils.cli_io import info, warning, banner, ok_mark, fail_mark
 from pygitgo.utils.platform import open_url
 from pygitgo.exceptions import GitGoError
 import subprocess
@@ -121,6 +121,9 @@ def repo_operation(args, silent=False):
         repo_name = os.path.basename(os.path.abspath("."))
         info(f"No name given: using current directory name: '{repo_name}'")
 
+    if not args.private:
+        warning("This creates a PUBLIC repository. Anyone can see it. Use 'gitgo repo --private' to keep it private.")
+
     token = _get_github_token()
 
     from yaspin import yaspin
@@ -140,13 +143,13 @@ def repo_operation(args, silent=False):
         )
         repo_url = repo_.get("clone_url")
         spinner.text = f"Successfully created remote repository: {repo_url}"
-        spinner.ok("✔")
+        spinner.ok(ok_mark())
     except KeyboardInterrupt:
         spinner.stop()
         raise
     except Exception as e:
         spinner.text = str(e)
-        spinner.fail("✖")
+        spinner.fail(fail_mark())
         raise e
 
     if not silent:

@@ -80,7 +80,7 @@ gitgo new my-app python
 - **`new` takes you from nothing to a live repo in one command.** Scaffolds the project, creates the GitHub repo, and pushes it. No switching tabs.
 - **`init` scaffolds a project locally.** Generates a README, a `.gitignore` pulled from GitHub's official templates, and starter files for Python, Node, Rust, Go, C#, and more.
 - **`repo` creates a GitHub repo from your terminal.** No browser needed.
-- **`jump` switches branches without losing your work.** Stashes what you're doing, moves to the target branch, pulls the latest, then restores your work. If that causes a conflict, GitGo offers to undo the whole thing and put you back where you started.
+- **`jump` switches branches without losing your work.** Stashes what you're doing, moves to the target branch, optionally pulls the latest main (`--sync`), then restores your work. If that causes a conflict, GitGo offers to undo the whole thing and put you back where you started.
 - **`state` replaces `git stash` with something you can actually read.** Named, numbered snapshots. Run `state list` to see what you saved instead of guessing what `stash@{2}` was.
 - **`log` shows your commit history in a readable, color-coded view.**
 - **Set your own defaults.** Store your usual branch name and commit message once with `config`, and GitGo uses them every time after.
@@ -221,7 +221,7 @@ gitgo push -n feat/login "Add login flow"
 
 ### 5. Switch Branches
 
-Switch branches with uncommitted work in progress. `jump` stashes your changes, moves to the target branch, syncs with main, and pops the stash. If the pop triggers a conflict, it offers to abort and restore the repo to its prior state.
+Switch branches with uncommitted work in progress. `jump` stashes your changes, moves to the target branch, optionally syncs with main (`--sync`), and pops the stash. If the pop triggers a conflict, it offers to abort and restore the repo to its prior state.
 
 ```bash
 gitgo jump feat/new-login
@@ -234,7 +234,7 @@ Undo recent mistakes with commands named for what they undo.
 ```bash
 gitgo undo commit    # Undo the last commit (files stay staged)
 gitgo undo add       # Unstage files
-gitgo undo changes   # DANGER: permanently discard all uncommitted edits
+gitgo undo changes   # Discard all uncommitted edits (a backup is saved first)
 gitgo undo link      # Remove remote and undo initial commit
 gitgo undo push      # DANGER: Revert last push with a force-push
 gitgo undo pull      # Revert the branch to its state before the last pull
@@ -340,10 +340,12 @@ gitgo push -s [branch] [message]   # interactively select files to stage
 |------|-------------|
 | `-n`, `--new` | Create a new branch before pushing |
 | `-s`, `--select` | Interactively select which files to include in the push |
+| `--allow-sensitive` | Commit files that look like secrets (`.env`, `*.pem`, private keys) without asking |
 
 **How arguments work:**
 - Two arguments: first is the branch, second is the commit message.
-- One argument: if it matches an existing branch, it is used as the branch; otherwise it is used as the commit message and the current branch is used.
+- One argument: if it matches an existing branch, it is used as the branch; otherwise it is used as the commit message and the current branch is used. If it looks like a typo of an existing branch, GitGo asks "Did you mean ...?" first.
+- Before committing, GitGo stops if a file looks like a secret (`.env`, `*.pem`, private keys). `.env.example` is fine.
 - No arguments: GitGo always pushes to whatever branch you're currently on, it doesn't read `default-branch` for this. Only the commit message falls back to your configured default. Both are shown before anything happens, for example:
   ```
   No branch given. Using current branch: 'feature/login'
@@ -380,10 +382,11 @@ gitgo link <repo_url> [commit_message]
 
 ### `gitgo jump`
 
-Switches to another branch while saving your current work automatically. Stashes your changes, moves to the target branch, pulls from main, then restores your work. If restoring causes a conflict, the Try-and-Revert engine offers to cancel the whole operation and put everything back.
+Switches to another branch while saving your current work automatically. Stashes your changes, moves to the target branch, then restores your work. Add `--sync` to also pull the latest main into the target branch (or run `gitgo config set jump-sync true` to always do this). If restoring causes a conflict, the Try-and-Revert engine offers to cancel the whole operation and put everything back.
 
 ```bash
 gitgo jump <branch>
+gitgo jump <branch> --sync   # also pull the latest main into <branch>
 ```
 
 ### `gitgo undo`
@@ -393,9 +396,10 @@ Undo recent actions with subcommands named for what they undo.
 ```bash
 gitgo undo commit    # Undo the last commit without losing files
 gitgo undo add       # Unstage files
-gitgo undo changes   # DANGER (destructive): permanently discard all uncommitted edits
+gitgo undo changes   # Discard all uncommitted edits. A backup is saved first (restore with 'gitgo state load')
+gitgo undo changes --permanent   # DANGER (destructive): discard with no backup
 gitgo undo link      # Remove the remote and undo the initial commit
-gitgo undo push      # DANGER (destructive): revert the last push with a force-push
+gitgo undo push      # DANGER (destructive): remove the last pushed commit with a force-push
 gitgo undo pull      # Revert the branch to its state before the last pull
 ```
 
@@ -442,6 +446,7 @@ gitgo config get <key>
 |-----|-------------|---------|
 | `default-branch` | The branch used for push/link | `main` |
 | `default-message` | The commit message used for push | `chore: new changes applied` |
+| `jump-sync` | Set to `true` to pull the latest main into the target branch on every `jump` | `false` |
 
 ### Global Flags
 

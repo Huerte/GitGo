@@ -1,4 +1,4 @@
-from pygitgo.commands.git_core import git_commit, git_push, ensure_inside_git_repository
+from pygitgo.commands.git_core import git_commit, git_push, ensure_inside_git_repository, begin_pull_record, finish_pull_record
 from pygitgo.utils.cli_io import info, error, warning, banner, write
 from pygitgo.commands.git_branch import get_current_branch
 from pygitgo.exceptions import GitCommandError, GitGoError
@@ -28,12 +28,14 @@ def sync_operation(args):
 
     if remote_exists:
         try:
+            begin_pull_record(branch)
             pull_result = run_command(
                 ["git", "pull", "--rebase", "--autostash", "origin", branch],
                 loading_msg=f"Downloading latest updates for '{branch}'...",
                 ok_text="Checked remote.",
                 return_complete=True,
             )
+            finish_pull_record()
             pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
             if "already up to date" not in pull_stdout.lower():
                 info("Latest changes pulled from remote.")
@@ -57,7 +59,7 @@ def sync_operation(args):
         info(f"No commit message provided. Using default: '{message}'\n")
 
     try:
-        if git_commit(message):
+        if git_commit(message, allow_sensitive=getattr(args, 'allow_sensitive', False)):
             git_push(branch)    
         else:
             try:

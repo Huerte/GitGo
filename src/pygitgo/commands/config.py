@@ -9,7 +9,7 @@ def config_operation(args):
     action = args.action
     value = getattr(args, 'value', None)
 
-    VALID_KEYS = ["default-branch", "default-message"]
+    VALID_KEYS = ["default-branch", "default-message", "jump-sync"]
     if key not in VALID_KEYS:
         raise GitGoError(f"Invalid configuration key: '{key}'. Valid keys are: {', '.join(VALID_KEYS)}")
 

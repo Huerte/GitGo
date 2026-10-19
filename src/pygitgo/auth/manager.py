@@ -1,9 +1,12 @@
-from pygitgo.utils.cli_io import info, success, warning, error, write
+from pygitgo.utils.cli_io import info, success, warning, error, write, confirm
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pygitgo.utils.platform import open_url
+from .account import get_user
 from . import ssh_utils
+import shutil
+import time
 import os
 
 
@@ -31,8 +34,8 @@ def login():
             ensure_user_configure(default_username=ssh_utils.get_github_username())
         else:
             warning("GitHub SSH connection is active, but NOT via a GitGo-managed key.", required=True)
-            warning("To use GitGo's full login (SSH + verified commits), you must log out first.", required=True)
-            info("Run: gitgo user logout", required=True)
+            warning("To use GitGo's full login (SSH + verified commits), GitGo has to replace ~/.ssh/id_ed25519.", required=True)
+            info("Run: gitgo user logout   (your current key is backed up, not deleted)", required=True)
             info("Then run: gitgo user login", required=True)
 
         return True
@@ -109,33 +112,51 @@ def login():
 
 
  
-def logout():
+def _backup_key(key_path):
+    """Move the key pair aside instead of deleting it. Returns the private-key backup path."""
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    backup = key_path.with_name(f"{key_path.name}.gitgo-backup-{stamp}")
+    shutil.move(str(key_path), str(backup))
+
+    pub = key_path.with_name(key_path.name + ".pub")
+    if pub.exists():
+        shutil.move(str(pub), str(backup) + ".pub")
+    return backup
+
+
+def logout(clear_identity=None):
     key_path = ssh_utils.get_ssh_key_path()
     if not key_path.exists():
         warning("You are already logged out (no keys found).")
         return False
-    
+
+    warning(f"This will remove the SSH key at {key_path}.")
+    warning("If you use this key for other servers or Git hosts, they will stop accepting you.")
+    info("GitGo keeps a backup copy next to it, so you can restore it by renaming the file.")
+    info("The key is NOT removed from your GitHub account. Do that at github.com/settings/keys.")
+    if not confirm("Remove this SSH key? (y/n): ", destructive=True):
+        info("Canceled. Nothing was changed.")
+        return False
+
     try:
-        
-        os.remove(key_path)
-
-        pub_key_path = str(key_path) + ".pub"
-        if os.path.exists(pub_key_path):
-            os.remove(pub_key_path)
-
-        try:
-            run_command(["git", "config", "--global", "--unset-all", "user.name"], loading_msg="Clearing Git username...", ok_text="Git username cleared.")
-        except GitCommandError:
-            pass
-        
-        try:
-            run_command(["git", "config", "--global", "--unset-all", "user.email"], loading_msg="Clearing Git email...", ok_text="Git email cleared.")
-        except GitCommandError:
-            pass
-
-        success("User successfully logged out.")
-        return True
-    
+        backup = _backup_key(key_path)
+        success(f"SSH key removed. Backup saved at: {backup}")
     except Exception as e:
         error(f"Failed to remove SSH keys\nCAUSE OF ERROR: {e}")
         return False
+
+    name, email = get_user()
+    if name or email:
+        if clear_identity is None:
+            clear_identity = confirm(f"Also clear your global Git identity ({name} <{email}>)? (y/n): ")
+        if clear_identity:
+            for key, label in (("user.name", "username"), ("user.email", "email")):
+                try:
+                    run_command(["git", "config", "--global", "--unset-all", key], loading_msg=f"Clearing Git {label}...", ok_text=f"Git {label} cleared.")
+                except GitCommandError:
+                    pass
+        else:
+            info("Git identity left as it was.")
+
+    success("User successfully logged out.")
+    return True

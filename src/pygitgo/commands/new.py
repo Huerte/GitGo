@@ -44,7 +44,7 @@ def new_operation(args):
         repo_url = repo_operation(args, silent=True)
 
         try:
-            link_core(repo_url, "Initial commit", silent=True, already_initialized=True)
+            link_core(repo_url, "Initial commit", silent=True, already_initialized=True, allow_sensitive=getattr(args, "allow_sensitive", False))
         except GitGoError as e:
             error(str(e))
             from pygitgo.commands.repo import delete_github_repo, parse_repo_fullname
