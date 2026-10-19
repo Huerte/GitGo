@@ -39,7 +39,7 @@ def _link_interrupt_cleanup(repo_url, initialized, committed, remote_added):
         success("No Git state was changed. Your files are safe.")
 
 
-def link_core(repo_url, commit_message, silent=False, already_initialized=False):
+def link_core(repo_url, commit_message, silent=False, already_initialized=False, allow_sensitive=False):
     if not validate_repo_url(repo_url):
         raise GitGoError(f"Invalid remote repository URL: '{repo_url}'")
     
@@ -81,7 +81,7 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
             info("Ready to push with: gitgo push <branch> 'your message'")
             return
 
-        commit_made = git_commit(commit_message, loading_msg="Creating initial commit...", ok_text="Initial commit created.")
+        commit_made = git_commit(commit_message, loading_msg="Creating initial commit...", ok_text="Initial commit created.", allow_sensitive=allow_sensitive)
         if commit_made:
             committed = True
 
@@ -139,5 +139,5 @@ def link_core(repo_url, commit_message, silent=False, already_initialized=False)
 
 
 def link_operation(args):
-    link_core(args.url, args.message)
+    link_core(args.url, args.message, allow_sensitive=getattr(args, 'allow_sensitive', False))
 

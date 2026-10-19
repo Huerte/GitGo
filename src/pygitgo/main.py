@@ -1,4 +1,4 @@
-from pygitgo.utils.update_checker import check_for_updates_background, check_for_updates
+from pygitgo.utils.update_checker import check_for_updates_background, check_for_updates, cached_update_notice
 from pygitgo.utils.cli_io import info, warning, error, write, _highlight_cmd
 from pygitgo.utils.bootstrap import ensure_first_run_setup
 from pygitgo.commands.resolve import resolve_operation
@@ -75,6 +75,7 @@ def main():
         help="Switch to another branch, saving your current work automatically if needed",
         epilog="Examples:\n  gitgo jump feature/login          Switch to 'feature/login' branch"
     )
+    jump_parser.add_argument("--sync", action="store_true", default=None, help="Also pull the latest main into the target branch (rebase). Off by default.")
     jump_parser.add_argument("branch", help="The name of the branch to jump to")
 
     link_parser = _add_subcommand(
@@ -87,6 +88,7 @@ def main():
             "  gitgo link https://github.com/user/repo.git 'First commit' Connect with a custom first commit message"
         )
     )
+    link_parser.add_argument("--allow-sensitive", action="store_true", help="Commit files that look like secrets (.env, *.pem, private keys) without asking")
     link_parser.add_argument("url", help="The GitHub repository URL to link")
     link_parser.add_argument("message", nargs="?", default="Initial commit", help="Custom commit message")
 
@@ -106,6 +108,7 @@ def main():
     )
     push_parser.add_argument("-n", "--new", action="store_true", help="Create a new branch before pushing")
     push_parser.add_argument("-s", "--select", action="store_true", help="Interactively select which files to stage")
+    push_parser.add_argument("--allow-sensitive", action="store_true", help="Commit files that look like secrets (.env, *.pem, private keys) without asking")
     push_parser.add_argument("branch", nargs="?", default=None, help="Branch to push to (default: current branch)")
     push_parser.add_argument("message", nargs="?", default=None, help="Commit message")
 
@@ -166,7 +169,7 @@ def main():
         )
     )
     config_parser.add_argument("action", choices=["set", "get"], help="Action to perform")
-    config_parser.add_argument("key", choices=["default-branch", "default-message"], help="The setting to change")
+    config_parser.add_argument("key", choices=["default-branch", "default-message", "jump-sync"], help="The setting to change")
     config_parser.add_argument("value", nargs="?", help="The new value (required for 'set')")
 
     undo_parser = _add_subcommand(
@@ -183,6 +186,7 @@ def main():
             "  gitgo undo pull         Revert the branch to how it was before the last pull"
         )
     )
+    undo_parser.add_argument("--permanent", action="store_true", help="With 'changes': discard without saving a backup first")
     undo_parser.add_argument(
         "action",
         choices=["commit", "add", "changes", "link", "push", "pull"],
@@ -285,6 +289,7 @@ def main():
             "  gitgo new my-app rust --private    Private Rust project\n"
         )
     )
+    new_parser.add_argument("--allow-sensitive", action="store_true", help="Commit files that look like secrets (.env, *.pem, private keys) without asking")
     new_parser.add_argument(
         "name",
         metavar="NAME",
@@ -353,6 +358,7 @@ def main():
             "  gitgo sync 'Fix navbar'           Sync and commit with a custom message\n"
         )
     )
+    sync_parser.add_argument("--allow-sensitive", action="store_true", help="Commit files that look like secrets (.env, *.pem, private keys) without asking")
     sync_parser.add_argument("message", nargs="?", default=None, help="Commit message for your local changes")
 
     args = parser.parse_args()
@@ -399,6 +405,10 @@ def main():
         handler = COMMANDS.get(args.command)
         if handler:
             handler(args)
+            notice = cached_update_notice(get_version())
+            if notice:
+                write()
+                write(notice)
     except GitGoError as e:
         error(f"{e}")
         sys.exit(1)

@@ -1,3 +1,4 @@
+import sys
 from pygitgo.utils.cli_io import confirm, danger, warning, error, info, success, banner
 from pygitgo.utils.colors import RED, GREEN, YELLOW, BLUE, RESET
 import os
@@ -19,27 +20,27 @@ def test_confirm_destructive(mocker):
 def test_danger(mocker):
     mock_print = mocker.patch("builtins.print")
     danger("irreversible action")
-    mock_print.assert_called_once_with(f"{RED}DANGER: irreversible action{RESET}")
+    mock_print.assert_called_once_with(f"{RED}DANGER: irreversible action{RESET}", end="\n")
 
 def test_warning(mocker):
     mock_print = mocker.patch("builtins.print")
     warning("recoverable risk")
-    mock_print.assert_called_once_with(f"{YELLOW}WARNING: recoverable risk{RESET}")
+    mock_print.assert_called_once_with(f"{YELLOW}WARNING: recoverable risk{RESET}", end="\n", file=sys.stderr)
 
 def test_error(mocker):
     mock_print = mocker.patch("builtins.print")
     error("failed operation")
-    mock_print.assert_called_once_with(f"{RED}failed operation{RESET}")
+    mock_print.assert_called_once_with(f"{RED}failed operation{RESET}", end="\n", file=sys.stderr)
 
 def test_info(mocker):
     mock_print = mocker.patch("builtins.print")
     info("some info")
-    mock_print.assert_called_once_with(f"{BLUE}some info{RESET}")
+    mock_print.assert_called_once_with(f"{BLUE}some info{RESET}", end="\n")
 
 def test_success(mocker):
     mock_print = mocker.patch("builtins.print")
     success("action done")
-    mock_print.assert_called_once_with(f"{GREEN}action done{RESET}")
+    mock_print.assert_called_once_with(f"{GREEN}action done{RESET}", end="\n")
 
 def test_banner(mocker):
     mock_print = mocker.patch("builtins.print")

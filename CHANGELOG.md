@@ -8,6 +8,32 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `gitgo push`, `gitgo sync`, `gitgo link` and `gitgo new` now stop before committing files that look like secrets, such as `.env`, `*.pem` and private keys. You can ignore them, commit them anyway, or abort. Use `--allow-sensitive` to skip the check.
+- GitGo now tells you how many files are about to be committed and lists the first few names.
+- `gitgo push` now asks "Did you mean ...?" when the branch name you typed looks like a typo of an existing branch, instead of using it as the commit message.
+- `gitgo jump --sync` and `gitgo config set jump-sync true` pull the latest main into the target branch when you want that.
+- `gitgo undo changes --permanent` discards changes without saving a backup.
+
+### Changed
+- `gitgo user logout` now asks for confirmation, moves your SSH key to a timestamped backup instead of deleting it, and asks separately before clearing your global Git identity.
+- `gitgo undo pull` now uses a record GitGo saves at pull time instead of Git's shared `ORIG_HEAD`, and uses `git reset --keep` so it can never overwrite uncommitted work.
+- `gitgo resolve` now stages only the files that were in conflict.
+- `gitgo undo changes` now lists what will be discarded and saves a backup first. Restore it with `gitgo state load`.
+- `gitgo undo push` now shows the commit it will remove. It refuses if you have commits that were never pushed, or if the remote has newer commits than your local branch.
+- `gitgo jump` no longer pulls main into the target branch unless you ask for it with `--sync` or the `jump-sync` setting. It also finds the main branch from local data instead of making a network call.
+- `gitgo repo` now warns when it is about to create a public repository.
+- Errors and warnings now print to stderr, so piped output stays clean.
+- The "update available" notice now shows at most once a day after any command, and gives the upgrade command that matches how GitGo was installed.
+
+### Fixed
+- `gitgo resolve` no longer commits files that still contain conflict markers (`<<<<<<<` / `>>>>>>>`). It lists them and stops.
+- `gitgo undo pull` no longer resets to an unrelated `ORIG_HEAD` (for example after `gitgo undo commit`) and discards your work. It refuses if the branch changed or moved since the last pull.
+- `gitgo push -s` file picker: the first file no longer loses its first character, and filenames containing spaces work.
+- Output no longer crashes with `UnicodeEncodeError` on terminals or pipes using legacy encodings such as cp1252; box and check characters fall back to ASCII.
+- The Ctrl+C cleanup in `gitgo push` no longer misdetects staged files.
+- `gitgo init --lang` no longer fails when GitHub's API rate limit is reached. It now saves the language list for a week and falls back to a built-in list when GitHub is unreachable.
+
 ---
 
 ## [1.10.4] - 2026-09-24

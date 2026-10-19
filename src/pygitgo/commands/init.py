@@ -98,7 +98,47 @@ README_TEMPLATE = """# {name}
 GITIGNORE_API_URL = "https://api.github.com/repos/github/gitignore/contents/"
 
 
+# Used only when GitHub's API is unreachable or rate-limited and there is no saved list.
+_FALLBACK_TEMPLATES = (
+    "Android", "C", "C++", "Dart", "Flutter", "Go", "Java", "Kotlin", "Laravel",
+    "Node", "Python", "Ruby", "Rust", "Swift", "Unity", "VisualStudio",
+)
+_TEMPLATE_CACHE_TTL = 7 * 24 * 3600
+
+
+def _template_cache_file():
+    return os.path.join(os.path.expanduser("~"), ".gitgo", "gitignore_templates.json")
+
+
+def _read_template_cache(allow_stale=False):
+    import time
+    try:
+        with open(_template_cache_file(), "r", encoding="utf-8") as f:
+            data = json.load(f)
+        fresh = (time.time() - data.get("saved_at", 0)) < _TEMPLATE_CACHE_TTL
+        if (fresh or allow_stale) and data.get("templates"):
+            return data["templates"]
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def _write_template_cache(templates):
+    import time
+    try:
+        path = _template_cache_file()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"saved_at": time.time(), "templates": templates}, f)
+    except OSError:
+        pass
+
+
 def _fetch_available_templates():
+    cached = _read_template_cache()
+    if cached:
+        return cached
+
     req = urllib.request.Request(
         GITIGNORE_API_URL,
         headers={
@@ -109,17 +149,26 @@ def _fetch_available_templates():
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             entries = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        raise GitGoError(f"Failed to fetch template list: HTTP {e.code}")
     except Exception as e:
-        raise GitGoError(f"Network error fetching template list: {e}")
+        # GitHub's API allows only 60 anonymous requests per hour per IP, which shared
+        # networks (schools, offices) hit quickly. Fall back instead of failing.
+        stale = _read_template_cache(allow_stale=True)
+        if stale:
+            warning("Could not refresh the language list from GitHub. Using the saved copy.")
+            return stale
+        warning("Could not load the full language list from GitHub (offline or rate-limited).")
+        info("Using the built-in list of common languages instead.")
+        return {name.lower(): name for name in _FALLBACK_TEMPLATES}
 
     suffix = ".gitignore"
-    return {
+    templates = {
         item["name"][: -len(suffix)].lower(): item["name"][: -len(suffix)]
         for item in entries
         if item.get("type") == "file" and item["name"].endswith(suffix)
     }
+    if templates:
+        _write_template_cache(templates)
+    return templates
 
 
 def _resolve_lang(lang, available):

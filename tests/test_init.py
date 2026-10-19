@@ -1,3 +1,4 @@
+import json
 import pytest
 import urllib.error
 import zipfile
@@ -123,18 +124,44 @@ def test_fetch_available_templates_success(mock_urlopen):
     assert templates == {"python": "Python", "go": "Go"}
 
 @patch("urllib.request.urlopen")
-def test_fetch_available_templates_http_error(mock_urlopen):
-    mock_urlopen.side_effect = urllib.error.HTTPError("url", 500, "Internal Server Error", {}, None)
-    with pytest.raises(GitGoError) as ex:
-        _fetch_available_templates()
-    assert "HTTP 500" in str(ex.value)
+def test_fetch_available_templates_http_error_uses_builtin_list(mock_urlopen):
+    mock_urlopen.side_effect = urllib.error.HTTPError("url", 403, "rate limit exceeded", {}, None)
+    templates = _fetch_available_templates()
+    assert templates["python"] == "Python"
+    assert templates["node"] == "Node"
 
 @patch("urllib.request.urlopen")
-def test_fetch_available_templates_generic_error(mock_urlopen):
+def test_fetch_available_templates_generic_error_uses_builtin_list(mock_urlopen):
     mock_urlopen.side_effect = Exception("network fail")
-    with pytest.raises(GitGoError) as ex:
-        _fetch_available_templates()
-    assert "network fail" in str(ex.value)
+    assert "rust" in _fetch_available_templates()
+
+@patch("urllib.request.urlopen")
+def test_fetch_available_templates_caches_and_skips_network(mock_urlopen):
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps([
+        {"name": "Python.gitignore", "type": "file"},
+        {"name": "Zig.gitignore", "type": "file"},
+    ]).encode()
+    mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+    first = _fetch_available_templates()
+    second = _fetch_available_templates()
+
+    assert first == second == {"python": "Python", "zig": "Zig"}
+    assert mock_urlopen.call_count == 1
+
+@patch("urllib.request.urlopen")
+def test_fetch_available_templates_prefers_stale_cache_over_builtin(mock_urlopen):
+    from pygitgo.commands import init as init_mod
+    import time
+    init_mod._write_template_cache({"zig": "Zig"})
+    path = init_mod._template_cache_file()
+    data = json.load(open(path))
+    data["saved_at"] = time.time() - 30 * 24 * 3600
+    json.dump(data, open(path, "w"))
+    mock_urlopen.side_effect = Exception("offline")
+
+    assert _fetch_available_templates() == {"zig": "Zig"}
 
 @patch("urllib.request.urlopen")
 def test_fetch_gitignore_success(mock_urlopen):

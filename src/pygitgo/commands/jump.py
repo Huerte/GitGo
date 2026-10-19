@@ -8,6 +8,7 @@ from pygitgo.commands.stash import (
 from pygitgo.exceptions import GitCommandError, GitGoError
 from pygitgo.utils.executor import run_command
 import sys
+from pygitgo.utils.config import get_config
 
 
 def undo_jump_operation(original_branch, stashed_code, created_branch=None):
@@ -59,6 +60,9 @@ def _jump_interrupt_cleanup(original_branch, stashed_code, created_branch):
 
 def jump_operation(args):
     target_branch = args.branch
+    sync = getattr(args, "sync", None)
+    if not isinstance(sync, bool):
+        sync = get_config("jump-sync", "false").lower() == "true"
     original_branch = get_current_branch(safe=True)
 
     if original_branch == target_branch:
@@ -114,28 +118,32 @@ def jump_operation(args):
                 loading_msg=f"Switching to '{target_branch}'...",
                 ok_text=f"Switched to '{target_branch}'."
             )
-            main_branch = get_main_branch()
-            try:
-                pull_result = run_command(
-                    ["git", "pull", "--rebase", "--autostash", "origin", main_branch],
-                    loading_msg=f"Syncing '{target_branch}' with latest from '{main_branch}'...",
-                    ok_text=f"Checked '{main_branch}'.",
-                    return_complete=True,
-                )
-                pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
-                if "already up to date" in pull_stdout.lower():
-                    info(f"'{target_branch}' was already up to date with '{main_branch}'.")
-                else:
-                    info(f"'{target_branch}' synced with latest commits from '{main_branch}'.")
-            except GitCommandError as e:
-                stderr = getattr(e, "stderr", str(e))
-                if "conflict" in stderr.lower() or "rebase in progress" in stderr.lower():
-                    warning(f"Sync from '{main_branch}' hit a conflict.")
-                    info("Fix the conflict files, then run:  gitgo resolve")
-                    info("Or cancel the jump with:  gitgo resolve --abort")
-                else:
-                    warning(f"Could not sync from '{main_branch}': no remote or no internet.")
-                    info(f"On '{target_branch}', but not yet synced with '{main_branch}'.")
+            if sync:
+                main_branch = get_main_branch()
+                try:
+                    pull_result = run_command(
+                        ["git", "pull", "--rebase", "--autostash", "origin", main_branch],
+                        loading_msg=f"Syncing '{target_branch}' with latest from '{main_branch}'...",
+                        ok_text=f"Checked '{main_branch}'.",
+                        return_complete=True,
+                    )
+                    pull_stdout = pull_result.stdout if hasattr(pull_result, "stdout") else str(pull_result)
+                    if "already up to date" in pull_stdout.lower():
+                        info(f"'{target_branch}' was already up to date with '{main_branch}'.")
+                    else:
+                        info(f"'{target_branch}' synced with latest commits from '{main_branch}'.")
+                except GitCommandError as e:
+                    stderr = getattr(e, "stderr", str(e))
+                    if "conflict" in stderr.lower() or "rebase in progress" in stderr.lower():
+                        warning(f"Sync from '{main_branch}' hit a conflict.")
+                        info("Fix the conflict files, then run:  gitgo resolve")
+                        info("Or cancel the jump with:  gitgo resolve --abort")
+                    else:
+                        warning(f"Could not sync from '{main_branch}': no remote or no internet.")
+                        info(f"On '{target_branch}', but not yet synced with '{main_branch}'.")
+
+            else:
+                info(f"On '{target_branch}'. Not synced with main (use 'gitgo jump --sync' or 'gitgo config set jump-sync true').")
 
         if stashed_code:
             apply_result = git_stash_apply(loading_msg="Restoring your local changes...")

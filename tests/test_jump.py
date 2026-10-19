@@ -5,8 +5,8 @@ from argparse import Namespace
 from pathlib import Path
 import pytest
 
-def make_args(branch, nested=False):
-    return Namespace(branch=branch, nested=nested)
+def make_args(branch, nested=False, sync=True):
+    return Namespace(branch=branch, nested=nested, sync=sync)
 
 def test_undo_jump_operation_no_stash(mocker):
     fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value='')
@@ -357,3 +357,33 @@ def test_jump_operation_stash_apply_fails_drop_fails(mocker):
     fake_warning = mocker.patch("pygitgo.commands.jump.warning")
     assert capture_system_exit_code(lambda: jump_operation(make_args("feat"))) == 0
     fake_warning.assert_any_call("Could not clean up the temporary stash. Run 'gitgo state list' to remove it manually.")
+
+
+def test_jump_does_not_pull_main_by_default(mocker):
+    mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
+    mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
+    mocker.patch('pygitgo.commands.jump.get_config', return_value='false')
+    fake_main = mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
+    fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value='')
+    fake_info = mocker.patch('pygitgo.commands.jump.info')
+
+    jump_operation(Namespace(branch='feature', nested=False))
+
+    cmds = [c.args[0] for c in fake_run.call_args_list]
+    assert ['git', 'checkout', 'feature'] in cmds
+    assert not any(c[:2] == ['git', 'pull'] for c in cmds)
+    fake_main.assert_not_called()
+    assert any("Not synced with main" in str(c) for c in fake_info.call_args_list)
+
+
+def test_jump_pulls_main_when_config_enabled(mocker):
+    mocker.patch('pygitgo.commands.jump.get_current_branch', return_value='master')
+    mocker.patch('pygitgo.commands.jump.is_branch_exist', return_value=True)
+    mocker.patch('pygitgo.commands.jump.get_config', return_value='true')
+    mocker.patch('pygitgo.commands.jump.get_main_branch', return_value='main')
+    fake_run = mocker.patch('pygitgo.commands.jump.run_command', return_value='')
+
+    jump_operation(Namespace(branch='feature', nested=False))
+
+    cmds = [c.args[0] for c in fake_run.call_args_list]
+    assert ['git', 'pull', '--rebase', '--autostash', 'origin', 'main'] in cmds

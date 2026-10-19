@@ -28,6 +28,14 @@ def get_current_branch(safe=False):
 def get_main_branch():
     default_main_branch = get_config("default-branch", "main")
 
+    # Fast path: read the locally cached default branch, no network call.
+    try:
+        ref = run_command(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).strip()
+        if ref.startswith("origin/") and len(ref) > len("origin/"):
+            return ref[len("origin/"):]
+    except GitCommandError:
+        pass
+
     try:
         output = run_command(['git', 'remote', 'show', 'origin'])
     except GitCommandError:
@@ -37,6 +45,31 @@ def get_main_branch():
         return default_main_branch
 
     return output.split("HEAD branch:")[-1].strip().splitlines()[0].strip()
+
+
+def get_all_branch_names():
+    """Local branches plus origin branches, without the 'origin/' prefix."""
+    try:
+        out = run_command(["git", "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes/origin"])
+    except GitCommandError:
+        return []
+    names = []
+    for line in out.splitlines():
+        name = line.strip()
+        if name.startswith("origin/"):
+            name = name[len("origin/"):]
+        if name and name != "HEAD" and name not in names:
+            names.append(name)
+    return names
+
+
+def suggest_branch(text, cutoff=0.7):
+    """Closest existing branch to `text`, or None. Multi-word text is a commit message, never a typo."""
+    import difflib
+    if not text or any(ch.isspace() for ch in text):
+        return None
+    matches = difflib.get_close_matches(text, get_all_branch_names(), n=1, cutoff=cutoff)
+    return matches[0] if matches else None
 
 
 def is_branch_exist(branch):

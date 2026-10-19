@@ -131,15 +131,28 @@ def test_logout_not_logged_in(mocker):
 def test_logout_success(mocker):
     mocker.patch("pygitgo.auth.manager.ssh_utils.get_ssh_key_path", return_value=Path("mock_key"))
     mocker.patch.object(Path, "exists", return_value=True)
-    fake_remove = mocker.patch("os.remove")
-    fake_path_exists = mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("pygitgo.auth.manager.confirm", return_value=True)
+    fake_backup = mocker.patch("pygitgo.auth.manager._backup_key", return_value=Path("mock_key.bak"))
+    mocker.patch("pygitgo.auth.manager.get_user", return_value=("Name", "me@example.com"))
     fake_run = mocker.patch("pygitgo.auth.manager.run_command")
     fake_success = mocker.patch("pygitgo.auth.manager.success")
 
     result = logout()
 
     assert result is True
-    assert fake_remove.call_count == 2
+    fake_backup.assert_called_once()
     fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.name"], loading_msg="Clearing Git username...", ok_text="Git username cleared.")
     fake_run.assert_any_call(["git", "config", "--global", "--unset-all", "user.email"], loading_msg="Clearing Git email...", ok_text="Git email cleared.")
-    fake_success.assert_called_once_with("User successfully logged out.")
+    fake_success.assert_called_with("User successfully logged out.")
+
+
+def test_logout_declined_changes_nothing(mocker):
+    mocker.patch("pygitgo.auth.manager.ssh_utils.get_ssh_key_path", return_value=Path("mock_key"))
+    mocker.patch.object(Path, "exists", return_value=True)
+    mocker.patch("pygitgo.auth.manager.confirm", return_value=False)
+    fake_backup = mocker.patch("pygitgo.auth.manager._backup_key")
+    fake_run = mocker.patch("pygitgo.auth.manager.run_command")
+
+    assert logout() is False
+    fake_backup.assert_not_called()
+    fake_run.assert_not_called()

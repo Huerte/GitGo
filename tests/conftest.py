@@ -33,3 +33,12 @@ def _restore_cwd():
     orig_cwd = os.getcwd()
     yield
     os.chdir(orig_cwd)
+
+@pytest.fixture(autouse=True)
+def _isolated_template_cache(tmp_path, monkeypatch):
+    """Keep tests from reading or writing the real ~/.gitgo gitignore template cache."""
+    monkeypatch.setattr(
+        "pygitgo.commands.init._template_cache_file",
+        lambda: str(tmp_path / "gitignore_templates.json"),
+        raising=False,
+    )

@@ -1,5 +1,5 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
-from pygitgo.utils.cli_io import info, success, warning
+from pygitgo.utils.cli_io import info, success, warning, ok_mark, fail_mark
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pathlib import Path
@@ -145,10 +145,10 @@ def check_connection(ok_text=None, fail_text=None, host: str = "github.com"):
 
     if connected:
         spinner.text = ok_text or f"Connected to {host}."
-        spinner.ok("✔")
+        spinner.ok(ok_mark())
     else:
         spinner.text = fail_text or f"Could not connect to {host}."
-        spinner.fail("✖")
+        spinner.fail(fail_mark())
 
     return connected
 

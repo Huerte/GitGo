@@ -22,7 +22,7 @@ def test_push_new_branch_success(mocker):
     push_operation(args)
 
     fake_new_branch.assert_called_once_with("feature-branch")
-    fake_commit.assert_called_once_with("Init commit")
+    fake_commit.assert_called_once_with("Init commit", allow_sensitive=False)
     fake_push.assert_called_once_with("feature-branch")
 
 def test_push_wrong_branch_auto_switch(mocker):
@@ -43,7 +43,7 @@ def test_push_wrong_branch_auto_switch(mocker):
     fake_info.assert_any_call("Run 'gitgo undo push' to revert the push, then 'gitgo jump main' to return.")
     jump_args = fake_jump.call_args[0][0]
     assert jump_args.branch == "feature-branch"
-    fake_commit.assert_called_once_with("Init commit")
+    fake_commit.assert_called_once_with("Init commit", allow_sensitive=False)
     fake_push.assert_called_once_with("feature-branch")
 
 def test_push_wrong_branch_auto_switch_refused(mocker):
@@ -69,7 +69,7 @@ def test_push_default_branch_and_msg(mocker):
     args = Namespace(branch=None, message=None, new=False, select=False)
     push_operation(args)
 
-    fake_commit.assert_called_once_with("Default Msg")
+    fake_commit.assert_called_once_with("Default Msg", allow_sensitive=False)
     fake_push.assert_called_once_with("main")
 
 def test_push_select_clean(mocker):
@@ -108,7 +108,7 @@ def test_push_select_success(mocker):
     push_operation(args)
 
     fake_stage.assert_called_once_with(["file1.txt"])
-    fake_commit.assert_called_once_with("Selective push", loading_msg="Committing selected files...", skip_staging=True)
+    fake_commit.assert_called_once_with("Selective push", loading_msg="Committing selected files...", skip_staging=True, allow_sensitive=False)
     fake_push.assert_called_once_with("main")
 
 def test_push_clean_but_unpushed_commits(mocker):

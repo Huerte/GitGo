@@ -10,6 +10,7 @@ import pytest
 @patch("os.chdir")
 def test_new_operation_quickstart(mock_chdir, mock_link_core, mock_repo_operation, mock_init_operation, capsys):
     args = MagicMock()
+    args.allow_sensitive = False
     args.name = "my-project"
     args.lang = "python"
     args.template = None
@@ -23,7 +24,7 @@ def test_new_operation_quickstart(mock_chdir, mock_link_core, mock_repo_operatio
     mock_init_operation.assert_called_once_with(args)
     mock_chdir.assert_called_once_with("my-project")
     mock_repo_operation.assert_called_once_with(args, silent=True)
-    mock_link_core.assert_called_once_with("https://github.com/user/my-project.git", "Initial commit", silent=True, already_initialized=True)
+    mock_link_core.assert_called_once_with("https://github.com/user/my-project.git", "Initial commit", silent=True, already_initialized=True, allow_sensitive=False)
 
     captured = capsys.readouterr()
     assert "undo link" in captured.out
@@ -67,6 +68,7 @@ def test_guard_case_sensitive_on_non_windows(tmp_path, monkeypatch):
 @patch("pygitgo.commands.new.confirm")
 def test_new_operation_link_failure(mock_confirm, mock_error, mock_banner, mock_chdir, mock_link_core, mock_repo_operation, mock_init_operation):
     args = MagicMock()
+    args.allow_sensitive = False
     args.name = "my-project"
     args.lang = "python"
     args.template = None
@@ -84,7 +86,7 @@ def test_new_operation_link_failure(mock_confirm, mock_error, mock_banner, mock_
     mock_init_operation.assert_called_once_with(args)
     mock_chdir.assert_called_once_with("my-project")
     mock_repo_operation.assert_called_once_with(args, silent=True)
-    mock_link_core.assert_called_once_with("https://github.com/user/my-project.git", "Initial commit", silent=True, already_initialized=True)
+    mock_link_core.assert_called_once_with("https://github.com/user/my-project.git", "Initial commit", silent=True, already_initialized=True, allow_sensitive=False)
     mock_banner.assert_not_called()
     mock_error.assert_called_once_with("remote link cancelled")
     mock_confirm.assert_called_once_with("Delete the repo I just created on GitHub? (y/n): ", destructive=True)

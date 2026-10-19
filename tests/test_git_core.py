@@ -216,16 +216,21 @@ def test_abort_pull_conflict_active_rebase(mocker):
     assert result is True
     fake_run.assert_called_once_with(["git", "rebase", "--abort"], loading_msg="Aborting sync...", ok_text="Sync aborted. Branch is back to how it was before the conflict.")
 
+RECORD = {"branch": "main", "pre": "aaa111", "post": "bbb222"}
+
+
 def test_abort_pull_conflict_no_rebase(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
     mocker.patch("pygitgo.utils.cli_io.confirm", return_value=True)
     mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="main")
-    fake_run = mocker.patch("pygitgo.utils.executor.run_command", side_effect=["", "", "0"])
-    
+    mocker.patch("pygitgo.commands.git_core.read_pull_record", return_value=dict(RECORD))
+    mocker.patch("pygitgo.commands.git_core.clear_pull_record")
+    fake_run = mocker.patch("pygitgo.utils.executor.run_command", side_effect=["bbb222", "", "0"])
+
     result = abort_pull_conflict()
-    
+
     assert result is True
-    fake_run.assert_any_call(["git", "reset", "--hard", "ORIG_HEAD"], loading_msg="Reverting to pre-pull state...", ok_text="Branch reset to its state before the last pull.")
+    fake_run.assert_any_call(["git", "reset", "--keep", "aaa111"], loading_msg="Reverting to pre-pull state...", ok_text="Branch reset to its state before the last pull.")
 
 def test_ensure_inside_git_repository(mocker):
     mocker.patch("pygitgo.commands.git_core.is_git_repository", return_value=True)
@@ -357,28 +362,43 @@ def test_abort_pull_conflict_active_rebase_error(mocker):
     with pytest.raises(GitGoError):
         abort_pull_conflict()
 
-def test_abort_pull_conflict_no_orig_head(mocker):
+def test_abort_pull_conflict_no_record(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
-    mocker.patch("pygitgo.utils.executor.run_command", side_effect=GitCommandError(["cmd"]))
+    mocker.patch("pygitgo.commands.git_core.read_pull_record", return_value=None)
     mock_info = mocker.patch("pygitgo.utils.cli_io.info")
-    result = abort_pull_conflict()
-    assert result is False
-    mock_info.assert_called_once_with("Nothing to undo. No recent pull was found (ORIG_HEAD does not exist).")
+    assert abort_pull_conflict() is False
+    mock_info.assert_called_once_with("Nothing to undo. GitGo has no record of a completed pull in this repository.")
 
 def test_abort_pull_conflict_branch_error(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
-    mocker.patch("pygitgo.utils.executor.run_command", return_value="")
+    mocker.patch("pygitgo.commands.git_core.read_pull_record", return_value=dict(RECORD))
     mocker.patch("pygitgo.commands.git_branch.get_current_branch", side_effect=GitCommandError(["cmd"]))
     with pytest.raises(GitGoError):
+        abort_pull_conflict()
+
+def test_abort_pull_conflict_wrong_branch(mocker):
+    mocker.patch("pathlib.Path.exists", return_value=False)
+    mocker.patch("pygitgo.commands.git_core.read_pull_record", return_value=dict(RECORD))
+    mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="feature")
+    with pytest.raises(GitGoError, match="last pull was on 'main'"):
+        abort_pull_conflict()
+
+def test_abort_pull_conflict_head_moved(mocker):
+    mocker.patch("pathlib.Path.exists", return_value=False)
+    mocker.patch("pygitgo.commands.git_core.read_pull_record", return_value=dict(RECORD))
+    mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.utils.executor.run_command", return_value="zzz999")
+    with pytest.raises(GitGoError, match="has moved since the last pull"):
         abort_pull_conflict()
 
 def test_abort_pull_conflict_reset_error(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
     mocker.patch("pygitgo.commands.git_branch.get_current_branch", return_value="main")
+    mocker.patch("pygitgo.commands.git_core.read_pull_record", return_value=dict(RECORD))
     mocker.patch("pygitgo.utils.cli_io.confirm", return_value=True)
     mocker.patch("pygitgo.utils.executor.run_command", side_effect=[
-        "",
+        "bbb222",
         GitCommandError(["cmd"], stderr="reset error")
     ])
-    with pytest.raises(GitGoError):
+    with pytest.raises(GitGoError, match="without overwriting your uncommitted changes"):
         abort_pull_conflict()

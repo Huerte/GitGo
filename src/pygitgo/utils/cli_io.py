@@ -1,10 +1,53 @@
 from pygitgo.utils.colors import RED, GREEN, YELLOW, BLUE, CYAN, RESET
 import shutil
+import sys
 import re
 
 
 _QUIET = False
 _VERBOSE = False
+
+
+_ASCII_FALLBACK = str.maketrans({
+    "╭": "+", "╮": "+", "╰": "+", "╯": "+", "─": "-", "│": "|",
+    "✔": "OK", "✖": "X", "→": "->",
+})
+
+
+def _stdout_encoding():
+    return getattr(sys.stdout, "encoding", None) or "ascii"
+
+
+def _can_encode(text):
+    try:
+        text.encode(_stdout_encoding())
+        return True
+    except (UnicodeEncodeError, LookupError):
+        return False
+
+
+def ok_mark():
+    """Check mark for spinners; falls back to ASCII on legacy encodings."""
+    return "✔" if _can_encode("✔") else "OK"
+
+
+def fail_mark():
+    return "✖" if _can_encode("✖") else "X"
+
+
+def safe_print(msg="", end="\n", file=None):
+    """print() that never crashes on terminals/pipes that can't encode box-drawing chars."""
+    kwargs = {"end": end}
+    if file is not None:
+        kwargs["file"] = file
+    try:
+        print(msg, **kwargs)
+    except UnicodeEncodeError:
+        stream = file or sys.stdout
+        enc = getattr(stream, "encoding", None) or "ascii"
+        text = str(msg).translate(_ASCII_FALLBACK).encode(enc, errors="replace").decode(enc, errors="replace")
+        print(text, **kwargs)
+
 
 _CMD_PATTERN = re.compile(r"(gitgo(?:[ ][\w./-]+)+)")
 
@@ -21,25 +64,25 @@ def confirm(prompt, destructive=False):
     return user_input in ('y', 'yes')
 
 def danger(msg):
-    print(f"{RED}DANGER: {msg.strip()}{RESET}")
+    safe_print(f"{RED}DANGER: {msg.strip()}{RESET}")
 
 def error(msg):
-    print(f"{RED}{msg.strip()}{RESET}")
+    safe_print(f"{RED}{msg.strip()}{RESET}", file=sys.stderr)
 
 def warning(msg, required=False):
     if _QUIET and not required:
         return
-    print(f"{YELLOW}WARNING: {_highlight_cmd(msg.strip(), YELLOW)}{RESET}")
+    safe_print(f"{YELLOW}WARNING: {_highlight_cmd(msg.strip(), YELLOW)}{RESET}", file=sys.stderr)
 
 def info(msg, required=False):
     if _QUIET and not required:
         return
-    print(f"{BLUE}{_highlight_cmd(msg.strip(), BLUE)}{RESET}")
+    safe_print(f"{BLUE}{_highlight_cmd(msg.strip(), BLUE)}{RESET}")
 
 def success(msg, required=False):
     if _QUIET and not required:
         return
-    print(f"{GREEN}{msg.strip()}{RESET}")
+    safe_print(f"{GREEN}{msg.strip()}{RESET}")
 
 def banner(title, subtitle="", required=False):
     if _QUIET and not required:
@@ -71,19 +114,19 @@ def banner(title, subtitle="", required=False):
 
     bottom = GREEN + "╰" + "─" * inner_width + "╯" + RESET
 
-    print()
-    print(top)
-    print(title_line)
+    safe_print()
+    safe_print(top)
+    safe_print(title_line)
     if sub_line:
-        print(sub_line)
-    print(bottom)
-    print()
+        safe_print(sub_line)
+    safe_print(bottom)
+    safe_print()
 
 
 def write(msg="", end="\n", required=False):
     if _QUIET and not required:
         return
-    print(_highlight_cmd(str(msg)) if msg else msg, end=end)
+    safe_print(_highlight_cmd(str(msg)) if msg else msg, end=end)
 
 def set_verbosity(quiet=False, verbose=False):
     global _QUIET, _VERBOSE
