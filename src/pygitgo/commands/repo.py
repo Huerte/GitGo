@@ -1,25 +1,21 @@
-from pygitgo.utils.config import get_config, set_config
+from pygitgo.utils import token_store
 from pygitgo.utils.cli_io import info, warning, banner, ok_mark, fail_mark
 from pygitgo.utils.platform import open_url
 from pygitgo.exceptions import GitGoError
 import subprocess
-import urllib
+import urllib.request
+import urllib.error
 import json
 import os
 
 GITHUB_API = "https://api.github.com"
 
 _TOKEN_URL = "https://github.com/settings/tokens/new?scopes=repo&description=GitGo"
+_DELETE_TOKEN_URL = "https://github.com/settings/tokens/new?scopes=delete_repo&description=GitGo%20one-time%20delete"
 
 
 def _clear_saved_token():
-    try:
-        subprocess.run(
-            ["git", "config", "--global", "--unset", "gitgo.github-token"],
-            capture_output=True
-        )
-    except Exception:
-        pass
+    token_store.delete_token()
 
 
 def _prompt_for_token():
@@ -37,7 +33,9 @@ def _prompt_for_token():
     if not token:
         raise GitGoError("Cancelled. No repository was created.")
 
-    set_config("github-token", token, silent=True)
+    where = token_store.save_token(token)
+    if where == "file":
+        info("Token saved to a private file (no system credential helper was available).")
     return token
 
 
@@ -58,7 +56,7 @@ def _get_github_token():
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
 
-    token = get_config("github-token", "").strip()
+    token = token_store.load_token().strip()
     if token:
         return token
 
@@ -173,6 +171,33 @@ def parse_repo_fullname(url):
     return None
 
 
+class MissingDeleteScope(GitGoError):
+    """The token can't delete repositories (needs the delete_repo scope)."""
+
+
+def prompt_for_delete_token():
+    """Ask for a one-time token with delete_repo. It is used once and never saved."""
+    info("Deleting a repository needs a token with the 'delete_repo' scope.")
+    info("GitGo's saved token deliberately does not have it. This one is used once and not stored.")
+    open_url(_DELETE_TOKEN_URL)
+
+    import getpass
+    token = getpass.getpass(
+        "Create the token on GitHub, paste it here (Enter to skip): "
+    ).strip()
+    if not token:
+        raise GitGoError("Skipped. The repository was not deleted.")
+    return token
+
+
+def delete_github_repo_with_prompt(full_name):
+    """Delete a repo, asking for a one-time delete_repo token if the saved one can't."""
+    try:
+        return delete_github_repo(full_name)
+    except MissingDeleteScope:
+        return delete_github_repo(full_name, token=prompt_for_delete_token())
+
+
 def delete_github_repo(full_name, token=None):
     if not token:
         token = _get_github_token()
@@ -190,7 +215,7 @@ def delete_github_repo(full_name, token=None):
             return True
     except urllib.error.HTTPError as e:
         if e.code == 403:
-            raise GitGoError(
+            raise MissingDeleteScope(
                 "Delete failed: your token does not have 'delete_repo' scope. "
                 "Generate a new token at https://github.com/settings/tokens with that scope."
             )

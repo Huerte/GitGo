@@ -31,7 +31,8 @@ This policy covers the GitGo code.
 
 A real security problem must affect one of these sensitive parts:
 - SSH key generation and commit signing.
-- How we store the GitHub Personal Access Token in the git config.
+- How we store the GitHub Personal Access Token (system credential helper, or a user-only file).
+- How we trust GitHub's SSH host keys (pinned to the keys GitHub publishes).
 - How we rewrite remote URLs.
 - How we run git subprocess commands.
 

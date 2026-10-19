@@ -1,10 +1,12 @@
 from pygitgo.exceptions import GitCommandError, GitGoError
+from .host_keys import PINNED_HOSTS, known_hosts_lines, host_key_types_present
 from pygitgo.utils.cli_io import info, success, warning, ok_mark, fail_mark
 from pygitgo.utils.platform import get_platform
 from pygitgo.utils.executor import run_command
 from pathlib import Path
 from typing import Optional
 import subprocess
+import shutil
 import time
 import os
 import re
@@ -31,19 +33,41 @@ def get_remote_host(url: str) -> Optional[str]:
 
 
 def ensure_known_host(host: str = "github.com"):
-    """Add a host to known_hosts if it is not already there."""
+    """Make sure `host` is in known_hosts.
+
+    github.com is filled from GitHub's published keys (see host_keys.py), so nothing
+    on the network gets to decide what we trust. Other hosts still fall back to
+    ssh-keyscan, which trusts whatever answers on first connect.
+    """
     known_hosts = Path.home() / ".ssh" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        if known_hosts.exists():
-            with open(known_hosts, "r") as f:
-                if host in f.read():
-                    return
-    except Exception:
-        pass
+        existing = known_hosts.read_text() if known_hosts.exists() else ""
+    except OSError:
+        existing = ""
+
+    present = host_key_types_present(existing, host)
+
+    if host in PINNED_HOSTS:
+        missing = [line for line in known_hosts_lines(host) if line.split()[1] not in present]
+        if not missing:
+            return
+        try:
+            with open(known_hosts, "a") as f:
+                if existing and not existing.endswith("\n"):
+                    f.write("\n")
+                f.write("\n".join(missing) + "\n")
+            success(f"{host} host keys added to known_hosts (GitHub's published keys).")
+        except OSError:
+            warning(f"Could not write {known_hosts}. You might be prompted to verify {host}.")
+        return
+
+    if present:
+        return
 
     info(f"Adding {host} to known_hosts...")
+    warning(f"{host}'s key is taken from the network on first connect. Verify it if you can.")
     try:
         result = run_command(["ssh-keyscan", "-H", host], return_complete=True)
         if result.stdout and host in result.stdout:
@@ -109,7 +133,12 @@ def classify_connection_error(raw_output: str, timed_out: bool, os_error: Option
     if "Connection refused" in raw_output:
         return "Connection refused on port 22. Try a network without strict firewall rules."
     if "Host key verification failed" in raw_output:
-        return "Host key check failed. Run: ssh-keyscan -H <host> >> ~/.ssh/known_hosts"
+        return (
+            "Host key check failed. The key in ~/.ssh/known_hosts does not match what the server sent. "
+            "This can mean a man-in-the-middle, or GitHub rotated its keys. Compare against "
+            "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints "
+            "before removing the old line with: ssh-keygen -R <host>"
+        )
     if "Could not resolve hostname" in raw_output:
         return "DNS lookup failed. You may be offline or behind a proxy."
     return raw_output.strip() or "Unknown SSH error."
@@ -163,8 +192,117 @@ def get_github_username():
     return None
 
 
+GITGO_KEY_NAME = "gitgo_ed25519"
+LEGACY_KEY_NAME = "id_ed25519"
+_CONFIG_BEGIN = "# >>> gitgo (managed, do not edit) >>>"
+_CONFIG_END = "# <<< gitgo (managed) <<<"
+
+
 def get_ssh_key_path():
-    return Path.home() / ".ssh" / "id_ed25519"
+    """GitGo's own key. It never touches ~/.ssh/id_ed25519."""
+    return Path.home() / ".ssh" / GITGO_KEY_NAME
+
+
+def get_legacy_key_path():
+    return Path.home() / ".ssh" / LEGACY_KEY_NAME
+
+
+def _signing_key_setting() -> str:
+    try:
+        return run_command(["git", "config", "--global", "user.signingkey"]).strip()
+    except GitCommandError:
+        return ""
+
+
+def migrate_legacy_key() -> bool:
+    """Adopt an id_ed25519 key that older GitGo versions created.
+
+    Older versions generated ~/.ssh/id_ed25519 and pointed user.signingkey at it.
+    We only treat the key as GitGo's when that setting still names it. The key is
+    COPIED, never moved, so anything else that uses id_ed25519 keeps working, and
+    GitHub already knows the key, so no re-registration is needed.
+    Returns True when a migration happened.
+    """
+    new, old = get_ssh_key_path(), get_legacy_key_path()
+    if new.exists() or not old.exists():
+        return False
+    setting = _signing_key_setting()
+    if not setting:
+        return False
+    try:
+        if Path(setting).expanduser().resolve() != old.resolve():
+            return False
+    except OSError:
+        return False
+
+    try:
+        shutil.copy2(old, new)
+        old_pub = old.with_name(old.name + ".pub")
+        if old_pub.exists():
+            shutil.copy2(old_pub, new.with_name(new.name + ".pub"))
+        if os.name != "nt":
+            os.chmod(new, 0o600)
+    except OSError as e:
+        warning(f"Could not copy your existing GitGo key to {new}: {e}")
+        return False
+
+    try:
+        run_command(["git", "config", "--global", "user.signingkey", str(new)])
+    except GitCommandError:
+        pass
+    ensure_ssh_config(new)
+    ensure_ssh_agent(new, quiet=True)
+    success(f"GitGo now uses its own key: {new}")
+    info(f"Your original {old} was copied, not moved, and is untouched.")
+    return True
+
+
+def _config_block(key_path: Path) -> str:
+    key = str(key_path).replace("\\", "/")
+    return (
+        f"{_CONFIG_BEGIN}\n"
+        "Host github.com\n"
+        f'    IdentityFile "{key}"\n'
+        f"{_CONFIG_END}\n"
+    )
+
+
+def _strip_config_block(text: str) -> str:
+    if _CONFIG_BEGIN not in text:
+        return text
+    before, _, rest = text.partition(_CONFIG_BEGIN)
+    _, _, after = rest.partition(_CONFIG_END)
+    return before + after.lstrip("\n")
+
+
+def ensure_ssh_config(key_path: Path):
+    """Make github.com use GitGo's key, in a marked block at the top of ~/.ssh/config.
+
+    ssh uses the first value it finds, so the block goes first. Everything outside
+    the markers is left exactly as it was, and re-running replaces only our block.
+    """
+    config = Path.home() / ".ssh" / "config"
+    config.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        existing = config.read_text() if config.exists() else ""
+        body = _strip_config_block(existing)
+        config.write_text(_config_block(key_path) + ("\n" + body if body.strip() else ""))
+        if os.name != "nt":
+            os.chmod(config, 0o600)
+    except OSError as e:
+        warning(f"Could not update {config}: {e}")
+
+
+def remove_ssh_config_block():
+    config = Path.home() / ".ssh" / "config"
+    try:
+        if not config.exists():
+            return
+        text = config.read_text()
+        if _CONFIG_BEGIN in text:
+            config.write_text(_strip_config_block(text))
+    except OSError:
+        pass
 
 
 def is_agent_loaded(key_path: Path) -> bool:
@@ -215,6 +353,7 @@ def generate_ssh_key(email):
             f"Details: {e}"
         )
 
+    ensure_ssh_config(key_path)
     ensure_ssh_agent(key_path, quiet=True)
 
     return key_path

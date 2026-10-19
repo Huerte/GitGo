@@ -25,27 +25,27 @@ def test_get_github_token_gh_cli(mock_run):
 
 @patch.dict("os.environ", {}, clear=True)
 @patch("subprocess.run")
-@patch("pygitgo.commands.repo.get_config", return_value="cached-token")
-def test_get_github_token_cached(mock_get_config, mock_run):
+@patch("pygitgo.commands.repo.token_store.load_token", return_value="cached-token")
+def test_get_github_token_cached(mock_load, mock_run):
     mock_run.side_effect = FileNotFoundError()
     assert _get_github_token() == "cached-token"
-    mock_get_config.assert_called_once_with("github-token", "")
+    mock_load.assert_called_once_with()
 
 @patch.dict("os.environ", {}, clear=True)
 @patch("subprocess.run")
-@patch("pygitgo.commands.repo.get_config", return_value="")
+@patch("pygitgo.commands.repo.token_store.load_token", return_value="")
 @patch("pygitgo.commands.repo.open_url")
-@patch("pygitgo.commands.repo.set_config")
+@patch("pygitgo.commands.repo.token_store.save_token", return_value="credential-helper")
 @patch("getpass.getpass", return_value="user-pasted-token")
-def test_get_github_token_prompt(mock_getpass, mock_set_config, mock_open_url, mock_get_config, mock_run):
+def test_get_github_token_prompt(mock_getpass, mock_save, mock_open_url, mock_load, mock_run):
     mock_run.side_effect = FileNotFoundError()
     assert _get_github_token() == "user-pasted-token"
     mock_open_url.assert_called_once()
-    mock_set_config.assert_called_once_with("github-token", "user-pasted-token", silent=True)
+    mock_save.assert_called_once_with("user-pasted-token")
 
 @patch.dict("os.environ", {}, clear=True)
 @patch("subprocess.run")
-@patch("pygitgo.commands.repo.get_config", return_value="")
+@patch("pygitgo.commands.repo.token_store.load_token", return_value="")
 @patch("pygitgo.commands.repo.open_url")
 @patch("getpass.getpass", return_value="")
 def test_get_github_token_cancelled(mock_getpass, mock_open_url, mock_get_config, mock_run):
@@ -118,20 +118,14 @@ def test_repo_operation_silent(mock_create, mock_token, capsys):
     assert "gitgo link" not in captured.out
 
 def test_clear_saved_token(mocker):
-    mock_run = mocker.patch("subprocess.run")
+    delete = mocker.patch("pygitgo.commands.repo.token_store.delete_token")
     _clear_saved_token()
-    mock_run.assert_called_once_with(
-        ["git", "config", "--global", "--unset", "gitgo.github-token"],
-        capture_output=True
-    )
-
-    mock_run.side_effect = Exception("failed")
-    _clear_saved_token()
+    delete.assert_called_once_with()
 
 @patch.dict("os.environ", {}, clear=True)
 def test_get_github_token_gh_cli_timeout(mocker):
     mocker.patch("subprocess.run", side_effect=subprocess.TimeoutExpired(["gh"], 5))
-    mocker.patch("pygitgo.commands.repo.get_config", return_value="cached-token")
+    mocker.patch("pygitgo.commands.repo.token_store.load_token", return_value="cached-token")
     assert _get_github_token() == "cached-token"
 
 @patch("urllib.request.urlopen")
@@ -257,3 +251,38 @@ def test_delete_github_repo_generic_exception(mock_urlopen):
     with pytest.raises(GitGoError) as ex:
          delete_github_repo("owner/repo", token="token")
     assert "Unexpected error" in str(ex.value)
+
+
+@patch("urllib.request.urlopen")
+def test_missing_delete_scope_is_its_own_error(mock_urlopen):
+    from pygitgo.commands.repo import MissingDeleteScope
+    mock_urlopen.side_effect = urllib.error.HTTPError("u", 403, "Forbidden", {}, None)
+    with pytest.raises(MissingDeleteScope, match="delete_repo"):
+        delete_github_repo("owner/repo", token="token")
+
+
+def test_delete_with_prompt_retries_with_one_time_token(mocker):
+    from pygitgo.commands import repo as r
+    calls = []
+
+    def fake_delete(full_name, token=None):
+        calls.append(token)
+        if token is None:
+            raise r.MissingDeleteScope("no scope")
+        return True
+
+    mocker.patch.object(r, "delete_github_repo", side_effect=fake_delete)
+    mocker.patch.object(r, "prompt_for_delete_token", return_value="one-time")
+    save = mocker.patch.object(r.token_store, "save_token")
+    assert r.delete_github_repo_with_prompt("o/r") is True
+    assert calls == [None, "one-time"]
+    save.assert_not_called()
+
+
+def test_delete_with_prompt_skipped_raises(mocker):
+    from pygitgo.commands import repo as r
+    mocker.patch.object(r, "delete_github_repo", side_effect=r.MissingDeleteScope("no scope"))
+    mocker.patch.object(r, "open_url")
+    mocker.patch("getpass.getpass", return_value="")
+    with pytest.raises(GitGoError, match="not deleted"):
+        r.delete_github_repo_with_prompt("o/r")

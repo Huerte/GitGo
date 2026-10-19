@@ -47,14 +47,14 @@ def new_operation(args):
             link_core(repo_url, "Initial commit", silent=True, already_initialized=True, allow_sensitive=getattr(args, "allow_sensitive", False))
         except GitGoError as e:
             error(str(e))
-            from pygitgo.commands.repo import delete_github_repo, parse_repo_fullname
+            from pygitgo.commands.repo import delete_github_repo_with_prompt, parse_repo_fullname
             warning(f"An orphaned remote repository was created on GitHub: {repo_url}")
             info("It needs manual deletion or a retry of 'gitgo link'.")
             full_name = parse_repo_fullname(repo_url)
             if full_name:
                 if confirm("Delete the repo I just created on GitHub? (y/n): ", destructive=True):
                     try:
-                        delete_github_repo(full_name)
+                        delete_github_repo_with_prompt(full_name)
                         success("GitHub repository deleted successfully.")
                     except Exception as delete_err:
                         error(f"Failed to delete: {delete_err}")
@@ -71,7 +71,8 @@ def new_operation(args):
                     delete_github_repo(full_name)
                     info("GitHub repository cleaned up.")
                 except Exception:
-                    pass
+                    warning(f"Could not delete the GitHub repository automatically: {repo_url}")
+                    info("Delete it at its Settings page, or run 'gitgo link' to finish setting it up.")
         sys.exit(130)
 
     banner("PROJECT LAUNCHED. SCAFFOLDED, CREATED, AND DEPLOYED.", "LOCAL STRUCTURE ESTABLISHED AND REMOTE SYNCED.")

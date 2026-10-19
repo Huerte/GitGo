@@ -1,5 +1,9 @@
 # Login Guide: `gitgo user login`
 
+> **Browser login:** when your GitGo build has browser login enabled, `gitgo user login` shows a short code, opens GitHub, and registers the key for you once you approve. The manual steps below are the fallback, and are used automatically if the browser flow is unavailable or canceled.
+>
+> **Your keys are safe:** GitGo uses its own key, `~/.ssh/gitgo_ed25519`. It never replaces `~/.ssh/id_ed25519`. If an older GitGo created that key, it is copied to the new name on first use and the original is left in place.
+
 This guide walks you through connecting GitGo to your GitHub account. You only need to do this **once** on each computer you use.
 
 ---
@@ -221,3 +225,15 @@ gitgo user logout
 ---
 
 *Back to [README](../README.md) | [Troubleshooting](troubleshooting.md)*
+
+
+## For maintainers: enabling browser login
+
+Browser login uses GitHub's OAuth device flow, which needs a GitHub OAuth App:
+
+1. GitHub > Settings > Developer settings > OAuth Apps > New OAuth App.
+2. Name it `GitGo`. The homepage URL can be the repository. The callback URL is required by the form but unused by the device flow, so any valid URL works.
+3. After creating it, tick **Enable Device Flow** and save.
+4. Copy the **Client ID** (it is public, not a secret; do not generate or commit a client secret) into `DEFAULT_CLIENT_ID` in `src/pygitgo/auth/device_flow.py`.
+
+To try it before releasing, set `GITGO_GITHUB_CLIENT_ID` in your environment instead.
