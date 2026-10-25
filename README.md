@@ -9,6 +9,7 @@
   [![PyPI version](https://img.shields.io/pypi/v/pygitgo?color=blue&label=PyPI)](https://pypi.org/project/pygitgo)
   [![PyPI Downloads](https://img.shields.io/pypi/dm/pygitgo?color=blue)](https://pypi.org/project/pygitgo)
   [![Winget](https://img.shields.io/badge/winget-Huerte.GitGo-blue?logo=windows&logoColor=white)](https://github.com/microsoft/winget-pkgs/tree/master/manifests/h/Huerte/GitGo)  
+  [![GitGo on The Terminal Index](https://cli.masoko.net/badge/gitgo.svg)](https://cli.masoko.net/tools/gitgo/)
   [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
   [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
   [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Termux-lightgrey)](https://github.com/Huerte/GitGo)
