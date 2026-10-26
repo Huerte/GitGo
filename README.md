@@ -484,14 +484,10 @@ If this is your first time contributing to an open-source project, follow our st
 
 ## Credits
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><a href="https://github.com/Huerte"><img src="https://github.com/Huerte.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Huerte"><b>Huerte</b></a><br />Creator</td>
-      <td align="center"><a href="https://github.com/Venomous-pie"><img src="https://github.com/Venomous-pie.png" width="80px;" alt=""/></a><br /><a href="https://github.com/Venomous-pie"><b>Venomous-pie</b></a><br />Contributor</td>
-    </tr>
-  </table>
-</div>
+<a href="../../graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Huerte/GitGo" alt="Contributors">
+</a>
+
 
 ---
 
