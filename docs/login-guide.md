@@ -4,6 +4,51 @@
 >
 > **Your keys are safe:** GitGo uses its own key, `~/.ssh/gitgo_ed25519`. It never replaces `~/.ssh/id_ed25519`. If an older GitGo created that key, it is copied to the new name on first use and the original is left in place.
 
+## Browser Login (Recommended)
+
+GitGo supports GitHub's browser-based authorization flow. When available, this is the easiest way to connect your GitHub account without manually copying SSH keys into GitHub.
+
+### Step 1: Start login
+
+Open your terminal and run:
+
+```bash
+gitgo user login
+```
+
+If GitGo detects an existing connection using its own SSH key, it confirms that you're already logged in.
+
+Otherwise, GitGo starts the login process and displays a short authorization code and a GitHub verification URL.
+
+### Step 2: Authorize GitGo on GitHub
+
+1. Copy the authorization code shown in your terminal. GitGo also attempts to copy it to your clipboard automatically.
+2. Press Enter to open the GitHub verification page in your browser.
+3. Paste or enter the code and approve GitGo's requested access.
+
+If your browser does not open automatically, visit the verification URL displayed in your terminal.
+
+### Step 3: Wait for GitGo to finish
+
+Return to your terminal while GitGo waits for authorization.
+
+Once approved, GitGo automatically:
+
+- Retrieves your GitHub username and email.
+- Generates a GitGo-managed SSH key.
+- Registers the public key with GitHub for authentication and commit signing.
+- Verifies the SSH connection.
+- Configures your Git identity and SSH commit signing.
+
+You do not need to manually add SSH keys to GitHub when this process succeeds.
+
+### If Browser Login Doesn't Work
+
+If browser authorization is unavailable, canceled, expires, or cannot complete, GitGo may fall back to manual SSH setup.
+
+Follow the **Manual SSH Login (Fallback)** instructions below to finish connecting your account.
+
+
 This guide walks you through connecting GitGo to your GitHub account. You only need to do this **once** on each computer you use.
 
 ---
@@ -18,7 +63,7 @@ Make sure you have:
 
 ---
 
-## What Happens When You Run the Command
+## What Happens During Manual SSH Login
 
 GitGo does these things for you:
 
@@ -35,7 +80,7 @@ You will add the same key **twice** on GitHub: once as an **Authentication Key**
 
 ---
 
-## Step-by-Step
+## Manual SSH Login (Fallback)
 
 ### Step 1: Run the command
 
